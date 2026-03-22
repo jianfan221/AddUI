@@ -1,0 +1,66 @@
+﻿## Interface: 120000,120001
+## Title: |cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r |cFF00FF55界面功能包|r
+## Notes: 各类插件功能界面整合包|cff69ccf0by简繁|r
+## Author: CN-无尽之海-简繁丶
+## IconTexture: 135451
+## SavedVariables: AddUIDB
+## Version: 20260319.1
+
+AddUISet.lua
+AddUIDB.lua
+Update.lua
+Options.lua
+Test.lua
+
+Chat\Chat.lua
+Chat\Chatbar.lua
+Chat\ChatTab.lua
+
+Func\AH.lua
+Func\AHCorruptionInfo.lua
+Func\AHMS.lua
+Func\align.lua
+Func\AutoAllRoll.lua
+Func\BuffTimers.lua
+Func\EditButton.lua
+Func\FriendColor.lua
+Func\FriendSearch.lua
+Func\Killauctionlowprice.lua
+Func\LFG.lua
+Func\M+Guild.lua
+Func\move.lua
+Func\Professions.lua
+Func\SCmacro.lua
+Func\SetMacro.lua
+Func\SyMerchant.lua
+Func\zu.lua
+
+SetAddon\CVar.lua
+SetAddon\Details.lua
+
+UI\AlreadyKnown.lua
+UI\cancelAura.lua
+UI\CastingBar.lua
+UI\CombatAlert.lua
+UI\Cooldown.lua
+UI\CooldownBuffSp.lua
+UI\CooldownCopy.lua
+UI\Damage.lua
+UI\DamageValue.lua
+UI\DungeonTimer.lua
+UI\InfoBar.lua
+UI\InspectLevel.lua
+UI\MainMenuBar.lua
+UI\MainMenuBarAnimations.lua
+UI\MainMenuBarIcon.lua
+UI\RaidFrame.lua
+UI\Smap.lua
+UI\SmapIcon.lua
+UI\StatSheet.lua
+UI\SyDurGlow.lua
+UI\Timeline.lua
+UI\Tip.lua
+UI\UnitFrames.lua
+UI\vQuestmove.lua
+UI\NamePlateCastWatcher.lua
+
