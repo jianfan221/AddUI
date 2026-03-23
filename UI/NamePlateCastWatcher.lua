@@ -76,7 +76,7 @@ local function CreateCastRow(unit)
     return bar
 end
 
-local function UpdateBar(self)
+local function UpdateBar(self, event)
     if not IsModuleEnabled() then
         local unit = self and self.unit
         if unit and bars[unit] then
@@ -87,6 +87,18 @@ local function UpdateBar(self)
     end
 
     if self:IsForbidden() or not self.unit then
+        return
+    end
+
+    -- 这些事件表示施法条终结，立即清理显示
+    if event == "UNIT_SPELLCAST_STOP" or event == "UNIT_SPELLCAST_CHANNEL_STOP" or
+       event == "UNIT_SPELLCAST_INTERRUPTED" or event == "UNIT_SPELLCAST_FAILED" or
+       event == "UNIT_SPELLCAST_SUCCEEDED" or event == "NAME_PLATE_UNIT_REMOVED" then
+        local unit = self.unit
+        if unit and bars[unit] then
+            bars[unit]:Hide()
+            RefreshLayout()
+        end
         return
     end
 
@@ -209,4 +221,13 @@ ns.event("PLAYER_ENTERING_WORLD",function()
     ns.AddEdit(frame,"周围怪物施法监控")
 
     hooksecurefunc(NamePlateCastingBarMixin, "OnUpdate", UpdateBar)
+    hooksecurefunc(NamePlateCastingBarMixin, "OnEvent", UpdateBar)
+
+    ns.event("NAME_PLATE_UNIT_REMOVED", function(event, unit)
+        if not IsModuleEnabled() then return end
+        if bars[unit] then
+            bars[unit]:Hide()
+            RefreshLayout()
+        end
+    end)
 end)
