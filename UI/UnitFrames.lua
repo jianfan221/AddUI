@@ -2,7 +2,7 @@ local _,ns = ...
 
 --头像血条数值文本
 local function ADDUIUpdateHealthBar(s)
-if AddUIDB.unitf ==  false  then return end
+	if not AddUIDB.unitf then return end
 	if s.unit == "targettarget" or s.unit == "focustarget" then
 		if not s.PCTargetPercent then
 			s.PCTargetPercent = s:CreateFontString("PCTargetPercent", "OVERLAY")
@@ -25,7 +25,7 @@ if AddUIDB.unitf ==  false  then return end
 end
 
 local function ADDUIUpdateManaBar(s)
-if AddUIDB.unitf ==  false  then return end
+	if not AddUIDB.unitf then return end
 	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
 		if 	s.TextString and s.currValue then 
 			s.TextString:SetText(ns.ADDUIWK(s:GetValue())) 
@@ -39,8 +39,31 @@ end
 hooksecurefunc("UnitFrameHealthBar_OnUpdate", ADDUIUpdateHealthBar)
 hooksecurefunc("UnitFrameManaBar_OnUpdate", ADDUIUpdateManaBar)
 
+local function SetTargetSpellBar(self)
+	if not AddUIDB.unitf then return end
+	local parentFrame = self:GetParent();
+	if parentFrame.buffsOnTop then
+		self:ClearAllPoints();
+		self:SetPoint("BOTTOMLEFT", parentFrame, "TOPLEFT", 47,parentFrame.auraRows*27-15);
+	else--暴雪原来的逻辑
+		local useSpellbarAnchor = (not parentFrame.buffsOnTop) and ((parentFrame.haveToT and parentFrame.auraRows > 2) or ((not parentFrame.haveToT) and parentFrame.auraRows > 0));
+
+		local relativeKey = useSpellbarAnchor and parentFrame.spellbarAnchor or parentFrame;
+		local pointX = useSpellbarAnchor and 18 or  (parentFrame.smallSize and 38 or 43);
+		local pointY = useSpellbarAnchor and -10 or (parentFrame.smallSize and 3 or 5);
+
+		if ((not useSpellbarAnchor) and parentFrame.haveToT) then
+			pointY = parentFrame.smallSize and -48 or -46;
+		end
+
+		self:SetPoint("TOPLEFT", relativeKey, "BOTTOMLEFT", pointX, pointY);
+	end
+end
+hooksecurefunc(TargetFrameSpellBar, "AdjustPosition", SetTargetSpellBar)
+TargetFrameSpellBar:HookScript("OnShow", SetTargetSpellBar)
+
 ns.event("PLAYER_LOGIN", function()
-	if AddUIDB.unitf ==  false  then return end
+	if not AddUIDB.unitf then return end
 
 	------------------------------------------------
 	-- 修改默认头像

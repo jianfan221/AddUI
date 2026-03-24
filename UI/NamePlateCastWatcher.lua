@@ -86,7 +86,7 @@ local function UpdateBar(self, event)
         return
     end
 
-    if self:IsForbidden() or not self.unit then
+    if self:IsForbidden() or not self.unit or not UnitCanAttack("player", self.unit) then
         return
     end
 
