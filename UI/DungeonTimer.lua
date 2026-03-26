@@ -29,15 +29,13 @@ local function GetTimeAsString(totalSeconds,nocolor)
 end
 
 --注册大秘境事件
---CHALLENGE_MODE_COMPLETED_REWARDS--完成
---CHALLENGE_MODE_NEW_RECORD--新纪录
 local BossKillTime = {}
-ns.event("CHALLENGE_MODE_START", function(event, ...)
-	local self = ScenarioObjectiveTracker.ChallengeModeBlock
-	local mapID = C_ChallengeMode.GetActiveChallengeMapID();
-	local mapName = C_ChallengeMode.GetMapUIInfo(mapID)
-	local keyLevel = C_ChallengeMode.GetActiveKeystoneInfo()
-	self.keyLevel = keyLevel
+ns.event("CHALLENGE_MODE_START", function(event,...)
+	local info = C_ChallengeMode.GetChallengeCompletionInfo()
+	local mapName = C_ChallengeMode.GetMapUIInfo(info.mapChallengeModeID)
+	local keyLevel = info.level
+	if not mapName or not keyLevel then return end
+
 	AddUIDB.DungeonBossKill = AddUIDB.DungeonBossKill or {}
 	AddUIDB.DungeonBossKill[mapName] = AddUIDB.DungeonBossKill[mapName] or {}
 	AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
@@ -46,11 +44,13 @@ ns.event("CHALLENGE_MODE_START", function(event, ...)
 	BossKillTime[mapName][keyLevel] = {}
 end)
 
-ns.event("CHALLENGE_MODE_COMPLETED_REWARDS", function(event, ...)
-	local self = ScenarioObjectiveTracker.ChallengeModeBlock
-	local mapID, _, timeMS = ...
-	local mapName = C_ChallengeMode.GetMapUIInfo(mapID)
-	local keyLevel = self.keyLevel
+ns.event("CHALLENGE_MODE_COMPLETED", function()
+	local info = C_ChallengeMode.GetChallengeCompletionInfo()
+	local mapName = C_ChallengeMode.GetMapUIInfo(info.mapChallengeModeID)
+	local timeMS = info.time/1000
+	local keyLevel = info.level
+	if not mapName or not timeMS or not keyLevel then return end
+	
 	AddUIDB.DungeonBossKill = AddUIDB.DungeonBossKill or {}
 	AddUIDB.DungeonBossKill[mapName] = AddUIDB.DungeonBossKill[mapName] or {}
 	AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
@@ -100,9 +100,14 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 		
 		AddUIDB.DungeonBossKill = AddUIDB.DungeonBossKill or {}
 		AddUIDB.DungeonBossKill[mapName] = AddUIDB.DungeonBossKill[mapName] or {}
-		AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
+		if not AddUIDB.DungeonBossKill[mapName][keyLevel] and AddUIDB.DungeonBossKill[mapName][keyLevel-1] then
+			AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel-1]
+		else
+			AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
+		end
+
 		if not AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] and AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE] then
-			AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] = AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE]/1000
+			AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] = AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE]
 		end
 		BossKillTime = BossKillTime or {}
 		BossKillTime[mapName] = BossKillTime[mapName] or {}

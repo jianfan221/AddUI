@@ -42,10 +42,10 @@ StatusTrackingBarManager:SetScale(.73)
 
 --队伍查找器
 QueueStatusButton:ClearAllPoints()
-QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", 7, 7)
+QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", -5, 10)
 QueueStatusButton:HookScript("OnUpdate",function()
 	QueueStatusButton:ClearAllPoints()
-	QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", 7, 7)
+	QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", -5, 10)
 end)
 
 
