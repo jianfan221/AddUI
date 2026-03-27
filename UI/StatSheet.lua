@@ -33,9 +33,9 @@ ns.event("PLAYER_LOGIN", function()
 		else
 			CreateText("主属性","主属性",{1, 0, 1})
 		end
-		
+		local _,itemlevel = GetAverageItemLevel()
 		if StatList["装等"] then
-			StatList["装等"]:SetText(format("%.1f", GetAverageItemLevel()))
+			StatList["装等"]:SetText(format("%.1f", itemlevel))
 		else
 			CreateText("装等","装等",{0, 1, 1})
 		end
