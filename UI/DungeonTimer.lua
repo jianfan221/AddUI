@@ -100,12 +100,7 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 		
 		AddUIDB.DungeonBossKill = AddUIDB.DungeonBossKill or {}
 		AddUIDB.DungeonBossKill[mapName] = AddUIDB.DungeonBossKill[mapName] or {}
-		if not AddUIDB.DungeonBossKill[mapName][keyLevel] and AddUIDB.DungeonBossKill[mapName][keyLevel-1] then
-			AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel-1]
-		else
-			AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
-		end
-
+		AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
 		if not AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] and AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE] then
 			AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] = AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE]
 		end
@@ -116,6 +111,11 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 		if criteriaInfo then
 			local objectivesBlock = self.ObjectivesBlock;
 			local line = objectivesBlock:GetExistingLine(criteriaIndex)
+			local DBdate = AddUIDB.DungeonBossKill[mapName]
+			if not DBdate[keyLevel][bossName] and DBdate[keyLevel-1] and DBdate[keyLevel-1][bossName] then
+				DBdate[keyLevel][bossName] = DBdate[keyLevel-1][bossName]--如果有历史记录但当前等级没有，尝试从上一个等级继承记录
+			end
+
 			if line and criteriaInfo.completed then
 				local oldtext = line.Text:GetText()
 				local TimeGap = ""
@@ -124,16 +124,16 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 					BossKillTime[mapName][keyLevel][bossName] = select(2,GetWorldElapsedTime(1))
 				end
 
-				if BossKillTime[mapName][keyLevel][bossName] and AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] then
-					TimeGap = "("..GetTimeAsString(AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] - BossKillTime[mapName][keyLevel][bossName])..")"
+				if BossKillTime[mapName][keyLevel][bossName] and DBdate[keyLevel][bossName] then
+					TimeGap = "("..GetTimeAsString(DBdate[keyLevel][bossName] - BossKillTime[mapName][keyLevel][bossName])..")"
 				end
 				
 				if BossKillTime[mapName][keyLevel][bossName] == 0 then return end
 				line.Text:SetText(oldtext..GetTimeAsString(BossKillTime[mapName][keyLevel][bossName])..TimeGap)
 			elseif line then
 				local oldtext = line.Text:GetText()
-				if AddUIDB.DungeonBossKill[mapName][keyLevel][bossName] then
-					line.Text:SetText(oldtext..GetTimeAsString(AddUIDB.DungeonBossKill[mapName][keyLevel][bossName],3))
+				if DBdate[keyLevel][bossName] then
+					line.Text:SetText(oldtext..GetTimeAsString(DBdate[keyLevel][bossName],3))
 				end
 			end
 		end
