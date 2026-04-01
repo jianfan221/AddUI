@@ -40,6 +40,7 @@ ns.AddUIDefaultDB = {
 	-- 第三列（界面选项顺序）
 	cvar = true, -- CVAR自动设置
 	dimi = true, -- 右下角信息栏
+	lotbnt = true, -- Log快捷开关
 	autoloot = true, -- 装备一键选择器
 
 	-- 其他辅助功能（未在界面中直接暴露）
@@ -75,6 +76,7 @@ ns.AddUIDefaultDB = {
 	QuestCheck = true, -- 任务进度通报
 
 	-- 
+	AutoLog = false, --大秘境自动开启战斗记录
 	AHFavoritesDB = {}, -- 拍卖行收藏夹
 	AHFilterRestoreDB = {}, -- 拍卖行筛选恢复
 	CooldownDate = {}, -- 冷却管理器布局存储

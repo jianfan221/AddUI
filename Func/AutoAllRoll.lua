@@ -5,7 +5,7 @@
 local RollItems = {}
 local rollFrame = CreateFrame("Frame", "AllRollFrame", UIParent, "BasicFrameTemplate")
 rollFrame:SetSize(200, 75)
-rollFrame:SetPoint("CENTER",0,-35)
+rollFrame:SetPoint("CENTER",0,68)
 rollFrame:SetFrameStrata("FULLSCREEN_DIALOG")
 rollFrame.title = rollFrame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 rollFrame.title:SetPoint("CENTER", rollFrame.TitleBg, "CENTER", 0, 0)

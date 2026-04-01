@@ -78,6 +78,8 @@ hooksecurefunc("ChatEdit_CustomTabPressed", function(self)
             self:SetAttribute("channelTarget", nil)
         end
         
-        ChatEdit_UpdateHeader(self)
+        if type(ChatEdit_UpdateHeader) == "function" then
+            pcall(ChatEdit_UpdateHeader, self)
+        end
     end
 end)

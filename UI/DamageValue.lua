@@ -100,7 +100,9 @@ hooksecurefunc(DamageMeterEntryMixin, "Init", function(self)
 		if bar:GetNumberDisplayType() == Enum.DamageMeterNumbers.Complete then
 			return
 		end
-		local text = GetValueText(bar)
-		bar:GetValue():SetText(text);
+		local success, text = pcall(GetValueText, bar)
+		if success then
+			bar:GetValue():SetText(text);
+		end
 	end)
 end)
