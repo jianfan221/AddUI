@@ -141,7 +141,7 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 	end
 end)
 
---Hook计量条BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
+--[[Hook计量条BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
 hooksecurefunc(ScenarioTrackerProgressBarMixin,"OnGet", function(self, isNew, criteriaIndex)
 	local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex);
 	if not criteriaInfo then return end
@@ -150,4 +150,4 @@ hooksecurefunc(ScenarioTrackerProgressBarMixin,"OnGet", function(self, isNew, cr
 		local percentage = criteriaInfo.quantity / criteriaInfo.totalQuantity
 		self.Bar.Label:SetText(string.format("%.2f%%", percentage))
 	end
-end)
+end)]]
