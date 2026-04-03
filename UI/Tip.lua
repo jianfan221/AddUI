@@ -79,26 +79,27 @@ GameTooltipStatusBar:ClearAllPoints()
 GameTooltipStatusBar:SetPoint("BOTTOMLEFT", GameTooltipStatusBar:GetParent(), "TOPLEFT", 5, -4)	--血条左边
 GameTooltipStatusBar:SetPoint("BOTTOMRIGHT", GameTooltipStatusBar:GetParent(), "TOPRIGHT", -5, -4)	--血条右边
 
-
-local function TooltipBar(self)
-	
-	--血条职业着色
-	if UnitIsPlayer("mouseover") and UnitClass("mouseover") then
-		local _, class = UnitClass("mouseover")
-		local color = class and (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[class]
-		if color and color.r and color.g and color.b then
-			GameTooltipStatusBar:SetStatusBarColor(color.r,color.g,color.b)
-			GameTooltipStatusBar:SetStatusBarTexture("Interface\\TARGETINGFRAME\\UI-StatusBar") --血条材质，自己改喜欢的
-		end
+local function GetUnitColor(unit)
+	local UnitNameColor = {r=1,g=1,b=1}--目标职业颜色
+	if UnitIsPlayer(unit) then
+		local _,class = UnitClass(unit)
+		UnitNameColor = RAID_CLASS_COLORS[class]
+	elseif UnitReaction(unit, "player") then
+		UnitNameColor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
 	end
+	return UnitNameColor
+end
+local function TooltipBar(self, lineData)
+	local unit = not ns.MM(select(2, self:GetUnit())) and select(2, self:GetUnit()) or "mouseover"
 
-	--目名字和公会
-	if UnitIsPlayer("mouseover") then
-		local text = GameTooltipTextLeft1:GetText()
-		if ns.MM(text) then return end
-		local guild, gRank, gRankId = GetGuildInfo("mouseover")
+	--目标职业颜色
+	local TargetClassColor = GetUnitColor(unit)
+	GameTooltipTextLeft1:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
+
+	--公会染色
+	if UnitIsPlayer(unit) then
+		local guild, gRank, gRankId = GetGuildInfo(unit)
 		local hasText = GameTooltipTextLeft2:GetText()
-		GameTooltipTextLeft1:SetText(ns.ADDUICOLOR(text,"mouseover"))
 		if guild and hasText then
 			if (gRank and gRankId) then
 				gRank = gRank.."("..gRankId..")"
@@ -106,36 +107,34 @@ local function TooltipBar(self)
 			GameTooltipTextLeft2:SetFormattedText("|cffE41F9B<%s>|r |cffA0A0A0%s|r", guild, gRank or "")
 		end
 		if guild and GameTooltipTextLeft4 then
-			local text4 = GameTooltipTextLeft4:GetText()
-			GameTooltipTextLeft4:SetText(ns.ADDUICOLOR(text4,"mouseover"))
+			GameTooltipTextLeft4:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
 		elseif GameTooltipTextLeft3 then
-			local text3 = GameTooltipTextLeft3:GetText()
-			GameTooltipTextLeft3:SetText(ns.ADDUICOLOR(text3,"mouseover"))
+			GameTooltipTextLeft3:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
 		end
 	end
-	--显示目标
-	if not ns.MM(UnitName("mouseovertarget")) then
-		local targetText = ns.ADDUICOLOR(UnitName("mouseovertarget"),"mouseovertarget")
-		GameTooltip:AddDoubleLine(targetText and "目标: "..targetText or "")
+	--目标的目标
+	if UnitExists(unit.."target") then
+		local TOTClassColor = GetUnitColor(unit.."target")
+		GameTooltip:AddDoubleLine(TARGET..":", UnitName(unit.."target") or NONE, 1, 1, 1,TOTClassColor.r, TOTClassColor.g, TOTClassColor.b)
 	end
 
 	--大秘境分数
-	local summary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary("mouseover")
+	local summary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary(unit)
 	if not summary then return end		
 	local score = summary and summary.currentSeasonScore
 	if score and score > 0 then
-	local color = C_ChallengeMode.GetDungeonScoreRarityColor(score) or HIGHLIGHT_FONT_COLOR
+		local color = C_ChallengeMode.GetDungeonScoreRarityColor(score) or HIGHLIGHT_FONT_COLOR
 		GameTooltip:AddDoubleLine("史诗评分", score, 0, 0.7, 1, color.r, color.g, color.b)
 	end
 	local runs = summary and summary.runs
 	if runs and (IsAltKeyDown() or IsShiftKeyDown() or IsControlKeyDown()) then
 		GameTooltip:AddLine("     ")
 		GameTooltip:AddDoubleLine("副本", "评分层数", 1, 1, 1, 1, 1, 1)
-	for i, info in pairs(runs) do
-	local map = C_ChallengeMode.GetMapUIInfo(info.challengeModeID)
-	local colort = C_ChallengeMode.GetDungeonScoreRarityColor(info.mapScore*8) or HIGHLIGHT_FONT_COLOR
-		GameTooltip:AddDoubleLine(map, info.mapScore.."("..info.bestRunLevel..")", 1, 1, 1, colort.r, colort.g, colort.b)
-	end
+		for i, info in pairs(runs) do
+			local map = C_ChallengeMode.GetMapUIInfo(info.challengeModeID)
+			local colort = C_ChallengeMode.GetDungeonScoreRarityColor(info.mapScore*8) or HIGHLIGHT_FONT_COLOR
+				GameTooltip:AddDoubleLine(map, info.mapScore.."("..info.bestRunLevel..")", 1, 1, 1, colort.r, colort.g, colort.b)
+		end
 	end
 end
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, TooltipBar)

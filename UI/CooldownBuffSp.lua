@@ -10,8 +10,8 @@ local function SetItemUseBuff()
 		[sp2] = usesp2,
 		[241309] = true,--圣光潜力药水1
 		[241308] = true,--圣光潜力药水2
-		[212264] = true,--淬火药水2
-		[212265] = true,--淬火药水3
+		[241288] = true,--鲁莽药水2
+		[241289] = true,--鲁莽药水1
 	}
 
 	ns.ItemBuffTable = {}
@@ -55,7 +55,9 @@ local function SetItemUseBuff()
 			for ItemID,yes in pairs(Item) do
 				--print("物品列表",C_Item.GetItemNameByID(ItemID),"状态",yes)
 				if yes then
-					waitTimer[ItemID] = C_Timer.NewTicker(0.5, function()
+					local _,ItemSpellID = C_Item.GetItemSpell(ItemID)
+					local itemIcon = C_Item.GetItemIconByID(ItemID)
+					waitTimer[ItemID] = C_Timer.NewTicker(1, function()
 						local _,ItemSpellID = C_Item.GetItemSpell(ItemID)
 						local itemIcon = C_Item.GetItemIconByID(ItemID)
 						--print("检查物品法术ID",C_Item.GetItemNameByID(ItemID),"ID是",ItemSpellID)
@@ -63,9 +65,10 @@ local function SetItemUseBuff()
 							ns.ItemBuffTable[ItemSpellID] = {}
 							ns.ItemBuffTable[ItemSpellID]["frame"] = CreatItemBuffIcon()
 							ns.ItemBuffTable[ItemSpellID]["frame"]["Icon"]:SetTexture(itemIcon)
+							local itemTime = PrintSpellTooltip(ItemSpellID)
 							waitTimer[ItemID]:Cancel()
 							waitTimer[ItemID] = nil
-							waitTimer2[ItemID] = C_Timer.NewTicker(0.5, function()
+							waitTimer2[ItemID] = C_Timer.NewTicker(1, function()
 								local itemTime = PrintSpellTooltip(ItemSpellID)
 								--print("检查持续时间",C_Item.GetItemNameByID(ItemID),"持续时间",itemTime)
 								if itemTime then

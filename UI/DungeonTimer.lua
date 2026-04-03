@@ -84,6 +84,7 @@ hooksecurefunc(ScenarioObjectiveTracker.ChallengeModeBlock,"UpdateTime", functio
 		end
 	end
 end)
+
 --Hook文本BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
 hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCriteria)
 	--不在大秘境中直接退出
@@ -137,5 +138,16 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 				end
 			end
 		end
+	end
+end)
+
+--Hook计量条BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
+hooksecurefunc(ScenarioTrackerProgressBarMixin,"OnGet", function(self, isNew, criteriaIndex)
+	local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex);
+	if not criteriaInfo then return end
+	if not criteriaInfo.completed then
+		if not criteriaInfo.quantity or not criteriaInfo.totalQuantity then return end
+		local percentage = criteriaInfo.quantity / criteriaInfo.totalQuantity
+		self.Bar.Label:SetText(string.format("%.2f%%", percentage))
 	end
 end)

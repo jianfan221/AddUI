@@ -13,7 +13,6 @@ end)
 
 --通报
 local function OnQuestEvent(event, ...)
-	if IsInInstance() then return end
 	if event == "PLAYER_ENTERING_WORLD" then
 		SetCVar("autoQuestWatch", 1)--屏幕中间的任务进度
 		SetCVar("showQuestTrackingTooltips", 1)--任务进度鼠标提示
@@ -39,6 +38,7 @@ local function OnQuestEvent(event, ...)
 	
 	if not AddUIDB.QuestCheck then return end
 	if not IsInGroup() then return end
+	if IsInInstance() then return end
 	if C_Secrets.ShouldAurasBeSecret() then return end
 	if event == "QUEST_WATCH_UPDATE" then
         local questID = ...
