@@ -141,13 +141,12 @@ hooksecurefunc(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCrite
 	end
 end)
 
---[[Hook计量条BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
-hooksecurefunc(ScenarioTrackerProgressBarMixin,"OnGet", function(self, isNew, criteriaIndex)
-	local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex);
-	if not criteriaInfo then return end
-	if not criteriaInfo.completed then
-		if not criteriaInfo.quantity or not criteriaInfo.totalQuantity then return end
-		local percentage = criteriaInfo.quantity / criteriaInfo.totalQuantity
-		self.Bar.Label:SetText(string.format("%.2f%%", percentage))
+--Hook计量条BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
+hooksecurefunc(ScenarioTrackerProgressBarMixin,"SetValue", function(self)
+	local criteriaIndex = select(3, C_Scenario.GetStepInfo())
+	local criteriaInfo = C_ScenarioInfo.GetCriteriaInfo(criteriaIndex)
+	if criteriaInfo and criteriaInfo.isWeightedProgress and not criteriaInfo.completed and criteriaInfo.quantity and criteriaInfo.totalQuantity then
+		local quantity = tonumber((criteriaInfo.quantityString or ""):match("(%d+)") or 0)--暴雪的API有问题
+		self.Bar.Label:SetText(string.format("%.2f%%", quantity / criteriaInfo.totalQuantity * 100))
 	end
-end)]]
+end)

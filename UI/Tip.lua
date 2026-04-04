@@ -78,6 +78,9 @@ GameTooltipStatusBar:SetHeight(3)
 GameTooltipStatusBar:ClearAllPoints()
 GameTooltipStatusBar:SetPoint("BOTTOMLEFT", GameTooltipStatusBar:GetParent(), "TOPLEFT", 5, -4)	--血条左边
 GameTooltipStatusBar:SetPoint("BOTTOMRIGHT", GameTooltipStatusBar:GetParent(), "TOPRIGHT", -5, -4)	--血条右边
+GameTooltipStatusBar.text = GameTooltipStatusBar:CreateFontString(nil, "OVERLAY")
+GameTooltipStatusBar.text:SetFont("Fonts\\ARKai_T.ttf", 10, "OUTLINE")
+GameTooltipStatusBar.text:SetPoint("CENTER", GameTooltipStatusBar, "CENTER", 0, 0)
 
 local function GetUnitColor(unit)
 	local UnitNameColor = {r=1,g=1,b=1}--目标职业颜色
@@ -92,6 +95,7 @@ end
 local function TooltipBar(self, lineData)
 	local unit = not ns.MM(select(2, self:GetUnit())) and select(2, self:GetUnit()) or "mouseover"
 
+	GameTooltipStatusBar.text:SetText(ns.ADDUIWK(UnitHealth(unit)).."/"..ns.ADDUIWK(UnitHealthMax(unit)))
 	--目标职业颜色
 	local TargetClassColor = GetUnitColor(unit)
 	GameTooltipTextLeft1:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
@@ -115,7 +119,8 @@ local function TooltipBar(self, lineData)
 	--目标的目标
 	if UnitExists(unit.."target") then
 		local TOTClassColor = GetUnitColor(unit.."target")
-		GameTooltip:AddDoubleLine(TARGET..":", UnitName(unit.."target") or NONE, 1, 1, 1,TOTClassColor.r, TOTClassColor.g, TOTClassColor.b)
+		local totname = string.format("|cff%02x%02x%02x%s|r",TOTClassColor.r*255,TOTClassColor.g*255,TOTClassColor.b*255, UnitName(unit.."target"))
+		GameTooltip:AddDoubleLine(TARGET..": "..totname)
 	end
 
 	--大秘境分数

@@ -151,6 +151,10 @@ end)
 hooksecurefunc("LFGListApplicationViewer_UpdateInfo", function(self)
 	LFGListFrame.ApplicationViewer.BrowseGroupsButton:Show()
 end)
+--浏览队伍按钮改成回到初始菜单
+LFGListFrame.ApplicationViewer.BrowseGroupsButton:SetScript("OnClick", function()
+	LFGListFrame_SetActivePanel(LFGListFrame,LFGListFrame.CategorySelection)
+end)
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED")
