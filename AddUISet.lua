@@ -287,7 +287,7 @@ local NumberData = {
 		})
 	},
 }
-function ns.ADDUIWK(numbers)
+function ns.value(numbers)
 	if AddUIDB and NumberData[AddUIDB.value] and NumberData[AddUIDB.value] ~= 3 then
 		return AbbreviateNumbers(numbers,NumberData[AddUIDB.value])
 	else
@@ -313,23 +313,9 @@ function ns.ADDUIBFB(nownumber,maxnumber)
 	end
 end
 
---文本添加职业颜色
-function ns.ADDUICOLOR(text,unit)
-if not text or not unit then return end
-	if UnitIsPlayer(unit) then
-		local _,class = UnitClass(unit)
-		if not class then return ("|cffFF0000"..text.."|r") end
-		local colorStr = RAID_CLASS_COLORS[class].colorStr
-		return ("|c"..colorStr..text.."|r")
-	elseif UnitReaction(unit, "player") then
-		local color = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
-		return ("|cff%.2x%.2x%.2x"..text.."|r"):format(color.r * 255, color.g * 255, color.b * 255)
-	end
-end
-
 --获取职业颜色RGB
-function ns.ADUnitClassColor(unit)
-local Stylecolor
+function ns.ClassRGB(unit)
+	local Stylecolor
 	if UnitIsPlayer(unit) then
 		local _, class = UnitClass(unit)
 		Stylecolor = CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[class] or RAID_CLASS_COLORS[class]
@@ -337,11 +323,11 @@ local Stylecolor
 		Stylecolor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
 	end
 	if (not UnitIsConnected(unit)) then	
-		return 0.5, 0.5, 0.5, 1
+		return 0.5, 0.5, 0.5
 	elseif Stylecolor and Stylecolor.r and Stylecolor.g and Stylecolor.b then
-		return Stylecolor.r, Stylecolor.g, Stylecolor.b, 1
+		return Stylecolor.r, Stylecolor.g, Stylecolor.b
 	else
-		return 0.5, 0.5, 0.5, 1
+		return 0.5, 0.5, 0.5
 	end
 end
 

@@ -7,36 +7,36 @@ local function ADDUIUpdateHealthBar(s)
 		if not s.PCTargetPercent then
 			s.PCTargetPercent = s:CreateFontString("PCTargetPercent", "OVERLAY")
 			s.PCTargetPercent:SetVertexColor(1, 1, 1)
+			s.PCTargetPercent:SetFont("Fonts\\ARHei.ttf", 12, "OUTLINE")
+			s.PCTargetPercent:ClearAllPoints()
+			s.PCTargetPercent:SetPoint("CENTER", s, "CENTER", 0, 0)
 		end
-		s.PCTargetPercent:SetFont("Fonts\\ARHei.ttf", 13, "OUTLINE")
-		s.PCTargetPercent:ClearAllPoints()
-		s.PCTargetPercent:SetPoint("TOP", s, "TOP", 2, 14)
-		local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
-		s.PCTargetPercent:SetText(string.format("%d%%", HealthPercent))
+		s.PCTargetPercent:SetText(ns.value(UnitHealth(s.unit)))
+		--local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
+		--s.PCTargetPercent:SetText(string.format("%d", HealthPercent))
 	end
 	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
 		if 	s.TextString and s.currValue then 
-			s.TextString:SetText(ns.ADDUIWK(s:GetValue())) 
+			s.TextString:SetText(ns.value(s:GetValue())) 
 		end
 		if 	s.RightText and s.currValue then
-			s.RightText:SetText(ns.ADDUIWK(s:GetValue()))
+			s.RightText:SetText(ns.value(s:GetValue()))
 		end
 	end
 end
+hooksecurefunc("UnitFrameHealthBar_OnUpdate", ADDUIUpdateHealthBar)
 
 local function ADDUIUpdateManaBar(s)
 	if not AddUIDB.unitf then return end
 	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
 		if 	s.TextString and s.currValue then 
-			s.TextString:SetText(ns.ADDUIWK(s:GetValue())) 
+			s.TextString:SetText(ns.value(s:GetValue())) 
 		end
 		if 	s.RightText and s.currValue then
-			s.RightText:SetText(ns.ADDUIWK(s:GetValue()))
+			s.RightText:SetText(ns.value(s:GetValue()))
 		end
 	end
 end
-
-hooksecurefunc("UnitFrameHealthBar_OnUpdate", ADDUIUpdateHealthBar)
 hooksecurefunc("UnitFrameManaBar_OnUpdate", ADDUIUpdateManaBar)
 
 local function SetTargetSpellBar(self)
@@ -97,7 +97,7 @@ ns.event("PLAYER_LOGIN", function()
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetFont("Fonts\\ARHei.ttf", 12, "")
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetPoint("TOPLEFT",77,-32)
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar.HealthBarTexture:SetTexture(hptexture1)
-			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(ns.ADUnitClassColor(bossTargetFrame.unit))
+			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(ns.ClassRGB(bossTargetFrame.unit))
 		end
 	end
 
@@ -107,11 +107,11 @@ ns.event("PLAYER_LOGIN", function()
 			self.TargetFrameContainer.FrameTexture:SetVertexColor(0, 0, 0, 1)
 			self.TargetFrameContent.TargetFrameContentMain.ReputationColor:Hide()
 			self.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarTexture(hptexture1)
-			self.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(ns.ADUnitClassColor(self.unit))
+			self.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(ns.ClassRGB(self.unit))
 		elseif self.HealthBar then
 			if not self.HealthBar.SetStatusBarColor then return end
 			self.HealthBar:SetStatusBarTexture(hptexture1)
-			self.HealthBar:SetStatusBarColor(ns.ADUnitClassColor(self.unit))
+			self.HealthBar:SetStatusBarColor(ns.ClassRGB(self.unit))
 		end
 	end
 	hooksecurefunc(TargetFrame, "CheckClassification", FrameBar)
@@ -132,7 +132,7 @@ ns.event("PLAYER_LOGIN", function()
 			PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PlayerPortraitCornerIcon:SetVertexColor(0, 0, 0, 1)
 			local playerHB = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBar
 			playerHB:SetStatusBarTexture(hptexture1)
-			playerHB:SetStatusBarColor(ns.ADUnitClassColor("player"))
+			playerHB:SetStatusBarColor(ns.ClassRGB("player"))
 
 			local attackIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.AttackIcon
 			attackIcon:SetPoint("TOPLEFT", PlayerName, "TOPLEFT", -13, 13)

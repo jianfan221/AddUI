@@ -85,7 +85,7 @@ GameTooltipStatusBar.text:SetPoint("CENTER", GameTooltipStatusBar, "CENTER", 0, 
 local function GetUnitColor(unit)
 	local UnitNameColor = {r=1,g=1,b=1}--目标职业颜色
 	if UnitIsPlayer(unit) then
-		local _,class = UnitClass(unit)
+		local class = UnitClassBase(unit)
 		UnitNameColor = RAID_CLASS_COLORS[class]
 	elseif UnitReaction(unit, "player") then
 		UnitNameColor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
@@ -95,7 +95,7 @@ end
 local function TooltipBar(self, lineData)
 	local unit = not ns.MM(select(2, self:GetUnit())) and select(2, self:GetUnit()) or "mouseover"
 
-	GameTooltipStatusBar.text:SetText(ns.ADDUIWK(UnitHealth(unit)).."/"..ns.ADDUIWK(UnitHealthMax(unit)))
+	GameTooltipStatusBar.text:SetText(ns.value(UnitHealth(unit)).."/"..ns.value(UnitHealthMax(unit)))
 	--目标职业颜色
 	local TargetClassColor = GetUnitColor(unit)
 	GameTooltipTextLeft1:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
@@ -157,9 +157,13 @@ local function ShowID(self,data)
 		end
 	elseif data.id and not ns.MM(data.id) then
 		local aura = C_UnitAuras.GetPlayerAuraBySpellID(data.id)
-		local source
-		if aura and aura.sourceUnit then source = ns.ADDUICOLOR(UnitName(aura.sourceUnit),aura.sourceUnit) end
-		self:AddDoubleLine("|cffBA55D3法术ID:|r|cff00FF00"..data.id.."|r",source)
+		local ClassColor = {r=1,g=1,b=1}
+		local SourceName = ""
+		if aura and aura.sourceUnit then 
+			SourceName = UnitName(aura.sourceUnit)
+			ClassColor = GetUnitColor(aura.sourceUnit)
+		end
+		self:AddDoubleLine("|cffBA55D3法术ID:|r|cff00FF00"..data.id.."|r",SourceName,1,1,1,ClassColor.r,ClassColor.g,ClassColor.b)
 	end
 end
 -- https://github.com/Stanzilla/WoWUIBugs/issues/298
