@@ -46,3 +46,14 @@ BossBanner:UnregisterAllEvents()
 setglobal("MAX_EQUIPMENT_SETS_PER_PLAYER",100)
 
 end)
+
+--[[ ==================== 嗜血DEBUFF列表 ====================
+local BLOODLUST_DEBUFFS = {
+    [57723] = true,  -- 疲劳（联盟嗜血后）
+    [57724] = true,  -- 心满意足（部落嗜血后）
+    [80354] = true,  -- 时间错乱（法师时间扭曲）
+    [95809] = true,  -- 癫狂（猎人远古狂乱）
+    [160455] = true, -- 疲劳（猎人原始狂怒）
+    [264689] = true, -- 疲劳（猎人原始狂怒变体）
+    [390435] = true, -- 疲劳（唤魔师巨龙之怒）
+}]]

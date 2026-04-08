@@ -72,15 +72,12 @@ GameTooltipText:SetFont("Fonts\\ARKai_T.ttf",13, "OUTLINE")	--普通字体
 GameTooltipTextSmall:SetFont("Fonts\\ARKai_T.ttf", 13, "OUTLINE")	--装备比较字体
 GameTooltipHeaderText:SetFont("Fonts\\ARKai_T.ttf", 16, "OUTLINE")	--提示名字
 --鼠标提示血条样式
-GameTooltipStatusBar:SetStatusBarTexture("Interface\\TargetingFrame\\UI-TargetingFrame-BarFill")
-GameTooltipStatusBar:SetHeight(3)
+GameTooltipStatusBar:SetStatusBarTexture(130937)
+GameTooltipStatusBar:SetStatusBarColor(0,1,0,0.75)
 GameTooltipStatusBar:SetHeight(3)
 GameTooltipStatusBar:ClearAllPoints()
-GameTooltipStatusBar:SetPoint("BOTTOMLEFT", GameTooltipStatusBar:GetParent(), "TOPLEFT", 5, -4)	--血条左边
-GameTooltipStatusBar:SetPoint("BOTTOMRIGHT", GameTooltipStatusBar:GetParent(), "TOPRIGHT", -5, -4)	--血条右边
-GameTooltipStatusBar.text = GameTooltipStatusBar:CreateFontString(nil, "OVERLAY")
-GameTooltipStatusBar.text:SetFont("Fonts\\ARKai_T.ttf", 10, "OUTLINE")
-GameTooltipStatusBar.text:SetPoint("CENTER", GameTooltipStatusBar, "CENTER", 0, 0)
+GameTooltipStatusBar:SetPoint("BOTTOMLEFT", GameTooltipStatusBar:GetParent(), "TOPLEFT", 3, -3)	--血条左边
+GameTooltipStatusBar:SetPoint("BOTTOMRIGHT", GameTooltipStatusBar:GetParent(), "TOPRIGHT", -3, -3)	--血条右边
 
 local function GetUnitColor(unit)
 	local UnitNameColor = {r=1,g=1,b=1}--目标职业颜色
@@ -93,9 +90,13 @@ local function GetUnitColor(unit)
 	return UnitNameColor
 end
 local function TooltipBar(self, lineData)
-	local unit = not ns.MM(select(2, self:GetUnit())) and select(2, self:GetUnit()) or "mouseover"
+	local unit = "mouseover"
+	local foci = GetMouseFoci()
+	local mouseFocus = foci[1] -- 获取数组中的第一个，即最顶层的框体
+	if mouseFocus and mouseFocus.unit then
+		unit = mouseFocus.unit
+	end
 
-	GameTooltipStatusBar.text:SetText(ns.value(UnitHealth(unit)).."/"..ns.value(UnitHealthMax(unit)))
 	--目标职业颜色
 	local TargetClassColor = GetUnitColor(unit)
 	GameTooltipTextLeft1:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)

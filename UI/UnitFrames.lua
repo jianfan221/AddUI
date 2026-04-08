@@ -12,12 +12,24 @@ local function ADDUIUpdateHealthBar(s)
 			s.PCTargetPercent:SetPoint("CENTER", s, "CENTER", 0, 0)
 		end
 		s.PCTargetPercent:SetText(ns.value(UnitHealth(s.unit)))
-		--local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
-		--s.PCTargetPercent:SetText(string.format("%d", HealthPercent))
 	end
 	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
 		if 	s.TextString and s.currValue then 
-			s.TextString:SetText(ns.value(s:GetValue())) 
+			local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
+			if UnitIsDead(s.unit) or UnitIsGhost(s.unit) then
+				s.TextString:SetText("")
+			else
+				if s.unit == "player" then
+					s.TextString:SetText(ns.value(s:GetValue()).."    "..string.format("%d%%", HealthPercent))
+				else
+					s.TextString:SetText(string.format("%d%%", HealthPercent).."    "..ns.value(s:GetValue()))
+				end
+			end
+			if not s.TextStringPoint then
+				s.TextStringPoint = true
+				s.TextString:ClearAllPoints()
+				s.TextString:SetPoint("CENTER", s, "CENTER", 0, 0)
+			end
 		end
 		if 	s.RightText and s.currValue then
 			s.RightText:SetText(ns.value(s:GetValue()))
@@ -45,6 +57,7 @@ local function SetTargetSpellBar(self)
 	if parentFrame.buffsOnTop then
 		self:ClearAllPoints();
 		self:SetPoint("BOTTOMLEFT", parentFrame, "TOPLEFT", 47,parentFrame.auraRows*27-15);
+		--self:SetPoint("CENTER", UIParent, "CENTER", 0,-66);
 	else--暴雪原来的逻辑
 		local useSpellbarAnchor = (not parentFrame.buffsOnTop) and ((parentFrame.haveToT and parentFrame.auraRows > 2) or ((not parentFrame.haveToT) and parentFrame.auraRows > 0));
 
@@ -60,7 +73,6 @@ local function SetTargetSpellBar(self)
 	end
 end
 hooksecurefunc(TargetFrameSpellBar, "AdjustPosition", SetTargetSpellBar)
-TargetFrameSpellBar:HookScript("OnShow", SetTargetSpellBar)
 
 ns.event("PLAYER_LOGIN", function()
 	if not AddUIDB.unitf then return end
@@ -158,6 +170,23 @@ ns.event("PLAYER_LOGIN", function()
 		end
 	end)
 
+	--[[施法条仅钢条显示边框
+	local function SetBarBorderAlpha(self,event)
+		if not self.unit then return end
+		if not string.match(event,"START") then return end
+		local _, _, _, _, _, _, _, CastType = UnitCastingInfo(self.unit)
+		local BarType = CastType
+		if BarType == nil then
+			local _, _, _, _, _, _, ChannelType = UnitChannelInfo(self.unit)
+			BarType = ChannelType
+		end
+		if BarType == nil then
+			BarType = false
+		end
+		self.Border:SetAlphaFromBoolean(BarType, 1, 0)
+	end
+	TargetFrameSpellBar:HookScript("OnEvent", SetBarBorderAlpha)
+	FocusFrameSpellBar:HookScript("OnEvent", SetBarBorderAlpha)]]
 	--目标头像相关
 	TargetFrameToT:ClearAllPoints()
 	TargetFrameToT:SetPoint("RIGHT",TargetFrame,"RIGHT",15,-45)
@@ -171,6 +200,9 @@ ns.event("PLAYER_LOGIN", function()
 	TargetFrameSpellBar.Text:SetPoint("CENTER",TargetFrameSpellBar,"CENTER",0,0)
 	TargetFrameSpellBar.Text.SetPoint = ns.ADDUISET
 	TargetFrameSpellBar.Spark:SetHeight(30)		--施法条闪光高度
+	--TargetFrameSpellBar.Border:SetTexture(nil)
+	--TargetFrameSpellBar.Background:SetTexture(130937)
+	--TargetFrameSpellBar.Background:SetVertexColor(0.1, 0.1, 0.1, 1)
 	--焦点头像相关
 	FocusFrameToT:ClearAllPoints()
 	FocusFrameToT:SetPoint("RIGHT",FocusFrame,"RIGHT",15,-45)
@@ -184,6 +216,9 @@ ns.event("PLAYER_LOGIN", function()
 	FocusFrameSpellBar.Text:SetPoint("CENTER",FocusFrameSpellBar,"CENTER",0,0)
 	FocusFrameSpellBar.Text.SetPoint = ns.ADDUISET
 	FocusFrameSpellBar.Spark:SetHeight(30)		--施法条闪光高度
+	--FocusFrameSpellBar.Border:SetTexture(nil)
+	--FocusFrameSpellBar.Background:SetTexture(130937)
+	--FocusFrameSpellBar.Background:SetVertexColor(0.1, 0.1, 0.1, 1)
 	--施法条剩余时间
 	local function ShowUnitCasting(self)
 		if not self.Cooldown  then
@@ -200,6 +235,21 @@ ns.event("PLAYER_LOGIN", function()
 	end
 	TargetFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
 	FocusFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
+	if Boss1TargetFrameSpellBar then
+		Boss1TargetFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
+	end
+	if Boss2TargetFrameSpellBar then
+		Boss2TargetFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
+	end
+	if Boss3TargetFrameSpellBar then
+		Boss3TargetFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
+	end
+	if Boss4TargetFrameSpellBar then
+		Boss4TargetFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
+	end
+	if Boss5TargetFrameSpellBar then
+		Boss5TargetFrameSpellBar:HookScript("OnUpdate", ShowUnitCasting)
+	end
 
 	--boss框体施法条
 	for i = 1, MAX_BOSS_FRAMES do
