@@ -15,15 +15,23 @@ local function ADDUIUpdateHealthBar(s)
 	end
 	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
 		if 	s.TextString and s.currValue then 
-			local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
+			if not s.TextString2 then
+				s.TextString2 = s:CreateFontString(nil, "OVERLAY")
+				s.TextString2:SetFont("Fonts\\ARHei.ttf", 12, "OUTLINE")
+				s.TextString2:SetVertexColor(1, 1, 1)
+				if s.unit == "player" then
+					s.TextString2:SetPoint("RIGHT", s, "RIGHT", -2, 0)
+				else
+					s.TextString2:SetPoint("LEFT", s, "LEFT", 2, 0)
+				end
+			end
 			if UnitIsDead(s.unit) or UnitIsGhost(s.unit) then
 				s.TextString:SetText("")
+				s.TextString2:SetText("")
 			else
-				if s.unit == "player" then
-					s.TextString:SetText(ns.value(s:GetValue()).."    "..string.format("%d%%", HealthPercent))
-				else
-					s.TextString:SetText(string.format("%d%%", HealthPercent).."    "..ns.value(s:GetValue()))
-				end
+				local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
+				s.TextString:SetText(ns.value(s:GetValue()))
+				s.TextString2:SetText(string.format("%d%%", HealthPercent))
 			end
 			if not s.TextStringPoint then
 				s.TextStringPoint = true
