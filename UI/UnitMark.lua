@@ -1,7 +1,7 @@
 local _, ns = ...
 
 local ICON_SIZE = 12 --每个图标尺寸
-local OffsetX = -12
+local OffsetX = -8
 local OffsetY = -23
 
 local function CreateMarkButton(anchorFrame, unit, markIdx)

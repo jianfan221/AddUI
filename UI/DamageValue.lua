@@ -46,38 +46,30 @@ local NumberData = {
 	}),
 }
 local function GetMainValue(entry)
-	if entry.valuePerSecond and entry:ShowsValuePerSecondAsPrimary() then
+	if entry.valuePerSecond ~= nil and entry:ShowsValuePerSecondAsPrimary() then
 		return entry.valuePerSecond;
 	end
 
-	if entry.value then
+	if entry.value ~= nil then
 		return entry.value;
 	end
 
 	return 0;
 end
 local function GetParentheticalValue(entry)
-	if entry.value and entry:ShowsValuePerSecondAsPrimary() then
+	if entry.value ~= nil and entry:ShowsValuePerSecondAsPrimary() then
 		return entry.value;
 	end
 
-	if entry.valuePerSecond then
+	if entry.valuePerSecond ~= nil then
 		return entry.valuePerSecond;
 	end
 
 	return 0;
 end
-local function GetPercentageValue(entry)
-	if entry.value and entry.sessionTotalValue and entry.sessionTotalValue > 0 then
-		return entry.value / entry.sessionTotalValue;
-	end
 
-	return 0;
-end
-local function GetEntryValueText(value, parentheticalValue, percentageValue)
-	if percentageValue then
-		return DAMAGE_METER_ENTRY_FORMAT_COMPLETE:format(AbbreviateNumbers(value,NumberData), AbbreviateNumbers(parentheticalValue,NumberData), Round(percentageValue * 100));
-	elseif parentheticalValue then
+local function GetEntryValueText(value, parentheticalValue)
+	if parentheticalValue ~= nil then
 		return DAMAGE_METER_ENTRY_FORMAT_COMPACT:format(AbbreviateNumbers(value,NumberData), AbbreviateNumbers(parentheticalValue,NumberData));
 	else
 		return DAMAGE_METER_ENTRY_FORMAT_MINIMAL:format(AbbreviateNumbers(value,NumberData));
@@ -87,7 +79,6 @@ local numberDisplayTypeFormatters =
 {
 	[Enum.DamageMeterNumbers.Minimal] = function(entry) return GetEntryValueText(GetMainValue(entry)); end,
 	[Enum.DamageMeterNumbers.Compact] = function(entry) return GetEntryValueText(GetMainValue(entry), GetParentheticalValue(entry)); end,
-	[Enum.DamageMeterNumbers.Complete] = function(entry) return GetEntryValueText(GetMainValue(entry), GetParentheticalValue(entry), GetPercentageValue(entry)); end,
 }
 local function GetValueText(self)
 	return numberDisplayTypeFormatters[self:GetNumberDisplayType()](self);

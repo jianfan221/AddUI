@@ -1,11 +1,11 @@
 ﻿local _, ns = ...
 
--- 在初始化时为每个框架创建吸收治疗盾文本
+-- 团队框架紫色数值显示吸收治疗盾数值
 hooksecurefunc('DefaultCompactUnitFrameSetup', function(frame)
 	if not AddUIDB.raidframebuff then return end
     if not frame.healAbsorbText then
         frame.healAbsorbText = frame.healthBar:CreateFontString(nil, "OVERLAY")
-        frame.healAbsorbText:SetFont(STANDARD_TEXT_FONT, 13, "OUTLINE")
+        frame.healAbsorbText:SetFont(STANDARD_TEXT_FONT, 15, "OUTLINE")
         frame.healAbsorbText:SetPoint("CENTER", frame.healthBar, "CENTER", 0, 0)
 		frame.healAbsorbText:SetTextColor(1, 0, 1)
 		frame.healAbsorbText:SetAlpha(0)
@@ -15,8 +15,9 @@ end)
 local function UpdateRaidFrameAbsorb(event,unit)
 	if not AddUIDB.raidframebuff then return end
 	if ns.MM(unit) then return end
-	
-	local amount = UnitGetTotalHealAbsorbs(unit)	--获取吸收盾数值
+	if unit ~= "player" and not string.match(unit,"party") and not string.match(unit,"raid") then return end
+
+	local amount = UnitGetTotalHealAbsorbs(unit)
 
 	if IsInRaid() then
 		for i = 1,8 do
