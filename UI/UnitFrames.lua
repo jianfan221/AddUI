@@ -3,40 +3,51 @@ local _,ns = ...
 --头像血条数值文本
 local function ADDUIUpdateHealthBar(s)
 	if not AddUIDB.unitf then return end
+	local cvar = GetCVar("statusTextDisplay")
 	if s.unit == "targettarget" or s.unit == "focustarget" then
 		if not s.PCTargetPercent then
-			s.PCTargetPercent = s:CreateFontString("PCTargetPercent", "OVERLAY")
+			s.PCTargetPercent = s:CreateFontString(nil, "OVERLAY")
 			s.PCTargetPercent:SetVertexColor(1, 1, 1)
 			s.PCTargetPercent:SetFont("Fonts\\ARHei.ttf", 12, "OUTLINE")
 			s.PCTargetPercent:ClearAllPoints()
-			s.PCTargetPercent:SetPoint("CENTER", s, "CENTER", 0, 0)
+			s.PCTargetPercent:SetPoint("CENTER", 0, 0)
 		end
 		s.PCTargetPercent:SetText(ns.value(UnitHealth(s.unit)))
 	end
-	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
-		if 	s.TextString and s.currValue then 
-			if not s.TextString2 then
+	if cvar ~= "PERCENT" then 
+		if s.TextString and s.currValue then 
+			if cvar == "NUMERIC" and not s.TextString2 then
 				s.TextString2 = s:CreateFontString(nil, "OVERLAY")
 				s.TextString2:SetFont("Fonts\\ARHei.ttf", 12, "OUTLINE")
 				s.TextString2:SetVertexColor(1, 1, 1)
 				if s.unit == "player" then
 					s.TextString2:SetPoint("RIGHT", s, "RIGHT", -2, 0)
+				elseif string.match(s.unit,"boss") then
+					s.TextString2:SetPoint("RIGHT",s, "LEFT", -2, 2)
 				else
-					s.TextString2:SetPoint("LEFT", s, "LEFT", 2, 0)
+					s.TextString2:SetPoint("LEFT",s, "LEFT", 2, 0)
 				end
 			end
 			if UnitIsDead(s.unit) or UnitIsGhost(s.unit) then
 				s.TextString:SetText("")
-				s.TextString2:SetText("")
+				if s.TextString2 then
+					s.TextString2:SetText("")
+				end
 			else
 				local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
 				s.TextString:SetText(ns.value(s:GetValue()))
-				s.TextString2:SetText(string.format("%d%%", HealthPercent))
+				if s.TextString2 then
+					s.TextString2:SetText(string.format("%d%%", HealthPercent))
+				end
 			end
 			if not s.TextStringPoint then
 				s.TextStringPoint = true
 				s.TextString:ClearAllPoints()
-				s.TextString:SetPoint("CENTER", s, "CENTER", 0, 0)
+				if string.match(s.unit,"boss") and s.TextString2 then
+					s.TextString:SetPoint("CENTER", s, "CENTER", 0, 5)
+				else
+					s.TextString:SetPoint("CENTER", s, "CENTER", 0, 0)
+				end
 			end
 		end
 		if 	s.RightText and s.currValue then
@@ -167,7 +178,7 @@ ns.event("PLAYER_LOGIN", function()
 			TargetFrameToT:SetFrameStrata("BACKGROUND")
 			FocusFrameToT.HealthBar:SetStatusBarTexture(hptexture2)
 			FocusFrameToT:SetFrameStrata("BACKGROUND")
-
+			BOSSHP()
 		elseif event == "INSTANCE_ENCOUNTER_ENGAGE_UNIT" then
 			BOSSHP()
 

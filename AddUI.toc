@@ -4,7 +4,7 @@
 ## Author: CN-无尽之海-简繁丶
 ## IconTexture: 135451
 ## SavedVariables: AddUIDB
-## Version: 20260409.1
+## Version: 202604010
 
 AddUISet.lua
 AddUIDB.lua
@@ -54,6 +54,7 @@ UI\MainMenuBar.lua
 UI\MainMenuBarAnimations.lua
 UI\MainMenuBarIcon.lua
 UI\RaidFrame.lua
+UI\RaidFrameAbsorb.lua
 UI\Smap.lua
 UI\SmapIcon.lua
 UI\StatSheet.lua

@@ -9,7 +9,7 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 
 	}
 	local needbuttons = {
-
+		["MythicPlusCountMinimapButton"] = true,--MythicPlusCount
 	}
 
 	local index = 1
