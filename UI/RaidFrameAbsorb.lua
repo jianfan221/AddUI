@@ -19,15 +19,17 @@ local function UpdateRaidFrameAbsorb(event,unit)
 	local amount = UnitGetTotalHealAbsorbs(unit)	--获取吸收盾数值
 
 	if IsInRaid() then
-		if CompactRaidFrameContainer and CompactRaidFrameContainer.flowFrames then
-			for _, frame in ipairs(CompactRaidFrameContainer.flowFrames) do
-				if frame.unit and UnitIsUnit(frame.unit, unit) then
+		for i = 1,8 do
+			for j = 1, 5 do
+				local frame = _G["CompactRaidGroup"..i.."Member"..j]
+				if frame and not frame:IsForbidden() and frame.unit and not ns.MM(frame.unit) and UnitIsUnit(frame.unit, unit) then
 					frame.healAbsorbText:SetText(ns.value(amount))
 					if amount == nil then
 						frame.healAbsorbText:SetAlpha(0)
 					else
 						frame.healAbsorbText:SetAlpha(amount)
 					end
+					return
 				end
 			end
 		end
@@ -41,6 +43,7 @@ local function UpdateRaidFrameAbsorb(event,unit)
 				else
 					frame.healAbsorbText:SetAlpha(amount)
 				end
+				return
 			end
 		end
 	end

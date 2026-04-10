@@ -4,7 +4,7 @@
 ## Author: CN-无尽之海-简繁丶
 ## IconTexture: 135451
 ## SavedVariables: AddUIDB
-## Version: 202604010
+## Version: 202604010.1
 
 AddUISet.lua
 AddUIDB.lua
