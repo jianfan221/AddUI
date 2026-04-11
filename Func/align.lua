@@ -209,30 +209,40 @@ TalkingHeadFrame:UnregisterAllEvents()
 
 
 ns.tips("自动修理部分(优先使用公会修理)")
+ns.event("PLAYER_ENTERING_WORLD", function()--进游戏时先请求一次数据，避免第一次打开商人界面时数据还没准备好
+	if IsInGuild() then
+		QueryGuildBankTab(1)
+		local cost = GetRepairAllCost()
+		local gbwm = GetGuildBankWithdrawMoney()
+		local gbk = GetGuildBankMoney()
+		local canGuildRepair = CanGuildBankRepair()
+	end
+end)
 ns.event("MERCHANT_SHOW", function()
 	if CanMerchantRepair() then
 		local cost = GetRepairAllCost()
 		local gbwm = GetGuildBankWithdrawMoney() - cost
 		local gbk = GetGuildBankMoney()
+		local canGuildRepair = CanGuildBankRepair()
 		if cost > 0 then
-			local money = GetMoney()
+		local money = GetMoney()
 			if IsInGuild() then
 				local guildMoney = GetGuildBankWithdrawMoney()
 				if guildMoney > GetGuildBankMoney() then
 					guildMoney = GetGuildBankMoney()
 				end
-				if guildMoney >= cost and CanGuildBankRepair() then
-				   RepairAllItems(1)
-				   PlaySound("7994")
-				   print("|cff00FFFF本次使用公会维修：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
-				   if gbk >= gbwm then
-				   print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(gbwm))
-				   else 
-				   print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(gbk))
-				   end
-				   return
+				if guildMoney >= cost and canGuildRepair then
+					RepairAllItems(1)
+					PlaySound("7994")
+					print("|cff00FFFF本次使用公会维修：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
+				if gbk >= gbwm then
+					print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(gbwm))
+				else 
+					print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(gbk))
 				end
+				return
 			end
+		end
 			if money > cost then
 				PlaySound("7994")
 				RepairAllItems()
