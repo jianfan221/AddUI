@@ -16,7 +16,7 @@ local function ADDUIUpdateHealthBar(s)
 	end
 	if cvar ~= "PERCENT" then 
 		if s.TextString and s.currValue then 
-			if cvar == "NUMERIC" and not s.TextString2 then
+			if cvar == "NUMERIC" and not s.TextString2 and s.unit ~= "pet" then
 				s.TextString2 = s:CreateFontString(nil, "OVERLAY")
 				s.TextString2:SetFont("Fonts\\ARHei.ttf", 12, "OUTLINE")
 				s.TextString2:SetVertexColor(1, 1, 1)

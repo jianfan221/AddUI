@@ -8,9 +8,9 @@ local needcancel = [[
 local function CreateFrames()
 	if ADDUIcancelAuraButton then return end
 	--创建框架
-	local ADDUIcancelAuraButton = CreateFrame("Frame", "ADDUIcancelAuraButton", BuffFrame);
+	local ADDUIcancelAuraButton = CreateFrame("Frame", "ADDUIcancelAuraButton", UIParent);
 	ADDUIcancelAuraButton:SetSize(60, 60)
-	ADDUIcancelAuraButton:SetPoint("TOPRIGHT",BuffFrame.Selection,"TOPLEFT",0,0); 
+	ADDUIcancelAuraButton:SetPoint("TOP",UIParent,"TOP",300,-10); 
 	--创建背景
 	ADDUIcancelAuraButton.Background = ADDUIcancelAuraButton:CreateTexture(nil, "BACKGROUND")
 	ADDUIcancelAuraButton.Background:SetTexture(130937)
