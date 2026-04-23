@@ -148,6 +148,7 @@ SetCVar("statusText",1) --状态文字
     SetCVar("doNotFlashLowHealthWarning",1) --生命值过低时不闪烁屏幕
     SetCVar("lossOfControl",1) --失控警报
 	SetCVar("enableFloatingCombatText",  0)	--滚动战斗记录
+	SetCVar("enableMouseoverCast", 1)--鼠标悬停施法
 	SetCVar("autoSelfCast",1) --自动自我施法
 
 

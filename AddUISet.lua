@@ -51,7 +51,6 @@ ns.event("PLAYER_REGEN_ENABLED", function()
 end)
 
 --编辑模式拖动位置
-
 function ns.AddEdit(frame,name)
     -- 自动生成数据库键名
     local dbName = frame:GetName() and frame:GetName().."_Edit"
@@ -90,8 +89,10 @@ function ns.AddEdit(frame,name)
     
     -- 编辑模式切换函数
 	local isshow = frame:IsShown()--储存框体原始显示状态
+	local isalpha = frame:GetAlpha()--储存框体原始透明度
     local function EnterEditMode()
 		frame:Show()
+		frame:SetAlpha(1)
         bg:Show()
 		text:Show()
         frame:SetMovable(true)
@@ -117,6 +118,7 @@ function ns.AddEdit(frame,name)
     
     local function LeaveEditMode()
 		frame:SetShown(isshow)
+        frame:SetAlpha(isalpha)
         bg:Hide()
 		text:Hide()
         frame:SetMovable(false)
@@ -298,19 +300,34 @@ end
 
 
 --百分比功能
-function ns.ADDUIBFB(nownumber,maxnumber)
-	if not nownumber or not maxnumber then return end
-	if tonumber(nownumber) == 0 or tonumber(maxnumber) == 0 then return end
-	local text = tonumber(nownumber)/tonumber(maxnumber) * 100
-	if text == 100 then
-		return format("%d",text).."%"
-	elseif text> 10 then
-		return format("%.1f",text).."%"
-	elseif text > 0 then
-		return format("%.2f",text).."%"
-	else
-		return ""
-	end
+local PercentData = {
+	config = CreateAbbreviateConfig({
+		{
+			breakpoint = 100,--100%
+			abbreviation = "%",
+			significandDivisor = 1,
+			fractionDivisor = 1,
+			abbreviationIsGlobal = false
+		},
+		{
+			breakpoint = 1,--1.2%
+			abbreviation = "%",
+			significandDivisor = 0.1,
+			fractionDivisor = 10,
+			abbreviationIsGlobal = false
+		},
+		{
+			breakpoint = 0.00001,--0.12%
+			abbreviation = "%",
+			significandDivisor = 0.01,
+			fractionDivisor = 100,
+			abbreviationIsGlobal = false
+		},
+	})
+}
+--百分比简化
+function ns.percent(number)
+	return AbbreviateNumbers(number,PercentData)
 end
 
 --获取职业颜色RGB

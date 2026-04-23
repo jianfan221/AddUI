@@ -31,17 +31,7 @@ end
 --注册大秘境事件
 local BossKillTime = {}
 ns.event("CHALLENGE_MODE_START", function(event,...)
-	local info = C_ChallengeMode.GetChallengeCompletionInfo()
-	local mapName = C_ChallengeMode.GetMapUIInfo(info.mapChallengeModeID)
-	local keyLevel = info.level
-	if not mapName or not keyLevel then return end
-
-	AddUIDB.DungeonBossKill = AddUIDB.DungeonBossKill or {}
-	AddUIDB.DungeonBossKill[mapName] = AddUIDB.DungeonBossKill[mapName] or {}
-	AddUIDB.DungeonBossKill[mapName][keyLevel] = AddUIDB.DungeonBossKill[mapName][keyLevel] or {}
-	BossKillTime = BossKillTime or {}
-	BossKillTime[mapName] = BossKillTime[mapName] or {}
-	BossKillTime[mapName][keyLevel] = {}
+	BossKillTime = {}
 end)
 
 ns.event("CHALLENGE_MODE_COMPLETED", function()

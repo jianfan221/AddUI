@@ -29,7 +29,10 @@ ns.event("PLAYER_LOGIN", function()
 	if statTimer then return end
 	statTimer = C_Timer.NewTicker(0.3, function()
 		if StatList["主属性"] then
-			StatList["主属性"]:SetText(format("%d", math.max(UnitStat("player", 1), UnitStat("player", 2), UnitStat("player", 4))))
+			local _, _, _, _, _, primaryStat = GetSpecializationInfo(GetSpecialization())
+			primaryStat = primaryStat or 1
+			local strength = UnitStat("player", primaryStat)
+			StatList["主属性"]:SetText(format("%d", strength))
 		else
 			CreateText("主属性","主属性",{1, 0, 1})
 		end
@@ -59,7 +62,7 @@ ns.event("PLAYER_LOGIN", function()
 		end
 		
 		if StatList[STAT_VERSATILITY] then
-			StatList[STAT_VERSATILITY]:SetText(format("%.2f%%", GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE) + GetVersatilityBonus(CR_VERSATILITY_DAMAGE_DONE)))
+			StatList[STAT_VERSATILITY]:SetText(format("%.2f%%", GetCombatRatingBonus(CR_VERSATILITY_DAMAGE_DONE)))
 		else
 			CreateText(STAT_VERSATILITY,STAT_VERSATILITY,{1, 1, 0})
 		end

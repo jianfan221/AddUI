@@ -41,6 +41,7 @@ ns.AddUIDefaultDB = {
 	cvar = true, -- CVAR自动设置
 	dimi = true, -- 右下角信息栏
 	lotbnt = true, -- Log快捷开关
+	chatCombatTimer = true, -- 聊天框战斗计时器
 	autoloot = true, -- 装备一键选择器
 
 	-- 其他辅助功能（未在界面中直接暴露）

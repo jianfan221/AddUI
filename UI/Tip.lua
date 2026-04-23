@@ -123,6 +123,10 @@ local function TooltipBar(self, lineData)
 		local totname = string.format("|cff%02x%02x%02x%s|r",TOTClassColor.r*255,TOTClassColor.g*255,TOTClassColor.b*255, UnitName(unit.."target"))
 		GameTooltip:AddDoubleLine(TARGET..": "..totname)
 	end
+	local _,_,per = C_ScenarioInfo.GetUnitCriteriaProgressValues(unit)
+	if per ~= nil then
+		GameTooltip:AddLine("|cffFFFFFF"..PET_BATTLE_COMBAT_LOG_ENEMY_TEAM..": |r"..per.."%")
+	end
 
 	--大秘境分数
 	local summary = C_PlayerInfo.GetPlayerMythicPlusRatingSummary(unit)

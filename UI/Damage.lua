@@ -75,10 +75,10 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 			end
 			local count = sessionWindow.sessionWindowIndex
 			DamageWindowsSetting(count)
-			
-			for _, Child in ipairs({sessionWindow.ScrollBox.ScrollTarget:GetChildren()}) do
-				DamageWindowsStatusBar(Child)
-			end
+
+			sessionWindow:ForEachEntryFrame(function(child)
+				DamageWindowsStatusBar(child)
+			end)
 		end)
 	end
 	

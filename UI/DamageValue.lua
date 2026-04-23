@@ -92,7 +92,7 @@ hooksecurefunc(DamageMeterEntryMixin, "Init", function(self)
 			return
 		end
 		local success, text = pcall(GetValueText, bar)
-		if success then
+		if success and text then
 			bar:GetValue():SetText(text);
 		end
 	end)

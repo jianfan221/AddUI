@@ -37,7 +37,11 @@ local function ADDUIUpdateHealthBar(s)
 				local HealthPercent = UnitHealthPercent(s.unit, true, CurveConstants.ScaleTo100)
 				s.TextString:SetText(ns.value(s:GetValue()))
 				if s.TextString2 then
-					s.TextString2:SetText(string.format("%d%%", HealthPercent))
+					if s.unit == "player" then
+						s.TextString2:SetText(string.format("%d%%", HealthPercent))
+					else
+						s.TextString2:SetText(string.format("%s", ns.percent(HealthPercent)))
+					end
 				end
 			end
 			if not s.TextStringPoint then

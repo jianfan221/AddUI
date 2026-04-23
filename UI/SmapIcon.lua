@@ -16,7 +16,7 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 	local maxindex = 6--最大显示数量，超过则换行
 	local offset = 32--间隔
 	local MinimapButtons = {}
-	C_Timer.After(1, function()
+	C_Timer.After(2, function()
 		for i, child in ipairs({Minimap:GetChildren()}) do
 			local name = child:GetName()
 			if name and ((string.match(name,"LibDBIcon10") and not notbuttons[name]) or needbuttons[name]) and child:IsShown() then
@@ -54,7 +54,7 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 			end
 		end
 	end)
-	C_Timer.After(2, function()--每个图标都要加上鼠标进入和离开事件，不能放在上面那个循环里，因为有些图标可能还没有加载出来，所以等2秒后再添加事件
+	C_Timer.After(3, function()--每个图标都要加上鼠标进入和离开事件，不能放在上面那个循环里，因为有些图标可能还没有加载出来，所以等2秒后再添加事件
 		for _, button in ipairs(MinimapButtons) do
 			button:HookScript('OnEnter', function(self)
 				for _, button in ipairs(MinimapButtons) do

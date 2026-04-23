@@ -1,10 +1,10 @@
-﻿## Interface: 120000,120001
+﻿## Interface: 120000,120001,120005
 ## Title: |cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r |cFF00FF55界面功能包|r
 ## Notes: 各类插件功能界面整合包|cff69ccf0by简繁|r
 ## Author: CN-无尽之海-简繁丶
 ## IconTexture: 135451
 ## SavedVariables: AddUIDB
-## Version: 202604013
+## Version: 202604023
 
 AddUISet.lua
 AddUIDB.lua
@@ -42,6 +42,7 @@ UI\AlreadyKnown.lua
 UI\cancelAura.lua
 UI\CastingBar.lua
 UI\CombatAlert.lua
+UI\CombatTimers.lua
 UI\Cooldown.lua
 UI\CooldownBuffSp.lua
 UI\CooldownCopy.lua

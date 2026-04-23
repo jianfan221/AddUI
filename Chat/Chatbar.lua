@@ -2,7 +2,7 @@
 ns.event("PLAYER_LOGIN", function()
 if not AddUIDB.chatb then return end
 
-JoinChannelByName("寻求组队")
+--JoinChannelByName("寻求组队")
 local chatFrame = SELECTED_DOCK_FRAME
 COLORSCHEME_BORDER = { 0.3,0.3,0.3,1 }
 

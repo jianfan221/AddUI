@@ -2,7 +2,7 @@
 
 ns.event("PLAYER_LOGIN", function()
 if not AddUIDB.raidframebuff then return end
-
+if 1 == 0 then
 hooksecurefunc('CompactUnitFrame_UtilSetDebuff', function(self,debuffFrame, aura)
 --[[
 	if not debuffFrame.DispelBorder then
@@ -30,7 +30,7 @@ hooksecurefunc('CompactUnitFrame_UtilSetDebuff', function(self,debuffFrame, aura
 		debuffFrame.border:Show()
 	end
 end)
-
+end
 hooksecurefunc("CompactUnitFrame_UpdateRoleIcon",function(frame)
 	C_Timer.After(0,function()
 		if not frame.roleIcon then return end
@@ -52,6 +52,7 @@ end)
 hooksecurefunc('DefaultCompactUnitFrameSetup', function(frame)
 	frame.healthBar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
 	frame.powerBar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
+	if 1==1 then return end
 	for i=1, #frame.buffFrames do
 		frame.buffFrames[i].cooldown:GetRegions():SetFont(STANDARD_TEXT_FONT, frame.buffFrames[i]:GetHeight()/1.6, "OUTLINE")
 		frame.buffFrames[i].cooldown:SetHideCountdownNumbers(false)
