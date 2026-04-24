@@ -42,7 +42,7 @@ needIconbutton:SetScript("OnClick", function()
 	for _, value in ipairs(RollItems) do
 		RollOnLoot(value,1)
 		ConfirmLootRoll(value,1)
-		StaticPopup1Button1:Click()
+		--StaticPopup1Button1:Click()
 		RollOnLoot(value,2)
 		RollOnLoot(value,4)
 	end
@@ -69,7 +69,7 @@ greedIconbutton:SetScript("OnClick", function()
     for _, value in ipairs(RollItems) do
 		RollOnLoot(value,2)
 		ConfirmLootRoll(value,2)
-		StaticPopup1Button1:Click()
+		--StaticPopup1Button1:Click()
 		RollOnLoot(value,4)
 	end
 	rollFrame:Hide()

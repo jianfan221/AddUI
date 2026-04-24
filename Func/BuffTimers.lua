@@ -29,7 +29,7 @@ hooksecurefunc('PaperDollFrame_SetItemLevel', function(self, unit)
 
    self.tooltip =  "|cffffffff".. STAT_AVERAGE_ITEM_LEVEL .. ' ' .. ilvl2 
 end)
-
+--[[
 ns.tips("给装备面板增加移动速度")--http://bbs.ngacn.cc/read.php?&tid=9727518
 table.insert(PAPERDOLL_STATCATEGORIES[1].stats,{ stat = "MOVESPEED" }) 
    
@@ -42,4 +42,4 @@ hooksecurefunc("PaperDollFrame_SetMovementSpeed",function(statFrame, unit)
       statFrame:SetScript("OnUpdate", MovementSpeed_OnUpdate); 
       tempstatFrame = statFrame; 
       statFrame:Show(); 
-end) 
+end) ]]

@@ -2,6 +2,7 @@
 
 ns.event("PLAYER_LOGIN", function()
 if not AddUIDB.raidframebuff then return end
+
 if 1 == 0 then
 hooksecurefunc('CompactUnitFrame_UtilSetDebuff', function(self,debuffFrame, aura)
 --[[
@@ -49,9 +50,20 @@ hooksecurefunc("CompactUnitFrame_UpdateRoleIcon",function(frame)
 	end)
 end)
 
+--[[
+hooksecurefunc(ContainerPrivateAuraBehaviorMixin,'SetPrivateAuraAnchorSettings', function(frame)
+	-- 12.0.5+ 显示光环倒计时
+	print(frame,frame.GetName and frame:GetName() or "未找到光环名称")
+	frame:SetAttribute("always-hide-duration", false)
+
+end)
+]]
+
 hooksecurefunc('DefaultCompactUnitFrameSetup', function(frame)
 	frame.healthBar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
 	frame.powerBar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
+	
+	
 	if 1==1 then return end
 	for i=1, #frame.buffFrames do
 		frame.buffFrames[i].cooldown:GetRegions():SetFont(STANDARD_TEXT_FONT, frame.buffFrames[i]:GetHeight()/1.6, "OUTLINE")
