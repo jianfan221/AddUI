@@ -21,6 +21,15 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 				self.SettingsDropdown:SetAlpha(alpha)
 				self.Header:SetAlpha(alpha)
 				self.Header:SetVertexColor(0, 0, 0)
+
+				local tex = self.MinimizeButton:GetNormalTexture()
+				if tex then
+					tex:SetVertexColor(0.5, 0.5, 0.5, alpha) 
+				end
+				local pushTex = self.MinimizeButton:GetPushedTexture()-- 鼠标悬停时的颜色
+				if pushTex then
+					pushTex:SetVertexColor(0.5, 0.5, 0.5, 1)
+				end
 			end
 			--自动贴附对齐
 			if not AddUIDB.poidama or count < 2 then return end

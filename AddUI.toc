@@ -4,7 +4,7 @@
 ## Author: CN-无尽之海-简繁丶
 ## IconTexture: 135451
 ## SavedVariables: AddUIDB
-## Version: 20260425
+## Version: 20260427
 
 AddUISet.lua
 AddUIDB.lua
@@ -66,5 +66,4 @@ UI\TipM+.lua
 UI\UnitFrames.lua
 UI\UnitMark.lua
 UI\vQuestmove.lua
-UI\NamePlateCastWatcher.lua
 

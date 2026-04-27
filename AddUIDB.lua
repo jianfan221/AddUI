@@ -17,7 +17,7 @@ ns.AddUIDefaultDB = {
 	mh = true, -- 自动卖灰
 	sq = true, -- 快速拾取
 	cast = true, -- 施法条模块
-	nameplatecast = false, -- 周围怪物施法监控（默认关闭）
+
 	castWidth = 260, -- 施法条宽度
 	castHeight = 20, -- 施法条高度
 	SCastTexture = true, -- 自定义施法条材质
