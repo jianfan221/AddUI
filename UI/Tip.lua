@@ -99,7 +99,9 @@ local function TooltipBar(self, lineData)
 
 	--目标职业颜色
 	local TargetClassColor = GetUnitColor(unit)
-	GameTooltipTextLeft1:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
+	if TargetClassColor then
+		GameTooltipTextLeft1:SetTextColor(TargetClassColor.r, TargetClassColor.g, TargetClassColor.b)
+	end
 
 	--公会染色
 	if UnitIsPlayer(unit) then
