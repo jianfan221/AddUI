@@ -10,7 +10,8 @@ local function CreateFrames()
 	--创建框架
 	local ADDUIcancelAuraButton = CreateFrame("Frame", "ADDUIcancelAuraButton", UIParent);
 	ADDUIcancelAuraButton:SetSize(60, 60)
-	ADDUIcancelAuraButton:SetPoint("TOP",UIParent,"TOP",300,-10); 
+	ADDUIcancelAuraButton:SetPoint("TOP",UIParent,"TOP",300,-10);
+	ns.AddEdit(ADDUIcancelAuraButton,"取消操控")
 	--创建背景
 	ADDUIcancelAuraButton.Background = ADDUIcancelAuraButton:CreateTexture(nil, "BACKGROUND")
 	ADDUIcancelAuraButton.Background:SetTexture(130937)
@@ -36,6 +37,30 @@ local function CreateFrames()
 		ADDUIcancelAuraButton.Background:SetColorTexture(0, 0, 0, 0)
 		ADDUIcancelAuraButton.tiptext:Hide()
 	end)
+	-- 子按钮覆盖了父框架导致拖动事件被拦截，需要让子按钮也响应编辑模式拖动
+	local function ToggleChildDrag()
+		if InCombatLockdown() then return end
+		local inEditMode = EditModeManagerFrame and EditModeManagerFrame:IsShown()
+		if inEditMode then
+			ADDUIcancelAuraButton.ADcancelAuraButton:RegisterForDrag("LeftButton")
+			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStart", function()
+				ADDUIcancelAuraButton:StartMoving()
+			end)
+			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStop", function()
+				ADDUIcancelAuraButton:StopMovingOrSizing()
+				if not AddUIDB then AddUIDB = {} end
+				local left, bottom = ADDUIcancelAuraButton:GetLeft(), ADDUIcancelAuraButton:GetBottom()
+				AddUIDB["ADDUIcancelAuraButton_Edit"] = {"BOTTOMLEFT", "UIParent", "BOTTOMLEFT", left, bottom}
+			end)
+		else
+			ADDUIcancelAuraButton.ADcancelAuraButton:RegisterForDrag()
+			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStart", nil)
+			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStop", nil)
+		end
+	end
+	EditModeManagerFrame:HookScript("OnShow", ToggleChildDrag)
+	EditModeManagerFrame:HookScript("OnHide", ToggleChildDrag)
+	ToggleChildDrag()
 	--图标材质
 	ADDUIcancelAuraButton.T = ADDUIcancelAuraButton:CreateTexture()
 	ADDUIcancelAuraButton.T:SetAllPoints(ADDUIcancelAuraButton)
