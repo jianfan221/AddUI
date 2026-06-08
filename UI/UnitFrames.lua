@@ -112,7 +112,7 @@ ns.event("PLAYER_LOGIN", function()
 		local aura = C_UnitAuras.GetBuffDataByIndex(self.unit, index)
 		if not aura then return end
 		if not buff.Stealable then return end
-		local color = C_UnitAuras.GetAuraDispelTypeColor(self.unit, aura.auraInstanceID, ns.discolor)
+		local color = C_UnitAuras.GetAuraDispelTypeColor(self.unit, aura.auraInstanceID, ns.dispelColor)
 		if color then
 			buff.Stealable:SetVertexColor(color:GetRGBA())
 			buff.Stealable:Show()
