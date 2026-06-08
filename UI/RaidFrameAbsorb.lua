@@ -12,7 +12,7 @@ local function UpdateRaidFrameAbsorb(event, unit)
 	if IsInRaid() then
 		for i = 1, 8 do
 			for j = 1, 5 do
-				raidframe = _G["CompactRaidGroup"..i.."Member"..j]
+				raidframe = C_AddOns.IsAddOnLoaded("DandersFrames") and _G["DandersRaidGroup"..i.."HeaderUnitButton"..j] or _G["CompactRaidGroup"..i.."Member"..j]
 				if raidframe and raidframe.unit and not ns.MM(raidframe.unit) and UnitIsUnit(raidframe.unit, unit) then
 					frame = raidframe
 					break
@@ -22,7 +22,7 @@ local function UpdateRaidFrameAbsorb(event, unit)
 		end
 	elseif IsInGroup() then
 		for i = 1, 5 do
-			raidframe = _G["CompactPartyFrameMember"..i]
+			raidframe = C_AddOns.IsAddOnLoaded("DandersFrames") and _G["DandersPartyHeaderUnitButton"..i] or _G["CompactPartyFrameMember"..i]
 			if raidframe and raidframe.unit and not ns.MM(raidframe.unit) and UnitIsUnit(raidframe.unit, unit) then
 				frame = raidframe
 				break
