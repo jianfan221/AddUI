@@ -4,7 +4,7 @@
 ## Author: CN-无尽之海-简繁丶
 ## IconTexture: 135451
 ## SavedVariables: AddUIDB
-## Version: 20260609.1
+## Version: 20260612
 
 AddUI-API.lua
 AddUIDB.lua
@@ -48,13 +48,13 @@ UI\CooldownBuffSp.lua
 UI\CooldownCopy.lua
 UI\Damage.lua
 UI\DamageValue.lua
-UI\DungeonTimer.lua
 UI\InfoBar.lua
 UI\InspectLevel.lua
 UI\InterruptREC.lua
 UI\MainMenuBar.lua
 UI\MainMenuBarAnimations.lua
 UI\MainMenuBarIcon.lua
+UI\MDTimer.lua
 UI\RaidFrame.lua
 UI\RaidFrameAbsorb.lua
 UI\Smap.lua
