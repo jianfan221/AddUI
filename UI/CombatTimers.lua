@@ -32,11 +32,19 @@ ns.event("PLAYER_LOGIN", function()
 		combatUpdateElapsed = combatUpdateElapsed - refreshInterval
 		self.text:SetText(FormatTime(GetTime() - combatStart))
 	end)
-	ns.event("PLAYER_REGEN_DISABLED", function()
+	local function ResetCombatTimer()
 		combatElapsed = 0
 		combatRunning = true
 		combatStart = GetTime()
+	end
+
+	ns.event("ENCOUNTER_STATE_CHANGED", function(_, isInProgress)
+		if isInProgress then
+			ResetCombatTimer()
+		end
 	end)
+
+	ns.event("PLAYER_REGEN_DISABLED", ResetCombatTimer)
 
 	ns.event("PLAYER_REGEN_ENABLED", function()
 		combatElapsed = GetTime() - combatStart
