@@ -104,7 +104,7 @@ local function TooltipBar(self, lineData)
 	end
 
 	--公会染色
-	if UnitIsPlayer(unit) then
+	if UnitIsPlayer(unit) and TargetClassColor then
 		local guild, gRank, gRankId = GetGuildInfo(unit)
 		local hasText = GameTooltipTextLeft2:GetText()
 		if guild and hasText then
