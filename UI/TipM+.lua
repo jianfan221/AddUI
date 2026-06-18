@@ -71,7 +71,7 @@ local function HookDungeonIcons()
 					if completionDate then
 						local adjustedYear = completionDate.year
 						local adjustedMonth = completionDate.month
-						local adjustedDay = completionDate.day
+						local adjustedDay = completionDate.monthDay
 						local adjustedHour = completionDate.hour + offset
 						local adjustedMinute = completionDate.minute
 						
