@@ -51,7 +51,7 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 		end
 		--新建窗口
 		ns.hook(DamageMeter,'SetupSessionWindow',function(self,data,count) 
-			DamageWindowsSetting(count)
+			DamageWindowsSetting(data)
 		end)
 		--编辑模式
 		ns.hook(DamageMeter, "SetIsEditing", function(self)
