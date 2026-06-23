@@ -89,11 +89,8 @@ local function MyBuffTime(self, timeLeft)
 	end
 end
 
-local frames = { BuffFrame, DebuffFrame }
-for i = 1, #frames do
-	for _, button in ipairs(frames[i].auraFrames) do
-		if button.UpdateDuration then
-			hooksecurefunc(button, "UpdateDuration", MyBuffTime)
-		end
+for _, button in ipairs(DebuffFrame.auraFrames) do
+	if button.UpdateDuration then
+		hooksecurefunc(button, "UpdateDuration", MyBuffTime)
 	end
 end
