@@ -4,9 +4,7 @@ local ADDUIGUI = CreateFrame("Frame")
 local category = Settings.RegisterCanvasLayoutCategory(ADDUIGUI, "|cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r")
 Settings.RegisterAddOnCategory(category)
 
-local ADDUIUPDATE = CreateFrame("Frame")
-local category2 = Settings.RegisterCanvasLayoutSubcategory(category,ADDUIUPDATE, "更新记录")
-Settings.RegisterAddOnCategory(category2)
+
 
 SlashCmdList["AddUIC"] = function()
 	ns.COMBAT(Settings.OpenToCategory,category:GetID())
@@ -91,20 +89,11 @@ ppc:SetText("|cff00FF7F/ad|r快速打开此界面")
 ppc:SetJustifyH("RIGHT")
 ppc:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
 
-local OpenUpDate = CreateFrame("Button", "OpenUpDate", ADDUIGUI, "UIPanelButtonTemplate")
-OpenUpDate:SetText("更新记录")
-OpenUpDate:SetWidth(120)
-OpenUpDate:SetHeight(22)
-OpenUpDate:SetPoint("TOPRIGHT", -5, -5)
-OpenUpDate:SetScript("OnClick", function()
-	 Settings.OpenToCategory(category2:GetID())
-end)
-
 
 --鼠标提示写一些没开关的功能
 local TIPFrame = CreateFrame("Frame", nil, ADDUIGUI)
 TIPFrame:SetSize(115, 20)
-TIPFrame:SetPoint("TOPRIGHT", -8, -30)
+TIPFrame:SetPoint("TOPRIGHT", -8, -10)
 local TIPtext = TIPFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 TIPtext:SetPoint("CENTER")
 TIPtext:SetVertexColor(0, 1, 0)
@@ -300,94 +289,5 @@ spellqq:RegisterCallback("OnValueChanged", function(self, value)
 	AddUIDB.SpellQ = tonumber(string.format("%d", value))
 	SetCVar("SpellQueueWindow", AddUIDB.SpellQ) 
 end)
-
-end)
-
---更新日志
-ns.event("PLAYER_LOGIN", function()
-local AddUI = newFont(16, 0 , ADDUIUPDATE, "TOPLEFT", ADDUIUPDATE, "TOPLEFT", "|cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r", 30)
-local AddUI2 = newFont(0, 5 , ADDUIUPDATE, "BOTTOMLEFT", AddUI, "BOTTOMRIGHT", "|cff00ffd2更新记录|r", 15)
-local OpenUpDate = CreateFrame("Button", "OpenUpDate", ADDUIUPDATE, "UIPanelButtonTemplate")
-OpenUpDate:SetText("返回设置")
-OpenUpDate:SetWidth(120)
-OpenUpDate:SetHeight(22)
-OpenUpDate:SetPoint("TOPRIGHT", -5, -5)
-OpenUpDate:SetScript("OnClick", function()
-	 Settings.OpenToCategory(category:GetID())
-end)
-local qqun = ADDUIUPDATE:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-qqun:SetPoint("BOTTOMLEFT", 30, -30)
-qqun:SetText("抖音:简繁       版本:|cff00FFFF"..ns.ADDUIBB)
-qqun:SetJustifyH("RIGHT")
-local pcrl = CreateFrame("Button", "AddUIrl", ADDUIUPDATE, "UIPanelButtonTemplate")
-pcrl:SetText("重载")
-pcrl:SetWidth(92)
-pcrl:SetHeight(22)
-pcrl:SetPoint("BOTTOMRIGHT", -132, -31)
-pcrl:SetScript("OnClick", function()
-	 ReloadUI()
-end)
-
---滚动框架
-local updatescroll = CreateFrame("ScrollFrame", nil, ADDUIUPDATE, "UIPanelScrollFrameTemplate")
-updatescroll:SetPoint("TOPLEFT", ADDUIUPDATE, "TOPLEFT", 0, -40)
-updatescroll:SetPoint("BOTTOMRIGHT", ADDUIUPDATE, "BOTTOMRIGHT", -20, 0)
---滚动内容
-local ConFrame = CreateFrame("Frame", nil, updatescroll)
-ConFrame:SetSize(670,480)
-updatescroll:SetScrollChild(ConFrame)
-ns.updateY = 0	--设置起始位置
-
-local Yoffset = -10
-local textcolor = {0.8, 0.8, 0.8, 0.9}
-local function AddUpdate(name)
-	local rowFrame = CreateFrame("Frame", nil, ConFrame)
-	
-	rowFrame:SetPoint("TOPLEFT", 10, Yoffset)
-	rowFrame:SetSize(630, 26)
-	local SliderBackground = rowFrame:CreateTexture(nil, "BACKGROUND")
-	SliderBackground:SetTexture(130937)
-	SliderBackground:SetPoint("TOPLEFT",rowFrame,"TOPLEFT",0,0)
-	SliderBackground:SetColorTexture(0.5, 0.5, 0.5, 0.1) -- 设置背景颜色为黑色，透明度为0.5
-	SliderBackground:SetScript("OnEnter", function(self)
-		self:SetColorTexture(0.5, 0.5, 0.5, .3)
-	end)
-	SliderBackground:SetScript("OnLeave", function(self)
-		self:SetColorTexture(0.5, 0.5, 0.5, 0.1)
-	end)
-	
-	local lefttext = rowFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
-	lefttext:SetPoint("LEFT", SliderBackground, "LEFT", 5, -1)
-	lefttext:SetText(name)
-	lefttext:SetFont(STANDARD_TEXT_FONT, 18, "OUTLINE")
-	lefttext:SetJustifyH("LEFT") 
-	lefttext:SetWordWrap(true)--换行
-	lefttext:SetWidth(623)
-	lefttext:SetSpacing(6)--间距
-	lefttext:SetTextColor(unpack(textcolor))--颜色
-	SliderBackground:SetSize(630,lefttext:GetHeight()+15)--背景颜色根据字体框架高度设置
-	
-	
-	
-	Yoffset = Yoffset - 25 - lefttext:GetHeight()--后面的位置
-	
-	textcolor = {0.6, 0.6, .6, 0.6}
-	ns.updateY = ns.updateY + 1
-end
-
--- 收集更新表格
-local keys = {}
-for k in pairs(ns.update) do
-	table.insert(keys, k)
-end
-
--- 对表格进行排序
-table.sort(keys, function(a, b) return a > b end)
-
--- 根据排序后的表格创建文本
-for _, k in ipairs(keys) do
-	AddUpdate("|cff00FFFF"..k.." : |r"..ns.update[k])
-end
-
 
 end)
