@@ -12,7 +12,8 @@ local showtable = {
 EventRegistry:RegisterFrameEventAndCallback("PLAYER_ENTERING_WORLD", function()
     for i, v in ipairs(showtable) do
         local f = _G[v]
-        if f then
+        local visibility = f.visibility or f.visibleSetting--可见性
+        if f and visibility and visibility == 0 then
             f:Show()
         end
     end
