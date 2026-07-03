@@ -81,7 +81,10 @@ local somep = ADDUIGUI:CreateFontString(nil, "OVERLAY");
 somep:SetFontObject("GameFontHighlight");
 somep:SetPoint("TOPLEFT", ADDUIGUI, "TOPLEFT", 16, -30 );   
 somep:SetJustifyH("LEFT")
-somep:SetText("此界面只是一些功能的开关,大部分功能改动后需要重载界面\n/aa 重载界面  /ab 打开网格线  /chat 配置聊天框\n/sc 删除所有宏并恢复默认按键     /cc打开冷却管理器界面\n/sd 配置esc-选项-里面的大部分东西");
+somep:SetText([[此界面只是一些功能的开关,大部分功能改动后需要重载界面
+/aa 重载界面  /ab 打开网格线  /chat 配置聊天框
+/sc 删除所有宏并恢复默认按键     /cc打开冷却管理器界面
+/sd 配置esc-选项-里面的大部分东西(/sdold恢复上一次)]]);
 
 local ppc = ADDUIGUI:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 ppc:SetPoint("TOPRIGHT", -5, 10)
