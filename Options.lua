@@ -123,7 +123,7 @@ end)
 
 local qqun = ADDUIGUI:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 qqun:SetPoint("BOTTOMLEFT", 30, -30)
-qqun:SetText("抖音:简繁       版本:|cff00FFFF"..ns.ADDUIBB)
+qqun:SetText("简繁:|cff00FFFF32655163@qq.com|r      版本:|cff00FFFF"..ns.ADDUIBB)
 qqun:SetJustifyH("RIGHT")
 
 local pcrl = CreateFrame("Button", "AddUIrl", ADDUIGUI, "UIPanelButtonTemplate")
