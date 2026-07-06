@@ -88,7 +88,7 @@ local function colorMerchant()
 		local c = mc[i]
 		local idx = ((MerchantFrame.page - 1) * MERCHANT_ITEMS_PER_PAGE) + i
 		local link = GetMerchantItemLink(idx)
-		if link and isKnown(link) then
+		if c and c.merBtn and link and isKnown(link) then
 			SetItemButtonNameFrameVertexColor(c.merBtn, COLOR.r, COLOR.g, COLOR.b)
 			SetItemButtonSlotVertexColor(c.merBtn, COLOR.r, COLOR.g, COLOR.b)
 			SetItemButtonTextureVertexColor(c.itemBtn, 0.9 * COLOR.r, 0.9 * COLOR.g, 0.9 * COLOR.b)
