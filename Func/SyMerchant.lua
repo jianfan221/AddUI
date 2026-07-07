@@ -55,7 +55,7 @@ StaticPopupDialogs.MerchantFrame_Sell = {
 			for s = 1,C_Container.GetContainerNumSlots(b) do
 				n = C_Container.GetContainerItemLink(b,s) 
 				if n then
-					local level = GetDetailedItemLevelInfo(n)
+					local level =  C_Item.GetDetailedItemLevelInfo(n)
 					N={C_Item.GetItemInfo(n)}
 					local itemID = tonumber(string.match(n, "item:(%d+)")) or 1
 					if BoxLevel and level and BoxLevel > level and level > 1 and (N[6] == ARMOR or N[6] == WEAPON) and not nosell[itemID] and not string.find(n,"|cnIQ5") then
