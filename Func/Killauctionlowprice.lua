@@ -75,8 +75,8 @@ do
     
     function e:PrintBuyResult(succeed)
         if not self.lowest_item then return nil end
-        local itemName = GetItemInfo(self.lowest_item.itemID)
-        local price_string = GetCoinTextureString(self.lowest_item.unitPrice)
+        local itemName = C_Item.GetItemInfo(self.lowest_item.itemID)
+        local price_string = C_CurrencyInfo.GetCoinTextureString(self.lowest_item.unitPrice)
         if not (itemName and price_string) then return nil end
         if succeed then
             print(itemName.."购买成功1件：" .. price_string)
