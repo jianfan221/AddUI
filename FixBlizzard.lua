@@ -8,13 +8,15 @@ local showtable = {
     "UtilityCooldownViewer",    --冷却管理器次要技能
     "BuffBarCooldownViewer",    --冷却管理器BUFF条
 }
-
 EventRegistry:RegisterFrameEventAndCallback("PLAYER_ENTERING_WORLD", function()
     for i, v in ipairs(showtable) do
         local f = _G[v]
-        local visibility = f.visibility or f.visibleSetting--可见性
-        if f and visibility and visibility == 0 then
-            f:Show()
+        if f then
+            local isDM = v == "DamageMeter"
+            local vis = isDM and f.visibility or f.visibleSetting
+            if vis == 0 and C_CVar.GetCVar(isDM and "damageMeterEnabled" or "cooldownViewerEnabled") == "1" then
+                f:Show()
+            end
         end
     end
 end)
