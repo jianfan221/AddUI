@@ -9,7 +9,7 @@ if not AddUIDB.chatm then return end
 local function GetChatFrame(cname)
 	local index = 0
 	for i = 1, NUM_CHAT_WINDOWS do
-		name, _, _, _, _, _, _, _, _, _ = GetChatWindowInfo(i)
+		local name = GetChatWindowInfo(i)
 		if name == cname then
 			index = i
 			break
