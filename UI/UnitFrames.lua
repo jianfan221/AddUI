@@ -108,18 +108,21 @@ ns.event("PLAYER_LOGIN", function()
 
 	SetCVar("noBuffDebuffFilterOnTarget", 0)--目标头像显示所有debuff
 
-	ns.hook("TargetFrame_UpdateBuffAnchor", function(self, buff, index)
-		local aura = C_UnitAuras.GetBuffDataByIndex(self.unit, index)
-		if not aura then return end
-		if not buff.Stealable then return end
-		local color = C_UnitAuras.GetAuraDispelTypeColor(self.unit, aura.auraInstanceID, ns.dispelColor)
-		if color then
-			buff.Stealable:SetVertexColor(color:GetRGBA())
-			buff.Stealable:Show()
-		else
-			buff.Stealable:Hide()
-		end
-	end)
+	local _, _, _, tocversion = GetBuildInfo()
+	if tocversion < 120100 then
+		ns.hook("TargetFrame_UpdateBuffAnchor", function(self, buff, index)
+			local aura = C_UnitAuras.GetBuffDataByIndex(self.unit, index)
+			if not aura then return end
+			if not buff.Stealable then return end
+			local color = C_UnitAuras.GetAuraDispelTypeColor(self.unit, aura.auraInstanceID, ns.dispelColor)
+			if color then
+				buff.Stealable:SetVertexColor(color:GetRGBA())
+				buff.Stealable:Show()
+			else
+				buff.Stealable:Hide()
+			end
+		end)
+	end
 
 	local hptexture1 = "Interface\\AddOns\\AddUI\\UI\\media\\AD-TargetingFrame"
 	local hptexture2 = "Interface\\AddOns\\AddUI\\UI\\media\\Raid-Bar-Hp-Fill"
