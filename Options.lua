@@ -4,6 +4,10 @@ local ADDUIGUI = CreateFrame("Frame")
 local category = Settings.RegisterCanvasLayoutCategory(ADDUIGUI, "|cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r")
 Settings.RegisterAddOnCategory(category)
 
+--更新日志子分类
+local ADDUIUPDATE = CreateFrame("Frame")
+local category2 = Settings.RegisterCanvasLayoutSubcategory(category, ADDUIUPDATE, "更新日志")
+Settings.RegisterAddOnCategory(category2)
 
 
 SlashCmdList["AddUIC"] = function()
@@ -92,11 +96,19 @@ ppc:SetText("|cff00FF7F/ad|r快速打开此界面")
 ppc:SetJustifyH("RIGHT")
 ppc:SetFont(STANDARD_TEXT_FONT, 12, 'OUTLINE')
 
+local OpenUpDate = CreateFrame("Button", "OpenUpDate", ADDUIGUI, "UIPanelButtonTemplate")
+OpenUpDate:SetText("更新记录")
+OpenUpDate:SetWidth(120)
+OpenUpDate:SetHeight(22)
+OpenUpDate:SetPoint("TOPRIGHT", -5, -5)
+OpenUpDate:SetScript("OnClick", function()
+         Settings.OpenToCategory(category2:GetID())
+end)
 
 --鼠标提示写一些没开关的功能
 local TIPFrame = CreateFrame("Frame", nil, ADDUIGUI)
 TIPFrame:SetSize(115, 20)
-TIPFrame:SetPoint("TOPRIGHT", -8, -10)
+TIPFrame:SetPoint("TOPRIGHT", -8, -30)
 local TIPtext = TIPFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
 TIPtext:SetPoint("CENTER")
 TIPtext:SetVertexColor(0, 1, 0)
@@ -292,5 +304,72 @@ spellqq:RegisterCallback("OnValueChanged", function(self, value)
 	AddUIDB.SpellQ = tonumber(string.format("%d", value))
 	SetCVar("SpellQueueWindow", AddUIDB.SpellQ) 
 end)
+
+end)
+
+ns.event("PLAYER_LOGIN", function()
+	local AddUI = newFont(16, 0 , ADDUIUPDATE, "TOPLEFT", ADDUIUPDATE, "TOPLEFT", "|cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r", 30)
+	local AddUI2 = newFont(0, 5 , ADDUIUPDATE, "BOTTOMLEFT", AddUI, "BOTTOMRIGHT", "|cff00ffd2更新记录|r", 15)
+	local qqun = ADDUIUPDATE:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+	qqun:SetPoint("BOTTOMLEFT", 30, -30)
+	qqun:SetText("简繁:|cff00FFFF32655163@qq.com|r      版本:|cff00FFFF"..ns.ADDUIBB)
+	qqun:SetJustifyH("RIGHT")
+
+	local backBtn = CreateFrame("Button", nil, ADDUIUPDATE, "UIPanelButtonTemplate")
+	backBtn:SetText("返回设置")
+	backBtn:SetWidth(120)
+	backBtn:SetHeight(22)
+	backBtn:SetPoint("TOPRIGHT", -5, -5)
+	backBtn:SetScript("OnClick", function()
+		Settings.OpenToCategory(category:GetID())
+	end)
+
+	local pcrl = CreateFrame("Button", "AddUIrl", ADDUIUPDATE, "UIPanelButtonTemplate")
+	pcrl:SetText("重载")
+	pcrl:SetWidth(92)
+	pcrl:SetHeight(22)
+	pcrl:SetPoint("BOTTOMRIGHT", -132, -31)
+	pcrl:SetScript("OnClick", function()
+			ReloadUI()
+	end)
+
+	--滚动背景
+	local scrollBG = CreateFrame("Frame", nil, ADDUIUPDATE, "BackdropTemplate")
+	scrollBG:SetPoint("TOPLEFT", ADDUIUPDATE, "TOPLEFT", 4, -35)
+	scrollBG:SetPoint("BOTTOMRIGHT", ADDUIUPDATE, "BOTTOMRIGHT", -30, 5)
+	scrollBG:SetBackdrop({bgFile = "Interface\\Tooltips\\UI-Tooltip-Background"})
+	scrollBG:SetBackdropColor(0, 0, 0, 0.5)
+
+	--滚动框架
+	local updatescroll = CreateFrame("ScrollFrame", nil, ADDUIUPDATE, "ScrollFrameTemplate")
+	updatescroll:SetPoint("TOPLEFT", ADDUIUPDATE, "TOPLEFT", 4, -35)
+	updatescroll:SetPoint("BOTTOMRIGHT", ADDUIUPDATE, "BOTTOMRIGHT", -30, 5)
+	updatescroll:SetScript("OnMouseWheel", function(self, value)
+		local step = 20
+		local scroll = self:GetVerticalScroll()
+		local range = self:GetVerticalScrollRange()
+		if value > 0 then
+			self:SetVerticalScroll(math.max(0, scroll - step))
+		else
+			self:SetVerticalScroll(math.min(range, scroll + step))
+		end
+	end)
+	--滚动内容
+	local ConFrame = CreateFrame("Frame", nil, updatescroll)
+	ConFrame:SetSize(670,480)
+	updatescroll:SetScrollChild(ConFrame)
+
+	-- 显示 ns.UpdateText
+	local text = ns.UpdateText or "暂无更新记录"
+	local logFont = ConFrame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+	logFont:SetPoint("TOPLEFT", 10, -8)
+	logFont:SetPoint("BOTTOMRIGHT", -40, 20)
+	logFont:SetWidth(620)
+	logFont:SetText(text)
+	logFont:SetFont(STANDARD_TEXT_FONT, 15, "OUTLINE")
+	logFont:SetJustifyH("LEFT")
+	logFont:SetWordWrap(true)
+	logFont:SetSpacing(8)
+	ConFrame:SetHeight(math.max(logFont:GetStringHeight() + 20, 480))
 
 end)
