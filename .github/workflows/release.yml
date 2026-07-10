@@ -18,7 +18,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: 生成最近3个标签的更新日志
+      - name: 生成更新日志写入Update.lua
         run: |
           if [ ! -f "Update.lua" ]; then
             echo "Update.lua 不存在，跳过更新日志生成"
