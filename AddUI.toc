@@ -8,6 +8,7 @@
 
 AddUI-API.lua
 AddUIDB.lua
+Update.lua
 Options.lua
 FixBlizzard.lua
 Test.lua
