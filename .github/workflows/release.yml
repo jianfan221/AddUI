@@ -48,12 +48,12 @@ jobs:
             done
 
             if [ -n "$ENTRIES" ]; then
-              CHANGES+="## $CUR"$'\n'
+              CHANGES+="|cff3cff00## $CUR|r"$'\n'
               while IFS= read -r line; do
                 [ -z "$line" ] && continue
                 f="${line%%|*}"
                 m="${line#*|}"
-                CHANGES+="* $m -- $f"$'\n'
+                CHANGES+="* $m |cfff0ff00$f|r"$'\n'
               done <<< "$ENTRIES"
               CHANGES+=$'\n'
             fi
