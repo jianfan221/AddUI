@@ -226,7 +226,7 @@ KOAHFrame:SetScript("OnEvent", function(self, event,...)
 		local itemPrice, itemAllPrice = ...
 		if not itemAllPrice then print("未查询到价格") return end
 		local itemName = C_Item.GetItemNameByID(self.ItemID)
-		local printPrice = GetCoinTextureString(tonumber(itemAllPrice/SetNumber))
+		local printPrice = C_CurrencyInfo.GetCoinTextureString(tonumber(itemAllPrice/SetNumber))
 		if itemPrice and itemAllPrice <= SetPrice*10000*SetNumber then--and itemPrice <= SetPrice*10000
 			C_AuctionHouse.ConfirmCommoditiesPurchase(self.ItemID,SetNumber)
 			print("|cff00FFFF购买|r "..itemName.."x"..SetNumber.."|cff00FFFF 等待系统确认,单价|r" ..printPrice)
@@ -237,6 +237,5 @@ KOAHFrame:SetScript("OnEvent", function(self, event,...)
 		end
 		SetIsSure = false
 	end
-	
-	
+
 end)
