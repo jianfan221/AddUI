@@ -19,7 +19,40 @@ ns.event("ADDON_LOADED", function(event, addon)
 			end
 		end)
 
+		-- 钥匙界面按钮 — 就位确认 / 倒计时 / 取消
+		local function MakeBtn(text, callback)
+			local btn = CreateFrame("Button", nil, keystoneframe)
+			btn:SetSize(100, 20)
+			btn:SetNormalFontObject("GameFontNormal")
+			btn:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]])
 
+			local bg = btn:CreateTexture(nil, "BACKGROUND")
+			bg:SetAllPoints()
+			bg:SetColorTexture(0.2, 0.2, 0.2, 0.7)
+			btn.bg = bg
+
+			local tx = btn:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			tx:SetPoint("CENTER", 0, 1)
+			tx:SetText(text)
+			btn:SetFontString(tx)
+
+			btn:SetScript("OnEnter", function() bg:SetColorTexture(0.35, 0.35, 0.35, 0.9) end)
+			btn:SetScript("OnLeave", function() bg:SetColorTexture(0.2, 0.2, 0.2, 0.7) end)
+			btn:SetScript("OnMouseDown", function() bg:SetColorTexture(0.15, 0.15, 0.15, 0.9) end)
+			btn:SetScript("OnMouseUp", function() bg:SetColorTexture(0.35, 0.35, 0.35, 0.9) end)
+			btn:SetScript("OnClick", callback)
+			return btn
+		end
+
+		local btn1 = MakeBtn(READY_CHECK, function() DoReadyCheck() end)
+		btn1:SetPoint("TOPLEFT", keystoneframe, "TOPLEFT", 4, -4)
+
+		local btn2 = MakeBtn(PLAYER_COUNTDOWN_BUTTON, function() C_PartyInfo.DoCountdown(10) end)
+		btn2:SetPoint("TOPLEFT", btn1, "BOTTOMLEFT", 0, -2)
+
+		local btn3 = MakeBtn(CANCEL, function() C_PartyInfo.DoCountdown(0) end)
+		btn3:SetPoint("TOPLEFT", btn2, "BOTTOMLEFT", 0, -2)
+		btn3:GetFontString():SetTextColor(1, 0.5, 0.5)
 	end
 end)
 --计时器-- 处理负数：统一转换为正数，并标记为负
