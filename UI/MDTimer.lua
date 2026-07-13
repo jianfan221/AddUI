@@ -1,5 +1,27 @@
 ﻿local _,ns = ...
 ns.tips("大秘境BOSS击杀时间记录(重置ADDUI配置不会重置历史记录)")
+ns.event("ADDON_LOADED", function(event, addon)
+	if addon == "Blizzard_ChallengesUI" then
+		local keystoneframe = ChallengesKeystoneFrame
+		if not keystoneframe then return end
+		keystoneframe:HookScript("OnShow", function()
+			for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
+				for slot = 1, C_Container.GetContainerNumSlots(bag) do
+					local link = C_Container.GetContainerItemLink(bag, slot)
+					if link and link:match("|Hkeystone:") then
+						C_Container.PickupContainerItem(bag, slot)
+						if CursorHasItem() then
+							C_ChallengeMode.SlotKeystone()
+							return
+						end
+					end
+				end
+			end
+		end)
+
+
+	end
+end)
 --计时器-- 处理负数：统一转换为正数，并标记为负
 local function GetTimeAsString(totalSeconds,nocolor)
     local isNegative = totalSeconds < 0
