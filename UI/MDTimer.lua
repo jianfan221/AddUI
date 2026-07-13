@@ -54,20 +54,10 @@ ns.event("ADDON_LOADED", function(event, addon)
 	end
 end)
 
---纯文本时间格式（不带颜色代码，用于 SetTextColor 控制颜色的场景）
-local function FormatTimePlain(totalSeconds)
-    totalSeconds = math.abs(totalSeconds)
-    local hours = math.floor(totalSeconds / 3600)
-    local minutes = math.floor((totalSeconds % 3600) / 60)
-    local seconds = math.floor(totalSeconds % 60)
-    if hours > 0 then
-        return string.format("%d:%.2d:%.2d", hours, minutes, seconds)
-    else
-        return string.format("%d:%.2d", minutes, seconds)
-    end
-end
---计时器-- 处理负数：统一转换为正数，并标记为负
-local function GetTimeAsString(totalSeconds,nocolor)
+--计时器
+-- style: 0=纯文本(无颜色), nil=自动(负红正绿), 1=绿, 2=红, 3=棕
+-- showMillis: true 则显示3位毫秒
+local function GetTimeAsString(totalSeconds, style, showMillis)
     local isNegative = totalSeconds < 0
     totalSeconds = math.abs(totalSeconds)
 
@@ -75,19 +65,26 @@ local function GetTimeAsString(totalSeconds,nocolor)
     local minutes = math.floor((totalSeconds % 3600) / 60)
     local seconds = math.floor(totalSeconds % 60)
 
-    local timeString-- 格式化为字符串
+    local timeString
     if hours > 0 then
-        timeString = string.format("%02d:%02d:%02d", hours, minutes, seconds)
+        timeString = string.format("%d:%.2d:%.2d", hours, minutes, seconds)
     else
-        timeString = string.format("%02d:%02d", minutes, seconds)
+        timeString = string.format("%d:%.2d", minutes, seconds)
     end
-	if nocolor == 1 then
-		return "|cff00FF00" .. timeString .. "|r"	-- 绿色 (计时)
-	elseif nocolor == 2 then
-		return "|cffff0000" .. timeString .. "|r"	-- 红色 (超时)
-    elseif nocolor == 3 then
-		return "|cff996633" .. timeString .. "|r"	-- 棕色 (历史)
-	elseif isNegative then
+
+    if showMillis then
+        timeString = timeString .. string.format(".%03d", math.floor((totalSeconds % 1) * 1000))
+    end
+
+    if style == 0 then
+        return timeString
+    elseif style == 1 then
+        return "|cff00FF00" .. timeString .. "|r"	-- 绿色 (计时)
+    elseif style == 2 then
+        return "|cffff0000" .. timeString .. "|r"	-- 红色 (超时)
+    elseif style == 3 then
+        return "|cff996633" .. timeString .. "|r"	-- 棕色 (历史)
+    elseif isNegative then
         return "|cffff0000" .. timeString .. "|r"	-- 红色（负数）
     else
         return "|cff00ff00" .. timeString .. "|r"	-- 绿色（正数）
@@ -118,6 +115,8 @@ ns.event("CHALLENGE_MODE_COMPLETED", function()
 		AddUIDB.DungeonBossKill[mapName][keyLevel] = BossKillTime[mapName][keyLevel]
 		AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE] = timeMS
 	end
+
+	print(mapName .. " +" .. keyLevel .. " " .. CRITERIA_COMPLETED_DATE:format(GetTimeAsString(timeMS, nil, true)))
 end)
 --
 --Hook文本BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
@@ -140,45 +139,43 @@ ns.hook(ScenarioObjectiveTracker.ChallengeModeBlock,"UpdateTime", function(self,
 	local time3 = self.timeLimit * 0.6
 	local time2 = self.timeLimit * 0.8
 
-	if not self.SplitBar then
+	if not self.Split then
 		local barW, barH = self.StatusBar:GetSize()
 
-		local f = CreateFrame("Frame", nil, self)
-		f:SetFrameLevel(self:GetFrameLevel() + 10)
-		f:SetAllPoints(self)
+		self.Split = CreateFrame("Frame", nil, self)
+		self.Split:SetFrameLevel(self:GetFrameLevel() + 10)
+		self.Split:SetAllPoints(self)
 
-		self.Split_Bar3 = f:CreateTexture(nil, "OVERLAY")
-		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6), 1)
+		self.Split_Bar3 = self.Split:CreateTexture(nil, "OVERLAY")
+		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6) - 3, 1)
 		self.Split_Bar3:SetSize(3, barH)
 		self.Split_Bar3:SetColorTexture(1, 0.843, 0)
 
-		self.Split_Bar2 = f:CreateTexture(nil, "OVERLAY")
-		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8), 1)
+		self.Split_Bar2 = self.Split:CreateTexture(nil, "OVERLAY")
+		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8) - 3, 1)
 		self.Split_Bar2:SetSize(3, barH)
 		self.Split_Bar2:SetColorTexture(0.78, 0.78, 0.812)
 
-		self.Split_Text3 = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		self.Split_Text3 = self.Split:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
 		self.Split_Text3:SetPoint("LEFT", self.TimeLeft, "RIGHT", 4, 0)
 		self.Split_Text3:SetTextColor(1, 0.843, 0)
 
-		self.Split_Text2 = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		self.Split_Text2 = self.Split:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
 		self.Split_Text2:SetPoint("LEFT", self.Split_Text3, "RIGHT", 4, 0)
 		self.Split_Text2:SetTextColor(0.78, 0.78, 0.812)
-
-		self.SplitBar = true
 	end
 
 	if elapsedTime < time3 then
 		self.Split_Bar3:Show()
 		self.Split_Bar2:Show()
-		self.Split_Text3:SetText(FormatTimePlain(time3 - elapsedTime))
+		self.Split_Text3:SetText(GetTimeAsString(time3 - elapsedTime, 0))
 		self.Split_Text3:Show()
-		self.Split_Text2:SetText(FormatTimePlain(time2 - elapsedTime))
+		self.Split_Text2:SetText(GetTimeAsString(time2 - elapsedTime, 0))
 		self.Split_Text2:Show()
 	elseif elapsedTime < time2 then
 		self.Split_Bar3:Hide()
 		self.Split_Bar2:Show()
-		self.Split_Text3:SetText(FormatTimePlain(time2 - elapsedTime))
+		self.Split_Text3:SetText(GetTimeAsString(time2 - elapsedTime, 0))
 		self.Split_Text3:Show()
 		self.Split_Text2:Hide()
 	else
