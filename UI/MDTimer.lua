@@ -4,6 +4,7 @@ ns.event("ADDON_LOADED", function(event, addon)
 	if addon == "Blizzard_ChallengesUI" then
 		local keystoneframe = ChallengesKeystoneFrame
 		if not keystoneframe then return end
+		--自动放入钥石
 		keystoneframe:HookScript("OnShow", function()
 			for bag = BACKPACK_CONTAINER, NUM_BAG_SLOTS do
 				for slot = 1, C_Container.GetContainerNumSlots(bag) do
@@ -86,7 +87,7 @@ local function GetTimeAsString(totalSeconds,nocolor)
 		return "|cffff0000" .. timeString .. "|r"	-- 红色 (超时)
     elseif nocolor == 3 then
 		return "|cff996633" .. timeString .. "|r"	-- 棕色 (历史)
-	elseif isNegative then-- 直接返回带颜色代码的字符串
+	elseif isNegative then
         return "|cffff0000" .. timeString .. "|r"	-- 红色（负数）
     else
         return "|cff00ff00" .. timeString .. "|r"	-- 绿色（正数）
@@ -123,19 +124,14 @@ end)
 ns.hook(ScenarioObjectiveTracker.ChallengeModeBlock,"UpdateTime", function(self,elapsedTime)
 	if not self.DungeonTime and self.Level then
 		self.DungeonTime = self:CreateFontString(nil, "OVERLAY")
-		self.DungeonTime:SetFont(STANDARD_TEXT_FONT, 16, 'OUTLINE')
-		self.DungeonTime:SetPoint("LEFT",self.Level,"RIGHT",5,0)
+		self.DungeonTime:SetFontObject(self.Level:GetFontObject())
+		self.DungeonTime:SetPoint("LEFT",self.Level,"RIGHT",2,0)
 	end
-	
 	if self.DungeonTime then
-		local mapID,endtime = C_ChallengeMode.GetActiveChallengeMapID(),0;
-		if mapID then
-			endtime = select(3,C_ChallengeMode.GetMapUIInfo(mapID))
-		end
-		if endtime > select(2,GetWorldElapsedTime(1)) then
-			self.DungeonTime:SetText(GetTimeAsString(select(2,GetWorldElapsedTime(1)),1))
+		if self.timeLimit > elapsedTime then
+			self.DungeonTime:SetText(GetTimeAsString(elapsedTime,1) .. " " .. GetTimeAsString(self.timeLimit,3))
 		else
-			self.DungeonTime:SetText(GetTimeAsString(select(2,GetWorldElapsedTime(1)),2))
+			self.DungeonTime:SetText(GetTimeAsString(elapsedTime,2) .. " " .. GetTimeAsString(self.timeLimit,3))
 		end
 	end
 
@@ -152,12 +148,12 @@ ns.hook(ScenarioObjectiveTracker.ChallengeModeBlock,"UpdateTime", function(self,
 		f:SetAllPoints(self)
 
 		self.Split_Bar3 = f:CreateTexture(nil, "OVERLAY")
-		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6), 2)
+		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6), 1)
 		self.Split_Bar3:SetSize(3, barH)
 		self.Split_Bar3:SetColorTexture(1, 0.843, 0)
 
 		self.Split_Bar2 = f:CreateTexture(nil, "OVERLAY")
-		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8), 2)
+		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8), 1)
 		self.Split_Bar2:SetSize(3, barH)
 		self.Split_Bar2:SetColorTexture(0.78, 0.78, 0.812)
 
