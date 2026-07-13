@@ -38,23 +38,33 @@ ns.event("ADDON_LOADED", function(event, addon)
 
 			btn:SetScript("OnEnter", function() bg:SetColorTexture(0.35, 0.35, 0.35, 0.9) end)
 			btn:SetScript("OnLeave", function() bg:SetColorTexture(0.2, 0.2, 0.2, 0.7) end)
-			btn:SetScript("OnMouseDown", function() bg:SetColorTexture(0.15, 0.15, 0.15, 0.9) end)
-			btn:SetScript("OnMouseUp", function() bg:SetColorTexture(0.35, 0.35, 0.35, 0.9) end)
 			btn:SetScript("OnClick", callback)
 			return btn
 		end
 
 		local btn1 = MakeBtn(READY_CHECK, function() DoReadyCheck() end)
-		btn1:SetPoint("TOPLEFT", keystoneframe, "TOPLEFT", 4, -4)
+		btn1:SetPoint("TOPLEFT", keystoneframe, "TOPLEFT", 4, -14)
 
 		local btn2 = MakeBtn(PLAYER_COUNTDOWN_BUTTON, function() C_PartyInfo.DoCountdown(10) end)
 		btn2:SetPoint("TOPLEFT", btn1, "BOTTOMLEFT", 0, -2)
 
 		local btn3 = MakeBtn(CANCEL, function() C_PartyInfo.DoCountdown(0) end)
 		btn3:SetPoint("TOPLEFT", btn2, "BOTTOMLEFT", 0, -2)
-		btn3:GetFontString():SetTextColor(1, 0.5, 0.5)
 	end
 end)
+
+--纯文本时间格式（不带颜色代码，用于 SetTextColor 控制颜色的场景）
+local function FormatTimePlain(totalSeconds)
+    totalSeconds = math.abs(totalSeconds)
+    local hours = math.floor(totalSeconds / 3600)
+    local minutes = math.floor((totalSeconds % 3600) / 60)
+    local seconds = math.floor(totalSeconds % 60)
+    if hours > 0 then
+        return string.format("%d:%.2d:%.2d", hours, minutes, seconds)
+    else
+        return string.format("%d:%.2d", minutes, seconds)
+    end
+end
 --计时器-- 处理负数：统一转换为正数，并标记为负
 local function GetTimeAsString(totalSeconds,nocolor)
     local isNegative = totalSeconds < 0
@@ -127,6 +137,59 @@ ns.hook(ScenarioObjectiveTracker.ChallengeModeBlock,"UpdateTime", function(self,
 		else
 			self.DungeonTime:SetText(GetTimeAsString(select(2,GetWorldElapsedTime(1)),2))
 		end
+	end
+
+	-- +2/+3 分割线 & 倒计时（如果装了AngryKeystones 功能重复则跳过）
+	if C_AddOns.IsAddOnLoaded("AngryKeystones") then return end
+	local time3 = self.timeLimit * 0.6
+	local time2 = self.timeLimit * 0.8
+
+	if not self.SplitBar then
+		local barW, barH = self.StatusBar:GetSize()
+
+		local f = CreateFrame("Frame", nil, self)
+		f:SetFrameLevel(self:GetFrameLevel() + 10)
+		f:SetAllPoints(self)
+
+		self.Split_Bar3 = f:CreateTexture(nil, "OVERLAY")
+		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6), 2)
+		self.Split_Bar3:SetSize(3, barH)
+		self.Split_Bar3:SetColorTexture(1, 0.843, 0)
+
+		self.Split_Bar2 = f:CreateTexture(nil, "OVERLAY")
+		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8), 2)
+		self.Split_Bar2:SetSize(3, barH)
+		self.Split_Bar2:SetColorTexture(0.78, 0.78, 0.812)
+
+		self.Split_Text3 = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		self.Split_Text3:SetPoint("LEFT", self.TimeLeft, "RIGHT", 4, 0)
+		self.Split_Text3:SetTextColor(1, 0.843, 0)
+
+		self.Split_Text2 = f:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
+		self.Split_Text2:SetPoint("LEFT", self.Split_Text3, "RIGHT", 4, 0)
+		self.Split_Text2:SetTextColor(0.78, 0.78, 0.812)
+
+		self.SplitBar = true
+	end
+
+	if elapsedTime < time3 then
+		self.Split_Bar3:Show()
+		self.Split_Bar2:Show()
+		self.Split_Text3:SetText(FormatTimePlain(time3 - elapsedTime))
+		self.Split_Text3:Show()
+		self.Split_Text2:SetText(FormatTimePlain(time2 - elapsedTime))
+		self.Split_Text2:Show()
+	elseif elapsedTime < time2 then
+		self.Split_Bar3:Hide()
+		self.Split_Bar2:Show()
+		self.Split_Text3:SetText(FormatTimePlain(time2 - elapsedTime))
+		self.Split_Text3:Show()
+		self.Split_Text2:Hide()
+	else
+		self.Split_Bar3:Hide()
+		self.Split_Bar2:Hide()
+		self.Split_Text3:Hide()
+		self.Split_Text2:Hide()
 	end
 end)
 
