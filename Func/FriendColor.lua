@@ -5,17 +5,19 @@ ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	if not FriendsListFrame or not FriendsListFrame:IsShown() then return end
 	if not friendbutton.id then return end
 	if friendbutton.buttonType == 3 then return end
-	if not C_BattleNet.GetFriendAccountInfo(friendbutton.id) then return end
-	local areaName = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.areaName	--区域名
-	local realmDisplayName = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.realmDisplayName	--服务器
-	local characterName = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.characterName --角色名
-	local bnname = Ambiguate(C_BattleNet.GetFriendAccountInfo(friendbutton.id).battleTag,"short")	--战网名
-	local className = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.className	--职业名
-	local level = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.characterLevel	--等级
-	--local factionName = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.factionName--阵营
-	local gamename = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.wowProjectID	--游戏id,1是正式服,11是wlk
-	local rich = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.richPresence	--丰富返回游戏版本-区域-服务器
-	local timerunningSeasonID = C_BattleNet.GetFriendAccountInfo(friendbutton.id).gameAccountInfo.timerunningSeasonID --赛季ID用于幻彩服务器
+	local info = C_BattleNet.GetFriendAccountInfo(friendbutton.id)
+	if not info then return end
+	local accountInfo = info.gameAccountInfo
+	local areaName = accountInfo.areaName	--区域名
+	local realmDisplayName = accountInfo.realmDisplayName	--服务器
+	local characterName = accountInfo.characterName --角色名
+	local bnname = Ambiguate(info.battleTag,"short")	--战网名
+	local className = accountInfo.className	--职业名
+	local level = accountInfo.characterLevel	--等级
+	--local factionName = accountInfo.factionName--阵营
+	local gamename = accountInfo.wowProjectID	--游戏id,1是正式服,11是wlk
+	local rich = accountInfo.richPresence	--丰富返回游戏版本-区域-服务器
+	local timerunningSeasonID = accountInfo.timerunningSeasonID --赛季ID用于幻彩服务器
 	--标题栏
 	local class
 	if characterName and className then
