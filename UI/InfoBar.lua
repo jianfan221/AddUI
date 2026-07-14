@@ -191,9 +191,9 @@ end
 --fps鼠标提示加上内存
 local function formatTotal(Total)
 	if Total >= 1024 then
-		return format("%.1f".."mb|r" or "%.1fmb", Total / 1024)
+		return format("%.1fmb", Total / 1024)
 	else
-		return format("%d".."kb|r" or "%dkb", Total)
+		return format("%dkb", Total)
 	end
 end
 
@@ -214,7 +214,7 @@ fps:SetScript("OnEnter", function(self)
 	GameTooltip:AddDoubleLine("总内存使用:",formatTotal(GetAllAddonsMemory()),.6,.8,1,1,1,1)
 	GameTooltip:AddLine(" ")
 	for i = 1, C_AddOns.GetNumAddOns() do
-		Mem = GetAddOnMemoryUsage(i)
+		local Mem = GetAddOnMemoryUsage(i)
 		MemoryTabel[i] = { select(2, C_AddOns.GetAddOnInfo(i)), Mem, C_AddOns.IsAddOnLoaded(i) }
 	end
 	table.sort(MemoryTabel, function(a, b)
