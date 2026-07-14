@@ -54,6 +54,24 @@ ns.event("ADDON_LOADED", function(event, addon)
 	end
 end)
 
+--自动对话（按住 Shift 跳过）
+ns.event("GOSSIP_SHOW", function()
+	if not C_ChallengeMode.IsChallengeModeActive() or IsShiftKeyDown() then return end -- 非大秘境/按住Shift跳过
+	local opts = C_GossipInfo.GetOptions()
+	if not opts or not opts[1] then return end -- 无对话选项跳过
+	if #opts ~= 1 then return end -- 非唯一选项跳过（修理/出售等）
+	local icon = opts[1].icon
+	if icon ~= 132053 and icon ~= 1019848 then return end -- 非八卦图标跳过
+	local hadPopup = StaticPopup_Visible(nil)
+	C_GossipInfo.SelectOption(opts[1].gossipOptionID)
+	UIErrorsFrame:AddExternalWarningMessage(WOWLABS_AREA_MAP_AUTO_SELECT.." "..opts[1].name)
+	if not hadPopup and StaticPopup_Visible(nil) then
+		local btn = StaticPopup_Visible(nil):GetButton1()
+		if btn then btn:Click() end
+	end
+	C_GossipInfo.CloseGossip()
+end)
+
 --计时器
 -- style: 0=纯文本(无颜色), nil=自动(负红正绿), 1=绿, 2=红, 3=棕
 -- showMillis: true 则显示3位毫秒
