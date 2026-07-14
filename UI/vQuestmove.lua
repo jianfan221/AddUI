@@ -151,16 +151,25 @@ local function OnAutoQuestEvent(event, ...)
 	end
 
 	if (event=="QUEST_GREETING") then
-		local npcAvailableQuestCount = GetNumAvailableQuests()
-		local npcActiveQuestCount = GetNumActiveQuests()
+		local nAvailable = C_GossipInfo.GetNumAvailableQuests()
+		local availableQuests = C_GossipInfo.GetAvailableQuests()
+		local nActive = C_GossipInfo.GetNumActiveQuests()
+		local activeQuests = C_GossipInfo.GetActiveQuests()
 
-		if (npcAvailableQuestCount > 0) then
-			for i = 1, GetNumAvailableQuests() do
-				SelectAvailableQuest(i)
+		if nAvailable > 0 then
+			for i, quest in ipairs(availableQuests) do
+				if not quest.repeatable or nAvailable < 2 then
+					C_GossipInfo.SelectAvailableQuest(quest.questID)
+				end
 			end
-		elseif (npcActiveQuestCount > 0) then
-			for i = 1, GetNumActiveQuests() do
-				SelectActiveQuest(i)
+			if availableQuests[1] and availableQuests[1].repeatable and nAvailable > 1 then
+				C_GossipInfo.SelectAvailableQuest(availableQuests[1].questID)
+			end
+		elseif nActive > 0 then
+			for i, quest in ipairs(activeQuests) do
+				if quest.isComplete then
+					C_GossipInfo.SelectActiveQuest(quest.questID)
+				end
 			end
 		end
 	end
