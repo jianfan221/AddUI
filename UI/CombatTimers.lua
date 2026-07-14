@@ -59,6 +59,7 @@ ns.event("PLAYER_LOGIN", function()
 	ns.AddEdit(battleFrame,"战复")
 	battleFrame.Icon:SetTexture(C_Spell.GetSpellTexture(20484))
 	battleFrame.Cooldown:SetReverse(false)
+	battleFrame.Cooldown:SetCountdownAbbrevThreshold(600)
 	battleFrame.Applications:SetScale(1.2)
 	local battleUpdateElapsed = 0
 	battleFrame:SetScript("OnUpdate", function(self, elapsed)
