@@ -114,7 +114,7 @@ local function SetItemUseBuff()
 			if ns.ItemBuffTable[id] then
 				ns.ItemBuffTable[id]["frame"]:Show()
 				ns.ItemBuffTable[id]["frame"]["Cooldown"]:SetCooldown(GetTime(),ns.ItemBuffTable[id]["time"])
-				SortIcon(ns.ItemBuffTable[id]["frame"])
+				SortIcon()
 			end
 		end
 		if event == "PLAYER_DEAD" then
