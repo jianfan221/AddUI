@@ -44,7 +44,7 @@ ns.event("PLAYER_LOGIN", function()
 		end
 		
 		if StatList[STAT_CRITICAL_STRIKE] then
-			StatList[STAT_CRITICAL_STRIKE]:SetText(format("%.2f%%", GetSpellCritChance(2)))
+			StatList[STAT_CRITICAL_STRIKE]:SetText(format("%.2f%%", GetSpellCritChance()))
 		else
 			CreateText(STAT_CRITICAL_STRIKE,STAT_CRITICAL_STRIKE,{1, 0.5, 0})
 		end
