@@ -11,6 +11,14 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 		PremadeGroupsFilterSettings.leaderCrown = false	--显示队长标记
 		PremadeGroupsFilterSettings.oneClickSignUp = false	--点击申请
 	end
+	--12.1暴雪把刷新按钮和搜索框大小改了,恢复到之前的布局
+	if LFGListFrame.SearchPanel.RefreshButton then
+		LFGListFrame.SearchPanel.RefreshButton:ClearAllPoints()
+		LFGListFrame.SearchPanel.RefreshButton:SetPoint("LEFT", LFGListFrame.SearchPanel.CategoryName, "RIGHT", 15, 1)
+		LFGListFrame.SearchPanel.SearchBox:ClearAllPoints()
+		LFGListFrame.SearchPanel.SearchBox:SetPoint("TOPLEFT", LFGListFrame.SearchPanel.CategoryName, "BOTTOMLEFT", 4, -7)
+		LFGListFrame.SearchPanel.SearchBox:SetPoint("RIGHT", LFGListFrame.SearchPanel.FilterButton, "LEFT", -2, 0)
+	end
 end
 
 --[[解决预创建GetPlaystyleString报错问题https://github.com/0xbs/premade-groups-filter/issues/64
