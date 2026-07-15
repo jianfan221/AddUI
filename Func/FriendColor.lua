@@ -57,11 +57,12 @@ if view and view.GetTemplateExtent then
     end
 end
 
-ns.tips("新版好友列表隐藏战网ID")
+ns.tips("隐藏好友列表战网ID,点击时显示") 
 if SocialUIFrame then
     local tagFrame = SocialUIFrame.BattleNetBar and SocialUIFrame.BattleNetBar.ControlsContainer and SocialUIFrame.BattleNetBar.ControlsContainer.PersonalBattleTagDisplay
-    if tagFrame then
+    if tagFrame and tagFrame.ShowBestDisplayTextAndButton then
         local hidden = true
+
         local cover = CreateFrame("Button", nil, tagFrame)
         cover:SetAllPoints()
         cover:RegisterForClicks("AnyUp")
@@ -70,14 +71,26 @@ if SocialUIFrame then
             tagFrame.DisplayText:SetShown(not hidden)
             tagFrame.CopyBattleTagToClipboardButton:SetShown(not hidden)
         end)
-        SocialUIFrame:HookScript("OnShow", function()
-            tagFrame.DisplayText:Hide()
-            tagFrame.CopyBattleTagToClipboardButton:Hide()
-        end)
+
+        -- 初始隐藏
+        tagFrame.DisplayText:Hide()
+        tagFrame.CopyBattleTagToClipboardButton:Hide()
+
+        -- Hook 暴雪的显示方法，根据 hidden 状态决定是否重新隐藏
+        -- 暴雪在 BN_CONNECTED/PLAYER_ENTERING_WORLD/FRAMES_LOADED 等事件中
+        -- 通过 RefreshElementVisibility → ShowBestDisplayTextAndButton 重新显示
+        local origShow = tagFrame.ShowBestDisplayTextAndButton
+        tagFrame.ShowBestDisplayTextAndButton = function(self)
+            origShow(self)
+            if hidden then
+                self.DisplayText:Hide()
+                self.CopyBattleTagToClipboardButton:Hide()
+            end
+        end
     end
 end
 
-ns.tips("隐藏好友列表战网ID,点击时显示") -- 12.1 正式上线后可删除（已被 SocialUI 取代）
+-- 12.1 正式上线后可删除（已被 SocialUI 取代）
 --隐藏好友列表战网ID,点击时显示
 local HideBattleIDclick = true
 local HideBattleID = CreateFrame("Button", "HideBattleID", FriendsFrameBattlenetFrame);
@@ -98,7 +111,7 @@ FriendsFrameBattlenetFrame.Tag:HookScript("OnShow", function(self)
 	end
 end)
 
-ns.tips("好友列表染色显示服务器") -- 12.1 正式上线后可删除（已被 SocialUI 取代）
+-- 12.1 正式上线后可删除（已被 SocialUI 取代）
 ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	if not FriendsListFrame or not FriendsListFrame:IsShown() then return end
 	if not friendbutton.id then return end
