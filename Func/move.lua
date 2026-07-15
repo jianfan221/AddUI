@@ -8,6 +8,7 @@ ns.tips("让暴雪的一些框体可以移动")
 local frametable = {
 	"CharacterFrame",	--角色
 	"FriendsFrame",		--好友
+	"SocialUIFrame",	--社交(12.1新好友)
 	"PVEFrame",			--地下城与PVP
 	"ContainerFrameCombinedBags",	--背包
 	"WorldMapFrame",	--大地图
