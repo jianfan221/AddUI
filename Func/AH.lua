@@ -117,15 +117,3 @@ local function OnAuctionHouseShow(event)
 end
 
 ns.event("AUCTION_HOUSE_SHOW", OnAuctionHouseShow)
-
---BlizzardInterfaceCode\Interface\FrameXML\UIParent
-ns.tips("让拍卖行和专业界面可以同时打开")
-function CanShowRightUIPanel(frame)
-	local width = frame and GetUIPanelWidth(frame) or UIParent:GetAttribute("DEFAULT_FRAME_WIDTH");
-	local rightSide = UIParent:GetAttribute("RIGHT_OFFSET") + width;
-	if frame == AuctionHouseFrame or frame == ProfessionsFrame then
-		return true
-	else
-		return rightSide <= GetMaxUIPanelsWidth();
-	end
-end
