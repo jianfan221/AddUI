@@ -2,49 +2,56 @@
 local _,ns = ...
 
 ns.tips("好友列表卡片重新布局")
-if FriendsListSocialCardMixin and FriendsListSocialCardMixin.Initialize then
-    local orig = FriendsListSocialCardMixin.Initialize
-    FriendsListSocialCardMixin.Initialize = function(self, node)
-        orig(self, node)
-        self:SetHeight(35)
+ns.hook(FriendsListSocialCardMixin, "Initialize", function(self, node)
+	self:SetHeight(35)
 
-        -- 重排文字：一行 FriendName Name，二行 Level Class Location
-        self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 8)
-        self.Name:ClearAllPoints()
-        self.Name:SetPoint("BOTTOMLEFT", self.FriendName, "BOTTOMRIGHT", 4, 0)
-        self.Name:SetPoint("BOTTOM", self.FriendName)
-        self.Name:SetWidth(0)
-        self.Name:SetFontObject(self.FriendName:GetFontObject())
-        self.StateDisplay:ClearAllPoints()
-        self.StateDisplay:SetPoint("BOTTOMLEFT", self.Name, "BOTTOMRIGHT", -2, -1)
+	-- 重排文字：一行 FriendName Name，二行 Level Class Location
+	self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 8)
+	self.Name:ClearAllPoints()
+	self.Name:SetPoint("BOTTOMLEFT", self.FriendName, "BOTTOMRIGHT", 4, 0)
+	self.Name:SetPoint("BOTTOM", self.FriendName)
+	self.Name:SetWidth(0)
+	self.Name:SetFontObject(self.FriendName:GetFontObject())
+	self.StateDisplay:ClearAllPoints()
+	self.StateDisplay:SetPoint("BOTTOMLEFT", self.Name, "BOTTOMRIGHT", -2, -1)
 
-        self.Level:Hide()
-        self.Class:Hide()
+	self.Level:Hide()
+	self.Class:Hide()
 
-        self.Location:ClearAllPoints()
-        self.Location:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
+	self.Location:ClearAllPoints()
+	self.Location:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
 
-        -- Level、Class、realm 都用 Location 的颜色（FRIENDS_GRAY_COLOR）
-        local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
-        if gameAccountInfo then
-            local parts = {}
-            if gameAccountInfo.areaName then tinsert(parts, gameAccountInfo.areaName) end
-            if gameAccountInfo.realmDisplayName then tinsert(parts, gameAccountInfo.realmDisplayName) end
-            if gameAccountInfo.characterLevel then tinsert(parts, gameAccountInfo.characterLevel) end
-            if #parts > 0 then
-                self.Location:SetText(FRIENDS_GRAY_COLOR:WrapTextInColorCode(table.concat(parts, " ")))
-            end
-        end
+	-- Level、Class、realm 都用 Location 的颜色（FRIENDS_GRAY_COLOR）
+	local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
+	if gameAccountInfo then
+		local parts = {}
+		if gameAccountInfo.areaName then tinsert(parts, gameAccountInfo.areaName) end
+		if gameAccountInfo.realmDisplayName then tinsert(parts, gameAccountInfo.realmDisplayName) end
+		if gameAccountInfo.characterLevel then tinsert(parts, gameAccountInfo.characterLevel) end
+		if #parts > 0 then
+			self.Location:SetText(FRIENDS_GRAY_COLOR:WrapTextInColorCode(table.concat(parts, " ")))
+		end
+	end
 
-        -- Name 改为职业颜色
-        if gameAccountInfo and gameAccountInfo.characterName and gameAccountInfo.classFilename and gameAccountInfo.classFilename ~= "" then
-            local color = GetClassColorObj(gameAccountInfo.classFilename)
-            if color then
-                self.Name:SetText(color:WrapTextInColorCode(gameAccountInfo.characterName))
-            end
-        end
-    end
+	-- Name 改为职业颜色
+	if gameAccountInfo and gameAccountInfo.characterName and gameAccountInfo.classFilename and gameAccountInfo.classFilename ~= "" then
+		local color = GetClassColorObj(gameAccountInfo.classFilename)
+		if color then
+			self.Name:SetText(color:WrapTextInColorCode(gameAccountInfo.characterName))
+		end
+	end
+end)
+-- 可邀请时变绿色，其他情况恢复默认
+if FriendsListSocialCardPartyButtonMixin then
+	ns.hook(FriendsListSocialCardPartyButtonMixin, "RefreshIcon", function(btn)
+		if btn:IsEnabled() and not btn.isInGroup then
+			btn.ActionIcon:SetVertexColor(0,1,0)
+		else
+			btn.ActionIcon:SetVertexColor(1,1,1)
+		end
+	end)
 end
+-- 卡片间距减半，配合 SetHeight(35) 实现紧凑布局
 local view = SocialUIFrame and SocialUIFrame.FriendsList
 if view and view.GetTemplateExtent then
     local orig = view.GetTemplateExtent
