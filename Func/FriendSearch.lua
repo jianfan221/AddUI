@@ -1,5 +1,46 @@
 ﻿local _,ns = ...
-ns.tips("好友列表添加搜索好友按钮")
+
+-- SocialUIFrame 搜索框即时搜索（12.1 PTR 新好友列表）
+-- 暴雪默认只在按回车时触发搜索，改为文字改变时即时触发
+do
+	ns.tips("好友列表搜索优化")
+	local view = SocialUIFrame and SocialUIFrame.FriendsList
+	local sb = view and view.FilterBar and view.FilterBar.SearchBar
+
+	local function DoSearch()
+		if not view or not view.OnSearchEnterPressed then return end
+		local text = sb:GetText():lower()
+		if text == "" then
+			view:OnSearchEnterPressed("")
+			return
+		end
+		local filtered = {}
+		for i = 1, BNGetNumFriends() do
+			local info = C_BattleNet.GetFriendAccountInfo(i)
+			if info then
+				local match = (info.battleTag or ""):lower():find(text, 1, true)
+					or (info.gameAccountInfo.characterName or ""):lower():find(text, 1, true)
+					or (info.gameAccountInfo.className or ""):lower():find(text, 1, true)
+					or (info.gameAccountInfo.areaName or ""):lower():find(text, 1, true)
+					or (info.gameAccountInfo.realmDisplayName or ""):lower():find(text, 1, true)
+				if match then tinsert(filtered, i) end
+			end
+		end
+		C_Timer.After(0, function()
+			view.ScrollBox:SetDataProvider(view:GenerateDataProvider(filtered), ScrollBoxConstants.DiscardScrollPosition)
+		end)
+	end
+
+	if sb then
+		sb:HookScript("OnTextChanged", DoSearch)--搜索框文字改变时触发搜索
+		sb:HookScript("OnShow", DoSearch)-- 显示时也触发搜索，避免搜索框隐藏后再显示时列表不刷新
+		ns.hook(view, "Refresh", DoSearch)-- 好友列表刷新（上线/下线等）后重新搜索
+		sb:SetScript("OnEnterPressed", function() sb:ClearFocus() end)--回车取消焦点
+	end
+
+end
+
+ns.tips("好友列表添加搜索好友按钮") -- 12.1 正式上线后可删除（已被 SocialUI 取代）
 --抄自FriendListHelper
 local function UpdateFriendList(searchText)
 	if not FriendsListFrame or not FriendsListFrame:IsShown() then return end
