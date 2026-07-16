@@ -65,7 +65,6 @@ if SocialUIFrame then
 	end
 
 	ns.tips("隐藏好友列表战网ID,点击时显示")
-
 	local tagFrame = SocialUIFrame.BattleNetBar and SocialUIFrame.BattleNetBar.ControlsContainer and SocialUIFrame.BattleNetBar.ControlsContainer.PersonalBattleTagDisplay
 	if tagFrame and tagFrame.ShowBestDisplayTextAndButton then
 		local hidden = true
