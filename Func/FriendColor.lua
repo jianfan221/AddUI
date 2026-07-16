@@ -1,48 +1,48 @@
 ﻿local _,_,_,mygame = GetBuildInfo()
 local _,ns = ...
+if SocialUIFrame then
+	ns.tips("好友列表卡片重新布局")
+	ns.hook(FriendsListSocialCardMixin, "Initialize", function(self, node)
+		self:SetHeight(35)
 
-ns.tips("好友列表卡片重新布局")
-ns.hook(FriendsListSocialCardMixin, "Initialize", function(self, node)
-	self:SetHeight(35)
+		-- 重排文字：一行 FriendName Name，二行 Level Class Location
+		self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 8)
+		self.Name:ClearAllPoints()
+		self.Name:SetPoint("BOTTOMLEFT", self.FriendName, "BOTTOMRIGHT", 4, 0)
+		self.Name:SetPoint("BOTTOM", self.FriendName)
+		self.Name:SetWidth(0)
+		self.Name:SetFontObject(self.FriendName:GetFontObject())
+		self.StateDisplay:ClearAllPoints()
+		self.StateDisplay:SetPoint("BOTTOMLEFT", self.Name, "BOTTOMRIGHT", -2, -1)
 
-	-- 重排文字：一行 FriendName Name，二行 Level Class Location
-	self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 8)
-	self.Name:ClearAllPoints()
-	self.Name:SetPoint("BOTTOMLEFT", self.FriendName, "BOTTOMRIGHT", 4, 0)
-	self.Name:SetPoint("BOTTOM", self.FriendName)
-	self.Name:SetWidth(0)
-	self.Name:SetFontObject(self.FriendName:GetFontObject())
-	self.StateDisplay:ClearAllPoints()
-	self.StateDisplay:SetPoint("BOTTOMLEFT", self.Name, "BOTTOMRIGHT", -2, -1)
+		self.Level:Hide()
+		self.Class:Hide()
 
-	self.Level:Hide()
-	self.Class:Hide()
+		self.Location:ClearAllPoints()
+		self.Location:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
 
-	self.Location:ClearAllPoints()
-	self.Location:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
-
-	-- Level、Class、realm 都用 Location 的颜色（FRIENDS_GRAY_COLOR）
-	local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
-	if gameAccountInfo then
-		local parts = {}
-		if gameAccountInfo.areaName then tinsert(parts, gameAccountInfo.areaName) end
-		if gameAccountInfo.realmDisplayName then tinsert(parts, gameAccountInfo.realmDisplayName) end
-		if gameAccountInfo.characterLevel then tinsert(parts, gameAccountInfo.characterLevel) end
-		if #parts > 0 then
-			self.Location:SetText(FRIENDS_GRAY_COLOR:WrapTextInColorCode(table.concat(parts, " ")))
+		-- Level、Class、realm 都用 Location 的颜色（FRIENDS_GRAY_COLOR）
+		local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
+		if gameAccountInfo then
+			local parts = {}
+			if gameAccountInfo.areaName then tinsert(parts, gameAccountInfo.areaName) end
+			if gameAccountInfo.realmDisplayName then tinsert(parts, gameAccountInfo.realmDisplayName) end
+			if gameAccountInfo.characterLevel then tinsert(parts, gameAccountInfo.characterLevel) end
+			if #parts > 0 then
+				self.Location:SetText(FRIENDS_GRAY_COLOR:WrapTextInColorCode(table.concat(parts, " ")))
+			end
 		end
-	end
 
-	-- Name 改为职业颜色
-	if gameAccountInfo and gameAccountInfo.characterName and gameAccountInfo.classFilename and gameAccountInfo.classFilename ~= "" then
-		local color = GetClassColorObj(gameAccountInfo.classFilename)
-		if color then
-			self.Name:SetText(color:WrapTextInColorCode(gameAccountInfo.characterName))
+		-- Name 改为职业颜色
+		if gameAccountInfo and gameAccountInfo.characterName and gameAccountInfo.classFilename and gameAccountInfo.classFilename ~= "" then
+			local color = GetClassColorObj(gameAccountInfo.classFilename)
+			if color then
+				self.Name:SetText(color:WrapTextInColorCode(gameAccountInfo.characterName))
+			end
 		end
-	end
-end)
--- 可邀请时变绿色，其他情况恢复默认
-if FriendsListSocialCardPartyButtonMixin then
+	end)
+
+	-- 可邀请时变绿色，其他情况恢复默认
 	ns.hook(FriendsListSocialCardPartyButtonMixin, "RefreshIcon", function(btn)
 		if btn:IsEnabled() and not btn.isInGroup then
 			btn.ActionIcon:SetVertexColor(0,1,0)
@@ -50,51 +50,51 @@ if FriendsListSocialCardPartyButtonMixin then
 			btn.ActionIcon:SetVertexColor(1,1,1)
 		end
 	end)
-end
--- 卡片间距减半，配合 SetHeight(35) 实现紧凑布局
-local view = SocialUIFrame and SocialUIFrame.FriendsList
-if view and view.GetTemplateExtent then
-    local orig = view.GetTemplateExtent
-    view.GetTemplateExtent = function(self, template)
-        local extent = orig(self, template)
-        if template == "FriendsListSocialCardTemplate" then
-            return extent / 2
-        end
-        return extent
-    end
-end
 
-ns.tips("隐藏好友列表战网ID,点击时显示") 
-if SocialUIFrame then
-    local tagFrame = SocialUIFrame.BattleNetBar and SocialUIFrame.BattleNetBar.ControlsContainer and SocialUIFrame.BattleNetBar.ControlsContainer.PersonalBattleTagDisplay
-    if tagFrame and tagFrame.ShowBestDisplayTextAndButton then
-        local hidden = true
+	-- 卡片间距减半，配合 SetHeight(35) 实现紧凑布局
+	local view = SocialUIFrame and SocialUIFrame.FriendsList
+	if view and view.GetTemplateExtent then
+		local orig = view.GetTemplateExtent
+		view.GetTemplateExtent = function(self, template)
+			local extent = orig(self, template)
+			if template == "FriendsListSocialCardTemplate" then
+				return extent / 2
+			end
+			return extent
+		end
+	end
 
-        local cover = CreateFrame("Button", nil, tagFrame)
-        cover:SetAllPoints()
-        cover:RegisterForClicks("AnyUp")
-        cover:SetScript("OnClick", function()
-            hidden = not hidden
-            tagFrame.DisplayText:SetShown(not hidden)
-            tagFrame.CopyBattleTagToClipboardButton:SetShown(not hidden)
-        end)
+	ns.tips("隐藏好友列表战网ID,点击时显示")
 
-        -- 初始隐藏
-        tagFrame.DisplayText:Hide()
-        tagFrame.CopyBattleTagToClipboardButton:Hide()
+	local tagFrame = SocialUIFrame.BattleNetBar and SocialUIFrame.BattleNetBar.ControlsContainer and SocialUIFrame.BattleNetBar.ControlsContainer.PersonalBattleTagDisplay
+	if tagFrame and tagFrame.ShowBestDisplayTextAndButton then
+		local hidden = true
 
-        -- Hook 暴雪的显示方法，根据 hidden 状态决定是否重新隐藏
-        -- 暴雪在 BN_CONNECTED/PLAYER_ENTERING_WORLD/FRAMES_LOADED 等事件中
-        -- 通过 RefreshElementVisibility → ShowBestDisplayTextAndButton 重新显示
-        local origShow = tagFrame.ShowBestDisplayTextAndButton
-        tagFrame.ShowBestDisplayTextAndButton = function(self)
-            origShow(self)
-            if hidden then
-                self.DisplayText:Hide()
-                self.CopyBattleTagToClipboardButton:Hide()
-            end
-        end
-    end
+		local cover = CreateFrame("Button", nil, tagFrame)
+		cover:SetAllPoints()
+		cover:RegisterForClicks("AnyUp")
+		cover:SetScript("OnClick", function()
+			hidden = not hidden
+			tagFrame.DisplayText:SetShown(not hidden)
+			tagFrame.CopyBattleTagToClipboardButton:SetShown(not hidden)
+		end)
+
+		-- 初始隐藏
+		tagFrame.DisplayText:Hide()
+		tagFrame.CopyBattleTagToClipboardButton:Hide()
+
+		-- Hook 暴雪的显示方法，根据 hidden 状态决定是否重新隐藏
+		-- 暴雪在 BN_CONNECTED/PLAYER_ENTERING_WORLD/FRAMES_LOADED 等事件中
+		-- 通过 RefreshElementVisibility → ShowBestDisplayTextAndButton 重新显示
+		local origShow = tagFrame.ShowBestDisplayTextAndButton
+		tagFrame.ShowBestDisplayTextAndButton = function(self)
+			origShow(self)
+			if hidden then
+				self.DisplayText:Hide()
+				self.CopyBattleTagToClipboardButton:Hide()
+			end
+		end
+	end
 end
 
 -- 12.1 正式上线后可删除（已被 SocialUI 取代）
