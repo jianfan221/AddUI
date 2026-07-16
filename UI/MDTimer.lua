@@ -62,14 +62,13 @@ ns.event("GOSSIP_SHOW", function()
 	if #opts ~= 1 then return end -- 非唯一选项跳过（修理/出售等）
 	local icon = opts[1].icon
 	if icon ~= 132053 and icon ~= 1019848 then return end -- 非八卦图标跳过
-	local hadPopup = StaticPopup_Visible(nil)
 	C_GossipInfo.SelectOption(opts[1].gossipOptionID)
 	UIErrorsFrame:AddExternalWarningMessage(WOWLABS_AREA_MAP_AUTO_SELECT.." "..opts[1].name)
-	if not hadPopup and StaticPopup_Visible(nil) then
-		local btn = StaticPopup_Visible(nil):GetButton1()
-		if btn then btn:Click() end
-	end
-	C_GossipInfo.CloseGossip()
+	C_Timer.After(0, function()
+		if not StaticPopup_IsAnyDialogShown() then
+			C_GossipInfo.CloseGossip()
+		end
+	end)
 end)
 
 --计时器
