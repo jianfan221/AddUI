@@ -3,6 +3,7 @@
 ## Notes: 各类插件功能界面整合包|cff69ccf0by简繁|r
 ## Author: CN-无尽之海-简繁丶
 ## IconTexture: 135451
+## X-ModUs-UID: 22
 ## SavedVariables: AddUIDB
 ## Version: 20260715
 
