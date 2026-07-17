@@ -5,7 +5,7 @@
 ## IconTexture: 135451
 ## X-ModUs-UID: 22
 ## SavedVariables: AddUIDB
-## Version: 20260718
+## Version: 20260718.1
 
 AddUI-API.lua
 AddUIDB.lua
@@ -34,7 +34,8 @@ Func\move.lua
 Func\Professions.lua
 Func\SCmacro.lua
 Func\SetMacro.lua
-Func\SyMerchant.lua
+Func\MerchantSearch.lua
+Func\Merchant.lua
 Func\zu.lua
 
 SetAddon\CVar.lua
