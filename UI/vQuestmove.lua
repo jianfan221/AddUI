@@ -151,25 +151,16 @@ local function OnAutoQuestEvent(event, ...)
 	end
 
 	if (event=="QUEST_GREETING") then
-		local nAvailable = C_GossipInfo.GetNumAvailableQuests()
-		local availableQuests = C_GossipInfo.GetAvailableQuests()
-		local nActive = C_GossipInfo.GetNumActiveQuests()
-		local activeQuests = C_GossipInfo.GetActiveQuests()
+		local npcAvailableQuestCount = C_GossipInfo.GetNumAvailableQuests()
+		local npcActiveQuestCount = C_GossipInfo.GetNumActiveQuests()
 
-		if nAvailable > 0 then
-			for i, quest in ipairs(availableQuests) do
-				if not quest.repeatable or nAvailable < 2 then
-					C_GossipInfo.SelectAvailableQuest(quest.questID)
-				end
+		if (npcAvailableQuestCount > 0) then
+			for i = 1, C_GossipInfo.GetNumAvailableQuests() do
+				C_GossipInfo.SelectAvailableQuest(i)
 			end
-			if availableQuests[1] and availableQuests[1].repeatable and nAvailable > 1 then
-				C_GossipInfo.SelectAvailableQuest(availableQuests[1].questID)
-			end
-		elseif nActive > 0 then
-			for i, quest in ipairs(activeQuests) do
-				if quest.isComplete then
-					C_GossipInfo.SelectActiveQuest(quest.questID)
-				end
+		elseif (npcActiveQuestCount > 0) then
+			for i = 1, C_GossipInfo.GetNumActiveQuests() do
+				C_GossipInfo.SelectActiveQuest(i)
 			end
 		end
 	end
@@ -183,12 +174,12 @@ local function OnAutoQuestEvent(event, ...)
 	end
 
 	if (event=="QUEST_COMPLETE") then
-		local npcQuestRewardsCount = GetNumQuestChoices()
+		local npcQuestRewardsCount = C_GossipInfo.GetNumQuestChoices()
 		if (npcQuestRewardsCount > 1) then
 			--选择奖励
 			PlaySound(5274, "master")
 		else
-			GetQuestReward(1)
+			C_GossipInfo.GetQuestReward(1)
 		end
 	end
 end
