@@ -164,12 +164,12 @@ ns.hook(ScenarioObjectiveTracker.ChallengeModeBlock,"UpdateTime", function(self,
 		self.Split:SetAllPoints(self)
 
 		self.Split_Bar3 = self.Split:CreateTexture(nil, "OVERLAY")
-		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6) - 3, 1)
+		self.Split_Bar3:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.6), 1)
 		self.Split_Bar3:SetSize(3, barH)
 		self.Split_Bar3:SetColorTexture(1, 0.843, 0)
 
 		self.Split_Bar2 = self.Split:CreateTexture(nil, "OVERLAY")
-		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8) - 3, 1)
+		self.Split_Bar2:SetPoint("TOPLEFT", self.StatusBar, "TOPLEFT", barW * (1 - 0.8), 1)
 		self.Split_Bar2:SetSize(3, barH)
 		self.Split_Bar2:SetColorTexture(0.78, 0.78, 0.812)
 
