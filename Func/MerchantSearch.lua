@@ -141,32 +141,16 @@ end)
 ns.event("MERCHANT_SHOW", function()
 	if MerchantSearchBox then return end
 
-	local searchBox = CreateFrame("EditBox", "MerchantSearchBox", MerchantFrame, "InputBoxTemplate")
+	local searchBox = CreateFrame("EditBox", "MerchantSearchBox", MerchantFrame, "SearchBoxTemplate")
 	searchBox:SetSize(110, 22)
 	searchBox:SetPoint("TOPLEFT", MerchantFrame, "TOPLEFT", 60, -30)
 	searchBox:SetAutoFocus(false)
-	searchBox:SetText("")
-
-	local placeholder = searchBox:CreateFontString(nil, "OVERLAY", "GameFontHighlight")
-	placeholder:SetPoint("LEFT", searchBox, "LEFT", 2, 0)
-	placeholder:SetText("搜索物品...")
-	placeholder:SetTextColor(0.5, 0.5, 0.5, 0.7)
-
-	local clearBtn = CreateFrame("Button", nil, searchBox)
-	clearBtn:SetSize(16, 16)
-	clearBtn:SetPoint("RIGHT", -2, 0)
-	clearBtn:SetNormalTexture("common-search-clearbutton")
-	clearBtn:SetHighlightTexture("common-search-clearbutton")
-	clearBtn:Hide()
-	clearBtn:SetScript("OnClick", function()
-		searchBox:SetText("")
-	end)
+	SearchBoxTemplate_OnLoad(searchBox)
 
 	searchBox:SetScript("OnTextChanged", function(self)
+		SearchBoxTemplate_OnTextChanged(self)
 		local text = self:GetText()
 		activeSearch = text
-		clearBtn:SetShown(text ~= "")
-		placeholder:SetShown(text == "")
 
 		if text == "" then
 			MerchantFrame_Update()
@@ -179,18 +163,6 @@ ns.event("MERCHANT_SHOW", function()
 	searchBox:SetScript("OnEnterPressed", function(self)
 		self:ClearFocus()
 	end)
-
-	searchBox:SetScript("OnEditFocusGained", function()
-		placeholder:Hide()
-		clearBtn:Show()
-	end)
-
-	searchBox:SetScript("OnEditFocusLost", function(self)
-		clearBtn:SetShown(self:GetText() ~= "")
-		placeholder:SetShown(self:GetText() == "")
-	end)
-
-	placeholder:Show()
 end)
 
 ns.event("MERCHANT_CLOSED", function()
