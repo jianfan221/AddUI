@@ -174,12 +174,12 @@ local function OnAutoQuestEvent(event, ...)
 	end
 
 	if (event=="QUEST_COMPLETE") then
-		local npcQuestRewardsCount = C_GossipInfo.GetNumQuestChoices()
+		local npcQuestRewardsCount = GetNumQuestChoices()
 		if (npcQuestRewardsCount > 1) then
 			--选择奖励
 			PlaySound(5274, "master")
 		else
-			C_GossipInfo.GetQuestReward(1)
+			GetQuestReward(1)
 		end
 	end
 end
