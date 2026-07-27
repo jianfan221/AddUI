@@ -340,25 +340,6 @@ function ns.percent(number)
 	return AbbreviateNumbers(number,PercentData)
 end
 
---获取职业颜色RGB
-function ns.ClassRGB(unit)
-	local Stylecolor
-	if UnitIsPlayer(unit) then
-		local _, class = UnitClass(unit)
-		Stylecolor = CUSTOM_CLASS_COLORS and CUSTOM_CLASS_COLORS[class] or RAID_CLASS_COLORS[class]
-	elseif UnitReaction(unit, "player") then
-		Stylecolor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
-	end
-	if (not UnitIsConnected(unit)) then	
-		return 0.5, 0.5, 0.5
-	elseif Stylecolor and Stylecolor.r and Stylecolor.g and Stylecolor.b then
-		return Stylecolor.r, Stylecolor.g, Stylecolor.b
-	else
-		return 0.5, 0.5, 0.5
-	end
-end
-
-
 ns.TIPTEXTS = {}
 local tipsindex = 1
 function ns.tips(text)
