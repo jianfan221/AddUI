@@ -122,7 +122,7 @@ local function TooltipBar(self, lineData)
 	--目标的目标
 	if UnitExists(unit.."target") then
 		local TOTClassColor = GetUnitColor(unit.."target")
-		local totname = string.format("|cff%02x%02x%02x%s|r",TOTClassColor.r*255,TOTClassColor.g*255,TOTClassColor.b*255, UnitName(unit.."target"))
+		local totname = C_ColorUtil.WrapTextInColor(UnitName(unit.."target"), TOTClassColor)
 		GameTooltip:AddDoubleLine(TARGET..": "..totname)
 	end
 	local _,_,per = C_ScenarioInfo.GetUnitCriteriaProgressValues(unit)
