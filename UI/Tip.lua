@@ -83,7 +83,7 @@ local function GetUnitColor(unit)
 	local UnitNameColor = {r=1,g=1,b=1}--目标职业颜色
 	if UnitIsPlayer(unit) then
 		local class = UnitClassBase(unit)
-		UnitNameColor = RAID_CLASS_COLORS[class]
+		UnitNameColor = C_ClassColor.GetClassColor(class)
 	elseif UnitReaction(unit, "player") then
 		UnitNameColor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
 	end
