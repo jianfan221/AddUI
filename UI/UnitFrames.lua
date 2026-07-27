@@ -1,5 +1,18 @@
 local _,ns = ...
 
+local function ClassRGB(unit)
+	local Stylecolor
+	if not UnitIsConnected(unit) then
+		Stylecolor = {r = 0.5, g = 0.5, b = 0.5}
+	elseif UnitIsPlayer(unit) then
+		local class = UnitClassBase(unit)
+		Stylecolor = C_ClassColor.GetClassColor(class)
+	elseif UnitReaction(unit, "player") then
+		Stylecolor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
+	end
+	return Stylecolor
+end
+
 --头像血条数值文本
 local function ADDUIUpdateHealthBar(s)
 	if not AddUIDB.unitf then return end
@@ -135,7 +148,8 @@ ns.event("PLAYER_LOGIN", function()
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetFont("Fonts\\ARHei.ttf", 12, "")
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetPoint("TOPLEFT",77,-32)
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar.HealthBarTexture:SetTexture(hptexture1)
-			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(ns.ClassRGB(bossTargetFrame.unit))
+			local color = ClassRGB(bossTargetFrame.unit)
+			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(color.r, color.g, color.b)
 		end
 	end
 
@@ -145,11 +159,13 @@ ns.event("PLAYER_LOGIN", function()
 			self.TargetFrameContainer.FrameTexture:SetVertexColor(0, 0, 0, 1)
 			self.TargetFrameContent.TargetFrameContentMain.ReputationColor:Hide()
 			self.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarTexture(hptexture1)
-			self.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(ns.ClassRGB(self.unit))
+			local color = ClassRGB(self.unit)
+			self.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(color.r, color.g, color.b)
 		elseif self.HealthBar then
 			if not self.HealthBar.SetStatusBarColor then return end
 			self.HealthBar:SetStatusBarTexture(hptexture1)
-			self.HealthBar:SetStatusBarColor(ns.ClassRGB(self.unit))
+			local color = ClassRGB(self.unit)
+			self.HealthBar:SetStatusBarColor(color.r, color.g, color.b)
 		end
 	end
 	ns.hook(TargetFrame, "CheckClassification", FrameBar)
@@ -170,7 +186,8 @@ ns.event("PLAYER_LOGIN", function()
 			PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.PlayerPortraitCornerIcon:SetVertexColor(0, 0, 0, 1)
 			local playerHB = PlayerFrame.PlayerFrameContent.PlayerFrameContentMain.HealthBarsContainer.HealthBar
 			playerHB:SetStatusBarTexture(hptexture1)
-			playerHB:SetStatusBarColor(ns.ClassRGB("player"))
+			local color = ClassRGB("player")
+			playerHB:SetStatusBarColor(color.r, color.g, color.b)
 
 			local attackIcon = PlayerFrame.PlayerFrameContent.PlayerFrameContentContextual.AttackIcon
 			attackIcon:SetPoint("TOPLEFT", PlayerName, "TOPLEFT", -13, 13)
