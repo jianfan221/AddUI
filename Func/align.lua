@@ -201,15 +201,17 @@ end
 GuildControlUIRankSettingsFrameRosterLabel = CreateFrame("Frame")
 GuildControlUIRankSettingsFrameRosterLabel:Hide()
 ns.tips("隐藏系统自带的界面NPC对话框")
-C_AddOns.LoadAddOn('Blizzard_TalkingHeadUI')
-TalkingHeadFrame:UnregisterAllEvents()
---hooksecurefunc(TalkingHeadFrame,"PlayCurrent", function()
-	--TalkingHeadFrame:Hide()
---end)
+EventUtil.ContinueOnAddOnLoaded("Blizzard_TalkingHeadUI", function()
+	TalkingHeadFrame:UnregisterAllEvents()
+end)
 
 
 ns.tips("自动修理部分(优先使用公会修理)")
-ns.event("PLAYER_ENTERING_WORLD", function()--进游戏时先请求一次数据，避免第一次打开商人界面时数据还没准备好
+local sessionGuildRepair = 0                                  -- 本次登录已使用的公修总额
+ns.event("PLAYER_ENTERING_WORLD", function(isInitialLogin, isReloading)
+	if isInitialLogin or isReloading then
+		sessionGuildRepair = 0
+	end
 	if IsInGuild() then
 		QueryGuildBankTab(1)
 		local cost = GetRepairAllCost()                      -- 修理总费用
@@ -221,25 +223,26 @@ end)
 ns.event("MERCHANT_SHOW", function()
 	if CanMerchantRepair() then
 		local cost = GetRepairAllCost()                      -- 修理总费用
-		local gbwm = GetGuildBankWithdrawMoney()             -- 公会银行每日可取上限
+		local gbwm = GetGuildBankWithdrawMoney()             -- 公会银行每日可取上限（固定值，不会减少）
 		local gbk = GetGuildBankMoney()                      -- 公会银行总金额
 		local canGuildRepair = CanGuildBankRepair()          -- 是否允许公会修理
 		local money = GetMoney()                             -- 玩家当前的金钱
 		if cost > 0 then
-			-- 优先公会修理（实际可用金额 = min(每日上限, 银行总金额)）
+			-- 优先公会修理
 			if IsInGuild() and canGuildRepair then
-				local guildMoney = math.min(gbwm, gbk)
+				QueryGuildBankTab(1)                         -- 确保公会银行数据是最新的
+				local dailyRemaining = math.max(0, gbwm - sessionGuildRepair)
+				-- gbk 可能为 0（首次上线数据未到），此时忽略银行余额限制，只管每日上限
+				local guildMoney = gbk > 0 and math.min(dailyRemaining, gbk) or dailyRemaining
 				if guildMoney >= cost then
 					RepairAllItems(true)
 					PlaySound("7994")
+					sessionGuildRepair = sessionGuildRepair + cost
 					print("|cff00FFFF本次使用公会维修：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
 					local newGbk = GetGuildBankMoney()
-					local newGbwm = GetGuildBankWithdrawMoney()
-					if newGbk >= newGbwm then
-						print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(newGbwm))
-					else
-						print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(newGbk))
-					end
+					local newDailyRemaining = math.max(0, gbwm - sessionGuildRepair)
+					local remaining = newGbk > 0 and math.min(newGbk, newDailyRemaining) or newDailyRemaining
+					print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(remaining))
 					return
 				end
 			end
