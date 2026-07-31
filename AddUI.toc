@@ -5,7 +5,7 @@
 ## IconTexture: 135451
 ## X-ModUs-UID: 22
 ## SavedVariables: AddUIDB
-## Version: 20260727
+## Version: 20260801
 
 AddUI-API.lua
 AddUIDB.lua
