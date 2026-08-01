@@ -1,11 +1,22 @@
 ﻿local addonName,ns = ...
+-- 标准动作条名字（StyleButton 与热键刷新共用）
+local ACTIONBARS = {
+	"MultiBarBottomLeft",
+	"MultiBarBottomRight",
+	"Action",
+	"MultiBarLeft",
+	"MultiBarRight",
+	"MultiBar5",
+	"MultiBar6",
+	"MultiBar7",
+}
 function ns.StyleButton()
 	if C_AddOns.IsAddOnLoaded("Dominos") then return end
 	if C_AddOns.IsAddOnLoaded("Bartender4") then return end
 	if C_AddOns.IsAddOnLoaded("ElvUI") then	return end
 	if C_AddOns.IsAddOnLoaded("BigFoot") then return end
 	if C_AddOns.IsAddOnLoaded("NDui") then return end
-	local r={"MultiBarBottomLeft", "MultiBarBottomRight", "Action", "MultiBarLeft", "MultiBarRight","MultiBar5","MultiBar6","MultiBar7"} 
+	local r = ACTIONBARS
 	for b=1,#r do for i=1,12 do
 		
 		_G[r[b].."Button"..i]:SetScale(1.095)
@@ -81,10 +92,6 @@ local ActionBarActionButtonMixinHook_UpdateHotkeys = function(self, actionButton
 
     hotkey:SetText(text)
 end
-local ActionBarActionButtonMixinHook_OnLoad = function(self)
-    ActionBarActionButtonMixinHook_UpdateHotkeys(self)
-    ns.hook(self, "UpdateHotkeys", ActionBarActionButtonMixinHook_UpdateHotkeys)
-end
 -- Force Hotkey Update
 ns.event("PLAYER_LOGIN", function(event)
 	if C_AddOns.IsAddOnLoaded("Dominos") then return end
@@ -93,14 +100,19 @@ ns.event("PLAYER_LOGIN", function(event)
 	if C_AddOns.IsAddOnLoaded("BigFoot") then return end
 	if C_AddOns.IsAddOnLoaded("NDui") then return end
 	if AddUIDB.mmb ==  false  then return end
-	-- Hook existing frames.主要这里是怎么hook住的没看懂,我自己hook不了
-	local ActionBarActionButtonMixin_OnLoad = ActionBarActionButtonMixin.OnLoad
-	local frame = EnumerateFrames()
-	while frame do
-		if frame.OnLoad == ActionBarActionButtonMixin_OnLoad then
-			ActionBarActionButtonMixinHook_OnLoad(frame)
-		end
+	-- Hook 全局 Mixin：登录后新建/动态创建的动作条按钮也会自动生效
+	pcall(hooksecurefunc, ActionBarActionButtonMixin, "UpdateHotkeys", ActionBarActionButtonMixinHook_UpdateHotkeys)
 
-		frame = EnumerateFrames(frame)
+	-- 遍历已知动作条按钮并立即刷新热键
+	-- （避免用 EnumerateFrames 遍历全部 UI 框架，登录时框架过多会导致 "script ran too long"）
+	local bars = ACTIONBARS
+	for _, barName in ipairs(bars) do
+		for i = 1, 12 do
+			local button = _G[barName.."Button"..i]
+			if button then
+				ActionBarActionButtonMixinHook_UpdateHotkeys(button) -- 立即刷新热键
+				ns.hook(button, "UpdateHotkeys", ActionBarActionButtonMixinHook_UpdateHotkeys) -- 后续改键也生效
+			end
+		end
 	end
 end)
