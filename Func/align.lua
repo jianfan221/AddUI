@@ -201,9 +201,10 @@ end
 GuildControlUIRankSettingsFrameRosterLabel = CreateFrame("Frame")
 GuildControlUIRankSettingsFrameRosterLabel:Hide()
 ns.tips("隐藏系统自带的界面NPC对话框")
-EventUtil.ContinueOnAddOnLoaded("Blizzard_TalkingHeadUI", function()
+-- TalkingHeadUI 属于 Blizzard_FrameXML 常驻加载,直接取消事件即可
+if TalkingHeadFrame then
 	TalkingHeadFrame:UnregisterAllEvents()
-end)
+end
 
 
 ns.tips("自动修理部分(优先使用公会修理)")
