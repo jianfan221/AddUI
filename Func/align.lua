@@ -251,6 +251,17 @@ ns.event("MERCHANT_SHOW", function()
 			if money > cost then
 				PlaySound("7994")
 				RepairAllItems()
+				local reason
+				if not IsInGuild() then
+					reason = "未加入公会"
+				elseif not canGuildRepair then
+					reason = "无权限"
+				elseif gbk > 0 and gbk < cost then
+					reason = "公会银行余额不足"
+				else
+					reason = "公会每日修理限额不足"
+				end
+				print("|cffFF9900未使用公会修理: |r"..reason)
 				print("|cffFF0000自费修理：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
 			else
 				print("|cff99CCFF".."没钱修装备了。".."|r")
