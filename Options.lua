@@ -16,6 +16,16 @@ end
 SLASH_AddUIC1 = "/ad"
 SLASH_AddUIC2 = "/addui"
 
+-- 懒构建：frame 首次显示时才执行 builder（只执行一次）
+function ns.LazyBuild(frame, builder)
+	local built = false
+	frame:HookScript("OnShow", function()
+		if built then return end
+		built = true
+		builder()
+	end)
+end
+
 local function newFont(offx, offy, createframe, anchora, anchroframe, anchorb, text, fontsize)
 	local font = createframe:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	font:SetPoint(anchora, anchroframe, anchorb, offx, offy)
@@ -62,7 +72,7 @@ local function newCheckbox(clickX,text, tip, db)
 end
 
 
-ns.event("PLAYER_LOGIN", function()
+ns.LazyBuild(ADDUIGUI, function()
 
 local clear = CreateFrame("Button", "AddUISaveButton", ADDUIGUI, "UIPanelButtonTemplate")
 clear:SetText("恢复默认并重载界面")
@@ -80,7 +90,7 @@ clear:SetScript("OnClick", function()
 end)
 
 local AddUI = newFont(16, 0 , ADDUIGUI, "TOPLEFT", ADDUIGUI, "TOPLEFT", "|cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r", 30)
-local AddUI2 = newFont(0, 5 , ADDUIGUI, "BOTTOMLEFT", AddUI, "BOTTOMRIGHT", "|cff00ffd2源生界面增强|r", 15)
+newFont(0, 5 , ADDUIGUI, "BOTTOMLEFT", AddUI, "BOTTOMRIGHT", "|cff00ffd2源生界面增强|r", 15)
 local somep = ADDUIGUI:CreateFontString(nil, "OVERLAY");
 somep:SetFontObject("GameFontHighlight");
 somep:SetPoint("TOPLEFT", ADDUIGUI, "TOPLEFT", 16, -30 );   
@@ -147,40 +157,40 @@ pcrl:SetScript("OnClick", function()
 	 ReloadUI()
 end)
 
-local unitc = newCheckbox(1,"头像模块","改变头像样式", "unitf")
-local mmbbc = newCheckbox(1,"动作条模块","改变动作条样式", "mmb")
-local mmbac = newCheckbox(1,"禁用动作条额外动画","禁用动作条的施法进度+指向技能圆圈+被断变红!", "mmba")
-local jsnjc = newCheckbox(1,"角色面板耐久","C键面板装备栏下面的耐久度百分比", "syd")
-local smapc = newCheckbox(1,"小地图模块","方形小地图", "smap")
-local smicc = newCheckbox(1,"小地图图标","自动排列小地图图标,指向显示+离开时渐隐", "smapicon")
-local chatc = newCheckbox(1,"聊天窗模块","聊天窗口样式,tab可以切换聊天频道", "chatm")
-local chabc = newCheckbox(1,"聊天频道按钮","提供一行可以切换频道的按钮", "chatb")
-local Friend= newCheckbox(1,"好友列表搜索","此功能会导致不能传送家宅好友", "Friend")
-local zdmhc = newCheckbox(1,"自动卖灰","自动卖垃圾", "mh")
-local kssqc = newCheckbox(1,"快速拾取","增加拾取速度", "sq")
-local castc = newCheckbox(1,"施法条模块","改变施法条样式", "cast")
-local rcast = newCheckbox(1,"|cff00BFFF自定义施法条材质|r","禁用施法条模块此项也会失效", "SCastTexture")
+newCheckbox(1,"头像模块","改变头像样式", "unitf")
+newCheckbox(1,"动作条模块","改变动作条样式", "mmb")
+newCheckbox(1,"禁用动作条额外动画","禁用动作条的施法进度+指向技能圆圈+被断变红!", "mmba")
+newCheckbox(1,"角色面板耐久","C键面板装备栏下面的耐久度百分比", "syd")
+newCheckbox(1,"小地图模块","方形小地图", "smap")
+newCheckbox(1,"小地图图标","自动排列小地图图标,指向显示+离开时渐隐", "smapicon")
+newCheckbox(1,"聊天窗模块","聊天窗口样式,tab可以切换聊天频道", "chatm")
+newCheckbox(1,"聊天频道按钮","提供一行可以切换频道的按钮", "chatb")
+newCheckbox(1,"好友列表搜索","此功能会导致不能传送家宅好友", "Friend")
+newCheckbox(1,"自动卖灰","自动卖垃圾", "mh")
+newCheckbox(1,"快速拾取","增加拾取速度", "sq")
+newCheckbox(1,"施法条模块","改变施法条样式", "cast")
+newCheckbox(1,"|cff00BFFF自定义施法条材质|r","禁用施法条模块此项也会失效", "SCastTexture")
 
-local combc = newCheckbox(2,"进入战斗提示","屏幕中间进入脱离战斗提示", "comb")
-local mizuc = newCheckbox(2,"密语自动邀请","别人密你123或者.组.会自动邀请,支持战网密语", "zu")
-local lfgkc = newCheckbox(2,"|cff00BFFFLFG增强|r","|r|cff00FF00预创建双击申请,自动邀请,自动进组|r\n!!!!!!如果你用集合石,此项自动失效!!!!!!", "lfgkg")
-local raidc = newCheckbox(2,"团队框架模块","血条材质和职责材质和鼠标指向边框", "raidframebuff")
-local raidabs = newCheckbox(2,"团队框架吸收盾","团队框架显示治疗吸奶盾和普通吸收盾", "raidabsorb")
-local stat  = newCheckbox(2,"|cff00BFFF自身属性框体|r","编辑模式拖动位置", "stat")
-local cdset = newCheckbox(2,"冷却管理器美化","冷却管理器美化", "cdset")
-local cdcenter = newCheckbox(2,"冷却管理器居中对齐","冷却管理器居中对齐,|cff00BFFF饰品药水BUFF整合|r", "cdcenter")
-local redama= newCheckbox(2,"大秘境重置伤害统计","大秘境开始时重置伤害统计", "MDRedamage")
-local setdama= newCheckbox(2,"伤害统计样式美化","伤害统计样式美化", "setdama")
-local poidama= newCheckbox(2,"伤害统计自动对齐","伤害统计自动对齐", "poidama")
-local valueda= newCheckbox(2,"伤害统计数值简化","伤害统计数值简化", "valueda")
+newCheckbox(2,"进入战斗提示","屏幕中间进入脱离战斗提示", "comb")
+newCheckbox(2,"密语自动邀请","别人密你123或者.组.会自动邀请,支持战网密语", "zu")
+newCheckbox(2,"|cff00BFFFLFG增强|r","|r|cff00FF00预创建双击申请,自动邀请,自动进组|r\n!!!!!!如果你用集合石,此项自动失效!!!!!!", "lfgkg")
+newCheckbox(2,"团队框架模块","血条材质和职责材质和鼠标指向边框", "raidframebuff")
+newCheckbox(2,"团队框架吸收盾","团队框架显示治疗吸奶盾和普通吸收盾", "raidabsorb")
+newCheckbox(2,"|cff00BFFF自身属性框体|r","编辑模式拖动位置", "stat")
+newCheckbox(2,"冷却管理器美化","冷却管理器美化", "cdset")
+newCheckbox(2,"冷却管理器居中对齐","冷却管理器居中对齐,|cff00BFFF饰品药水BUFF整合|r", "cdcenter")
+newCheckbox(2,"大秘境重置伤害统计","大秘境开始时重置伤害统计", "MDRedamage")
+newCheckbox(2,"伤害统计样式美化","伤害统计样式美化", "setdama")
+newCheckbox(2,"伤害统计自动对齐","伤害统计自动对齐", "poidama")
+newCheckbox(2,"伤害统计数值简化","伤害统计数值简化", "valueda")
 
 
-local cvac = newCheckbox(3,"CVAR自动设置","自动配置一些CVAR,大部分已移动至|cff00FF00/sd|r命令", "cvar")
-local dimic= newCheckbox(3,"|cff00BFFF右下角信息栏|r","|r|cff00FF00右下角显示延迟耐久", "dimi")
-local rolls= newCheckbox(3,"装备一键选择器","一键<需求/贪婪/放弃>全部装备", "autoloot")
-local lotbnt = newCheckbox(3,"Log快捷开关","聊天按钮后面的log按钮", "lotbnt")
-local chatct = newCheckbox(3,"聊天框战斗战复计时器","聊天框右上角战斗战复计时器(战复在编辑模式拖动)", "chatCombatTimer")
-local interrupt = newCheckbox(3,"打断记录","小队打断记录,编辑模式拖动位置\n只记录打断成功的人,持续记录20秒", "interrupt")
+newCheckbox(3,"CVAR自动设置","自动配置一些CVAR,大部分已移动至|cff00FF00/sd|r命令", "cvar")
+newCheckbox(3,"|cff00BFFF右下角信息栏|r","|r|cff00FF00右下角显示延迟耐久", "dimi")
+newCheckbox(3,"装备一键选择器","一键<需求/贪婪/放弃>全部装备", "autoloot")
+newCheckbox(3,"Log快捷开关","聊天按钮后面的log按钮", "lotbnt")
+newCheckbox(3,"聊天框战斗战复计时器","聊天框右上角战斗战复计时器(战复在编辑模式拖动)", "chatCombatTimer")
+newCheckbox(3,"打断记录","小队打断记录,编辑模式拖动位置\n只记录打断成功的人,持续记录20秒", "interrupt")
 
 --材质下拉菜单
 local RadioDropdown = CreateFrame("DropdownButton", nil, ADDUIGUI, "WowStyle1DropdownTemplate")
@@ -307,9 +317,9 @@ end)
 
 end)
 
-ns.event("PLAYER_LOGIN", function()
+ns.LazyBuild(ADDUIUPDATE, function()
 	local AddUI = newFont(16, 0 , ADDUIUPDATE, "TOPLEFT", ADDUIUPDATE, "TOPLEFT", "|cffff5900A|cffffb300d|cfff0ff00d|cff96ff00U|cff3cff00I|r", 30)
-	local AddUI2 = newFont(0, 5 , ADDUIUPDATE, "BOTTOMLEFT", AddUI, "BOTTOMRIGHT", "|cff00ffd2更新记录|r", 15)
+	newFont(0, 5 , ADDUIUPDATE, "BOTTOMLEFT", AddUI, "BOTTOMRIGHT", "|cff00ffd2更新记录|r", 15)
 	local qqun = ADDUIUPDATE:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	qqun:SetPoint("BOTTOMLEFT", 30, -30)
 	qqun:SetText("简繁:|cff00FFFF32655163@qq.com|r      版本:|cff00FFFF"..ns.ADDUIBB)
