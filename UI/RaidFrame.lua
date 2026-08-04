@@ -19,14 +19,6 @@ ns.event("PLAYER_LOGIN", function()
 		frame.roleIcon:SetDrawLayer("OVERLAY")
 	end)
 
-	ns.hook('DefaultCompactUnitFrameSetup', function(frame)
-		frame.healthBar:GetStatusBarTexture():SetDrawLayer("BACKGROUND")
-		frame.healthBar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
-		frame.healthBar:SetFrameLevel(2)
-		frame.powerBar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
-		frame.powerBar:SetFrameLevel(3)
-	end)
-
 	local function SetMouseHighlight(frame)
 		if frame and not frame.adBorder then
 			frame.adBorder = CreateFrame("Frame", nil, frame, "BackdropTemplate")
