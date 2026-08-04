@@ -42,7 +42,6 @@ local function formatTextMoney(money)
 	return format("%.0f", money * 0.0001).."|cffffd700"..GOLD_AMOUNT_SYMBOL
 end
 
-local goldupdate = CreateFrame("Frame")
 local function OnMoneyEvent(event)
 	if event == "PLAYER_ENTERING_WORLD" then
 		OldMoney = GetMoney()
@@ -91,8 +90,6 @@ ns.event("TRADE_MONEY_CHANGED", OnMoneyEvent)
 ns.event("PLAYER_ENTERING_WORLD", OnMoneyEvent)
 
 -----------耐久----------
-local classc = (CUSTOM_CLASS_COLORS or RAID_CLASS_COLORS)[select(2,UnitClass('player'))] 
-local Colored = ("|cff%.2x%.2x%.2x"):format(classc.r * 255, classc.g * 255, classc.b * 255)
 local gradient = function(perc)
 	perc = perc > 1 and 1 or perc < 0 and 0 or perc -- Stay between 0-1
 	local seg, relperc = math.modf(perc*2)
@@ -100,7 +97,6 @@ local gradient = function(perc)
 	local r,g,b = r1+(r2-r1)*relperc,g1+(g2-g1)*relperc,b1+(b2-b1)*relperc
 	return format("|cff%02x%02x%02x",r*255,g*255,b*255),r,g,b
 end
-local durableupdate = CreateFrame("Frame")
 local function OnDurabilityEvent(event)
 	local localSlots = {
 		[1] = {1, "头部", 1000},
@@ -131,7 +127,11 @@ local function OnDurabilityEvent(event)
 	if Total > 0 then
 		durable:SetText(format(gsub("[color]%d|r%%".."耐久","%[color%]",(gradient(floor(localSlots[1][3]*100)/100))), floor(localSlots[1][3]*100)))
 	else
-		durable:SetText(Colored.."无".."|r%D")
+		-- 耐久数据未就绪（如初次登录时耐久全满），黄色"--"表示正在获取
+		durable:SetText("|cffffd700--|r%耐久")
+		if event == "PLAYER_ENTERING_WORLD" then
+			C_Timer.After(1, OnDurabilityEvent)
+		end
 	end
 
 	durable:SetScript("OnEnter", function()
@@ -170,23 +170,19 @@ local function colorlatency(latency)
 	end
 end
 
-local fpscolor
-local latencycolor
-local fpsupdate
-if not fpsupdate then
-	fpsupdate  = C_Timer.NewTicker(1, function()
-		local _, _, latencyHome, latencyWorld = GetNetStats()
-		local lat = math.max(latencyHome, latencyWorld)
-		if floor(GetFramerate()) >= 30 then
-			fpscolor = "|cff0CD809"
-		elseif (floor(GetFramerate()) > 15 and floor(GetFramerate()) < 30) then
-			fpscolor = "|cffE8DA0F"
-		else
-			fpscolor = "|cffD80909"
-		end
-		fps:SetText(fpscolor..floor(GetFramerate()).."|r".." Fps "..colorlatency(lat).."|r".."Ms")
-	end)
-end
+C_Timer.NewTicker(1, function()
+	local _, _, latencyHome, latencyWorld = GetNetStats()
+	local lat = math.max(latencyHome, latencyWorld)
+	local fpscolor
+	if floor(GetFramerate()) >= 30 then
+		fpscolor = "|cff0CD809"
+	elseif (floor(GetFramerate()) > 15 and floor(GetFramerate()) < 30) then
+		fpscolor = "|cffE8DA0F"
+	else
+		fpscolor = "|cffD80909"
+	end
+	fps:SetText(fpscolor..floor(GetFramerate()).."|r".." Fps "..colorlatency(lat).."|r".."Ms")
+end)
 
 --fps鼠标提示加上内存
 local function formatTotal(Total)
@@ -201,7 +197,6 @@ local function GetAllAddonsMemory()
     local memoryUsage = 0
 	UpdateAddOnMemoryUsage()
     for i = 1, C_AddOns.GetNumAddOns() do
-        local _,name = C_AddOns.GetAddOnInfo(i)
         local usage = GetAddOnMemoryUsage(i)
 		memoryUsage = memoryUsage + usage
     end
