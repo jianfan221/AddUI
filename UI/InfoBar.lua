@@ -97,20 +97,42 @@ local gradient = function(perc)
 	local r,g,b = r1+(r2-r1)*relperc,g1+(g2-g1)*relperc,b1+(b2-b1)*relperc
 	return format("|cff%02x%02x%02x",r*255,g*255,b*255),r,g,b
 end
+-- 耐久槽位（提升为外层变量，供事件处理与鼠标提示共用）
+local localSlots = {
+	[1] = {1, "头部", 1000},
+	[2] = {3, "肩部", 1000},
+	[3] = {5, "胸部", 1000},
+	[4] = {6, "腰部", 1000},
+	[5] = {9, "手腕", 1000},
+	[6] = {10, "手", 1000},
+	[7] = {7, "腿部", 1000},
+	[8] = {8, "脚", 1000},
+	[9] = {16, "主手", 1000},
+	[10] = {17, "副手", 1000},
+	[11] = {18, "远程", 1000}
+}
+-- 鼠标提示（初始化时设置一次）
+durable:SetScript("OnEnter", function()
+	local total, equipped = GetAverageItemLevel()
+	GameTooltip:SetOwner(durable, "ANCHOR_TOP", 0, 6);
+	GameTooltip:ClearAllPoints()
+	GameTooltip:SetPoint("BOTTOM", durable, "TOP", 0, 1)
+	GameTooltip:ClearLines()
+	GameTooltip:AddDoubleLine(DURABILITY,format("%s: %d/%d", STAT_AVERAGE_ITEM_LEVEL, equipped, total),0,.6,1,0,.6,1)
+	GameTooltip:AddLine(" ")
+	for i = 1, 11 do
+		if localSlots[i][3] ~= 1000 then
+			local green = localSlots[i][3]*2
+			local red = 1 - green
+			GameTooltip:AddDoubleLine(localSlots[i][2], floor(localSlots[i][3]*100).."%", 1, 1, 1, red + 1, green, 0)
+		end
+	end
+	GameTooltip:AddDoubleLine(" ","--------------",1,1,1,0.5,0.5,0.5)
+	GameTooltip:Show()
+end)
+durable:SetScript("OnLeave", function() GameTooltip:Hide() end)
+
 local function OnDurabilityEvent(event)
-	local localSlots = {
-		[1] = {1, "头部", 1000},
-		[2] = {3, "肩部", 1000},
-		[3] = {5, "胸部", 1000},
-		[4] = {6, "腰部", 1000},
-		[5] = {9, "手腕", 1000},
-		[6] = {10, "手", 1000},
-		[7] = {7, "腿部", 1000},
-		[8] = {8, "脚", 1000},
-		[9] = {16, "主手", 1000},
-		[10] = {17, "副手", 1000},
-		[11] = {18, "远程", 1000}
-	}
 	local Total = 0
 	local current, max
 	for i = 1, 11 do
@@ -126,33 +148,7 @@ local function OnDurabilityEvent(event)
 	
 	if Total > 0 then
 		durable:SetText(format(gsub("[color]%d|r%%".."耐久","%[color%]",(gradient(floor(localSlots[1][3]*100)/100))), floor(localSlots[1][3]*100)))
-	else
-		-- 耐久数据未就绪（如初次登录时耐久全满），黄色"--"表示正在获取
-		durable:SetText("|cffffd700--|r%耐久")
-		if event == "PLAYER_ENTERING_WORLD" then
-			C_Timer.After(1, OnDurabilityEvent)
-		end
 	end
-
-	durable:SetScript("OnEnter", function()
-		local total, equipped = GetAverageItemLevel()
-		GameTooltip:SetOwner(durable, "ANCHOR_TOP", 0, 6);
-		GameTooltip:ClearAllPoints()
-		GameTooltip:SetPoint("BOTTOM", durable, "TOP", 0, 1)
-		GameTooltip:ClearLines()
-		GameTooltip:AddDoubleLine(DURABILITY,format("%s: %d/%d", STAT_AVERAGE_ITEM_LEVEL, equipped, total),0,.6,1,0,.6,1)
-		GameTooltip:AddLine(" ")
-		for i = 1, 11 do
-			if localSlots[i][3] ~= 1000 then
-				local green = localSlots[i][3]*2
-				local red = 1 - green
-				GameTooltip:AddDoubleLine(localSlots[i][2], floor(localSlots[i][3]*100).."%", 1, 1, 1, red + 1, green, 0)
-			end
-		end
-		GameTooltip:AddDoubleLine(" ","--------------",1,1,1,0.5,0.5,0.5)
-		GameTooltip:Show()
-	end)
-	durable:SetScript("OnLeave", function() GameTooltip:Hide() end)
 end
 
 ns.event("UPDATE_INVENTORY_DURABILITY", OnDurabilityEvent)
