@@ -7,16 +7,24 @@ local function ClassRGB(unit)
 	elseif UnitIsPlayer(unit) then
 		local class = UnitClassBase(unit)
 		Stylecolor = C_ClassColor.GetClassColor(class)
-	elseif UnitReaction(unit, "player") then
-		Stylecolor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[UnitReaction(unit, "player")]
+	else
+		local reaction = UnitReaction(unit, "player")
+		if reaction then
+			Stylecolor = FACTION_BAR_COLORS and FACTION_BAR_COLORS[reaction]
+		end
 	end
-	return Stylecolor
+	return Stylecolor or {r = 0.5, g = 0.5, b = 0.5}
 end
 
 --头像血条数值文本
+local statusTextDisplay = GetCVar("statusTextDisplay")
+local function UpdateStatusTextDisplay()
+	statusTextDisplay = GetCVar("statusTextDisplay")
+end
+CVarCallbackRegistry:RegisterCallback("statusTextDisplay", UpdateStatusTextDisplay)
+
 local function ADDUIUpdateHealthBar(s)
 	if not AddUIDB.unitf then return end
-	local cvar = GetCVar("statusTextDisplay")
 	if s.unit == "targettarget" or s.unit == "focustarget" then
 		if not s.PCTargetPercent then
 			s.PCTargetPercent = s:CreateFontString(nil, "OVERLAY")
@@ -27,9 +35,9 @@ local function ADDUIUpdateHealthBar(s)
 		end
 		s.PCTargetPercent:SetText(ns.value(UnitHealth(s.unit)))
 	end
-	if cvar ~= "PERCENT" then 
+	if statusTextDisplay ~= "PERCENT" then 
 		if s.TextString and s.currValue then 
-			if cvar == "NUMERIC" and not s.TextString2 and s.unit ~= "pet" then
+			if statusTextDisplay == "NUMERIC" and not s.TextString2 and s.unit ~= "pet" then
 				s.TextString2 = s:CreateFontString(nil, "OVERLAY")
 				s.TextString2:SetFont("Fonts\\ARHei.ttf", 12, "OUTLINE")
 				s.TextString2:SetVertexColor(1, 1, 1)
@@ -76,7 +84,7 @@ ns.hook("UnitFrameHealthBar_OnUpdate", ADDUIUpdateHealthBar)
 
 local function ADDUIUpdateManaBar(s)
 	if not AddUIDB.unitf then return end
-	if GetCVar("statusTextDisplay") ~= "PERCENT" then 
+	if statusTextDisplay ~= "PERCENT" then 
 		if 	s.TextString and s.currValue then 
 			s.TextString:SetText(ns.value(s:GetValue())) 
 		end
