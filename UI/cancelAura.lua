@@ -5,145 +5,150 @@ local needcancel = [[
 /cancelAura 操控时间
 ]]
 
+local button
+
+local function HideAura()
+	if not button then return end
+	button.text:Hide()
+	button.text:SetText("")
+	button.T:Hide()
+	button.T:SetTexture(nil)
+	button.Cooldown:SetCooldown(0, 0)
+	button.SAA:Hide()
+	button.SAA.ProcStartAnim:Stop()
+end
+
+local function ShowAura()
+	if not button then return end
+	button.text:Show()
+	button.text:SetText(string.format("%d%%", UnitHealthPercent("player", true, CurveConstants.ScaleTo100)))
+	button.T:Show()
+	button.T:SetTexture(985088)
+	button.Cooldown:SetCooldown(GetTime(), 10)
+	button.SAA:Show()
+	button.SAA.ProcStartAnim:Play()
+	PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\342247.mp3", "Master")
+end
+
 local function CreateFrames()
-	if ADDUIcancelAuraButton then return end
-	--创建框架
-	local ADDUIcancelAuraButton = CreateFrame("Frame", "ADDUIcancelAuraButton", UIParent);
-	ADDUIcancelAuraButton:SetSize(60, 60)
-	ADDUIcancelAuraButton:SetPoint("TOP",UIParent,"TOP",300,-10);
-	ns.AddEdit(ADDUIcancelAuraButton,"取消操控")
-	--创建背景
-	ADDUIcancelAuraButton.Background = ADDUIcancelAuraButton:CreateTexture(nil, "BACKGROUND")
-	ADDUIcancelAuraButton.Background:SetTexture(130937)
-	ADDUIcancelAuraButton.Background:SetAllPoints(ADDUIcancelAuraButton)
-	ADDUIcancelAuraButton.Background:SetColorTexture(0, 0, 0, 0)
-	ADDUIcancelAuraButton.tiptext = ADDUIcancelAuraButton:CreateFontString(nil, "BACKGROUND")
-	ADDUIcancelAuraButton.tiptext:SetFont(SystemFont_Outline_Small:GetFont(), 20, "OUTLINE")
-	ADDUIcancelAuraButton.tiptext:SetPoint("CENTER", ADDUIcancelAuraButton, "CENTER", 0, 0)
-	ADDUIcancelAuraButton.tiptext:SetText("取消\n操控")
-	ADDUIcancelAuraButton.tiptext:SetTextColor(0.5,0.5,0.5)
-	ADDUIcancelAuraButton.tiptext:Hide()
-	--取消按钮
-	ADDUIcancelAuraButton.ADcancelAuraButton = CreateFrame("CheckButton", "ADcancelAuraButton", ADDUIcancelAuraButton, "SecureActionButtonTemplate")
-	ADDUIcancelAuraButton.ADcancelAuraButton:SetAttribute("type", "macro")
-	ADDUIcancelAuraButton.ADcancelAuraButton:SetAttribute("macrotext", needcancel)
-	ADDUIcancelAuraButton.ADcancelAuraButton:SetAllPoints(ADDUIcancelAuraButton)
-	ADDUIcancelAuraButton.ADcancelAuraButton:RegisterForClicks("AnyDown", "AnyUp")
-	ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnEnter", function(self)
-		ADDUIcancelAuraButton.Background:SetColorTexture(0, 0, 0, .5)
-		ADDUIcancelAuraButton.tiptext:Show()
+	if button then return end
+
+	-- 主框架
+	local f = CreateFrame("Frame", "ADDUIcancelAuraButton", UIParent)
+	f:SetSize(60, 60)
+	f:SetPoint("TOP", UIParent, "TOP", 300, -10)
+	ns.AddEdit(f, "取消\n操控")
+	button = f
+
+	-- 背景
+	f.Background = f:CreateTexture(nil, "BACKGROUND")
+	f.Background:SetTexture(130937)
+	f.Background:SetAllPoints(f)
+	f.Background:SetColorTexture(0, 0, 0, 0)
+
+	-- 悬停提示
+	f.tiptext = f:CreateFontString(nil, "BACKGROUND")
+	f.tiptext:SetFont(SystemFont_Outline_Small:GetFont(), 20, "OUTLINE")
+	f.tiptext:SetPoint("CENTER", f, "CENTER", 0, 0)
+	f.tiptext:SetText("取消\n操控")
+	f.tiptext:SetTextColor(0.5, 0.5, 0.5)
+	f.tiptext:Hide()
+
+	-- 安全取消按钮
+	local btn = CreateFrame("CheckButton", "ADcancelAuraButton", f, "SecureActionButtonTemplate")
+	btn:SetAttribute("type", "macro")
+	btn:SetAttribute("macrotext", needcancel)
+	btn:SetAllPoints(f)
+	btn:RegisterForClicks("AnyDown", "AnyUp")
+	btn:SetScript("OnEnter", function()
+		f.Background:SetColorTexture(0, 0, 0, .5)
+		f.tiptext:Show()
 	end)
-	ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnLeave", function(self)
-		ADDUIcancelAuraButton.Background:SetColorTexture(0, 0, 0, 0)
-		ADDUIcancelAuraButton.tiptext:Hide()
+	btn:SetScript("OnLeave", function()
+		f.Background:SetColorTexture(0, 0, 0, 0)
+		f.tiptext:Hide()
 	end)
-	-- 子按钮覆盖了父框架导致拖动事件被拦截，需要让子按钮也响应编辑模式拖动
+	btn:SetScript("OnClick", HideAura)
+
+	-- 子按钮覆盖父框架拦截拖动 → 编辑模式下让子按钮也响应拖动
 	local function ToggleChildDrag()
 		if InCombatLockdown() then return end
 		local inEditMode = EditModeManagerFrame and EditModeManagerFrame:IsShown()
 		if inEditMode then
-			ADDUIcancelAuraButton.ADcancelAuraButton:RegisterForDrag("LeftButton")
-			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStart", function()
-				ADDUIcancelAuraButton:StartMoving()
+			btn:RegisterForDrag("LeftButton")
+			btn:SetScript("OnDragStart", function()
+				f:StartMoving()
 			end)
-			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStop", function()
-				ADDUIcancelAuraButton:StopMovingOrSizing()
+			btn:SetScript("OnDragStop", function()
+				f:StopMovingOrSizing()
 				if not AddUIDB then AddUIDB = {} end
-				local left, bottom = ADDUIcancelAuraButton:GetLeft(), ADDUIcancelAuraButton:GetBottom()
+				local left, bottom = f:GetLeft(), f:GetBottom()
 				AddUIDB["ADDUIcancelAuraButton_Edit"] = {"BOTTOMLEFT", "UIParent", "BOTTOMLEFT", left, bottom}
 			end)
 		else
-			ADDUIcancelAuraButton.ADcancelAuraButton:RegisterForDrag()
-			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStart", nil)
-			ADDUIcancelAuraButton.ADcancelAuraButton:SetScript("OnDragStop", nil)
+			btn:RegisterForDrag()
+			btn:SetScript("OnDragStart", nil)
+			btn:SetScript("OnDragStop", nil)
 		end
 	end
 	EditModeManagerFrame:HookScript("OnShow", ToggleChildDrag)
 	EditModeManagerFrame:HookScript("OnHide", ToggleChildDrag)
 	ToggleChildDrag()
-	--图标材质
-	ADDUIcancelAuraButton.T = ADDUIcancelAuraButton:CreateTexture()
-	ADDUIcancelAuraButton.T:SetAllPoints(ADDUIcancelAuraButton)
-	ADDUIcancelAuraButton.T:Hide()
-	--操控时间的百分比
-	ADDUIcancelAuraButton.text = ADDUIcancelAuraButton:CreateFontString(nil)
-	ADDUIcancelAuraButton.text:SetFont(SystemFont_Outline_Small:GetFont(), 30, "OUTLINE")
-	ADDUIcancelAuraButton.text:SetPoint("TOP", ADDUIcancelAuraButton, "BOTTOM", 0, 0)
-	ADDUIcancelAuraButton.text:Hide()
-	--冷却时间
-	ADDUIcancelAuraButton.Cooldown = CreateFrame("Cooldown", nil, ADDUIcancelAuraButton, "CooldownFrameTemplate")
-	ADDUIcancelAuraButton.Cooldown:SetAllPoints(ADDUIcancelAuraButton.T)
-	ADDUIcancelAuraButton.Cooldown:SetHideCountdownNumbers(false)
-	ADDUIcancelAuraButton.Cooldown:SetUseCircularEdge(true)
-	ADDUIcancelAuraButton.Cooldown:SetReverse(true)
-	ADDUIcancelAuraButton.Cooldown:SetScript("OnCooldownDone", function(self)
-		ADDUIcancelAuraButton.T:SetTexture(nil)
-		ADDUIcancelAuraButton.text:Hide()
-		ADDUIcancelAuraButton.SAA:Hide()
-		ADDUIcancelAuraButton.SAA.ProcStartAnim:Stop();
+
+	-- 操控时间图标
+	f.T = f:CreateTexture()
+	f.T:SetAllPoints(f)
+	f.T:SetTexture(985088)
+	f.T:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+	f.T:Hide()
+
+	-- 血量百分比
+	f.text = f:CreateFontString(nil)
+	f.text:SetFont(SystemFont_Outline_Small:GetFont(), 30, "OUTLINE")
+	f.text:SetPoint("TOP", f, "BOTTOM", 0, 0)
+	f.text:Hide()
+
+	-- 冷却（10 秒转圈）
+	f.Cooldown = CreateFrame("Cooldown", nil, f, "CooldownFrameTemplate")
+	f.Cooldown:SetAllPoints(f.T)
+	f.Cooldown:SetHideCountdownNumbers(false)
+	f.Cooldown:SetUseCircularEdge(true)
+	f.Cooldown:SetReverse(true)
+	f.Cooldown:SetScript("OnCooldownDone", function()
+		HideAura()
 	end)
-	local regon = ADDUIcancelAuraButton.Cooldown:GetRegions()
-	if regon.GetText then 
+	local regon = f.Cooldown:GetRegions()
+	if regon and regon.GetText then
 		regon:SetFont(STANDARD_TEXT_FONT, 30, "OUTLINE")
 	end
-	
-	
-	ADDUIcancelAuraButton.SAA = CreateFrame("Frame", nil, ADDUIcancelAuraButton, "ActionButtonSpellAlertTemplate");
-	local frameWidth, frameHeight = ADDUIcancelAuraButton:GetSize();
-	ADDUIcancelAuraButton.SAA:SetSize(frameWidth * 1.4, frameHeight * 1.4);
-	ADDUIcancelAuraButton.SAA:SetPoint("CENTER", ADDUIcancelAuraButton, "CENTER", 0, 0);
-	
-	ADDUIcancelAuraButton.ADcancelAuraButton:HookScript("OnClick", function()
-		ADDUIcancelAuraButton.text:Hide()
-		ADDUIcancelAuraButton.T:Hide()
-		ADDUIcancelAuraButton.T:SetTexture(nil)
-		ADDUIcancelAuraButton.Cooldown:SetCooldown(0,0)
-		ADDUIcancelAuraButton.SAA:Hide()
-		ADDUIcancelAuraButton.SAA.ProcStartAnim:Stop();
-	end)
-	
-end
 
---设置光环
-local function MYAURA(spellId)
-	if spellId == 342247 then
-		if not ADDUIcancelAuraButton.text:IsShown() then
-			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\342247.mp3","Master")
-			local HealthPercent = UnitHealthPercent("player", true, CurveConstants.ScaleTo100)
-			ADDUIcancelAuraButton.text:Show()
-			ADDUIcancelAuraButton.text:SetText(string.format("%d%%",HealthPercent))
-			ADDUIcancelAuraButton.T:Show()
-			ADDUIcancelAuraButton.T:SetTexture(985088)
-			ADDUIcancelAuraButton.Cooldown:SetCooldown(GetTime(),10)
-			ADDUIcancelAuraButton.SAA:Show()
-			ADDUIcancelAuraButton.SAA.ProcStartAnim:Play();
-		else
-			ADDUIcancelAuraButton.text:Hide()
-			ADDUIcancelAuraButton.text:SetText("")
-			ADDUIcancelAuraButton.T:Hide()
-			ADDUIcancelAuraButton.T:SetTexture(nil)
-			ADDUIcancelAuraButton.Cooldown:SetCooldown(0,0)
-			ADDUIcancelAuraButton.SAA:Hide()
-			ADDUIcancelAuraButton.SAA.ProcStartAnim:Stop();
-		end
-	end
+	-- SAA 法术警示动画
+	f.SAA = CreateFrame("Frame", nil, f, "ActionButtonSpellAlertTemplate")
+	local w, h = f:GetSize()
+	f.SAA:SetSize(w * 1.4, h * 1.4)
+	f.SAA:SetPoint("CENTER", f, "CENTER", 0, 0)
+	f.SAA:Hide()
 end
 
 local playerClass
 local function OnCancelAuraEvent(event, unit, _, spellId)
+	if event == "PLAYER_ENTERING_WORLD" then
+		CreateFrames()
+		return
+	end
 	if not playerClass then
-		_,playerClass = UnitClass("player")
+		_, playerClass = UnitClass("player")
 	end
 	if playerClass ~= "MAGE" then return end
-	
-	if event == "PLAYER_ENTERING_WORLD" then 
-		CreateFrames()
-	elseif event == 'UNIT_SPELLCAST_SUCCEEDED' and unit == "player" then
-		MYAURA(spellId)
+	if unit ~= "player" then return end
+
+	if spellId == 342245 then      -- 施放操控时间 → 显示
+		ShowAura()
+	elseif spellId == 342247 then  -- 操控时间结束 → 隐藏
+		HideAura()
 	end
 end
 
-ns.event('UNIT_AURA', OnCancelAuraEvent)
 ns.event('PLAYER_ENTERING_WORLD', OnCancelAuraEvent)
 ns.event('UNIT_SPELLCAST_SUCCEEDED', OnCancelAuraEvent)
 
