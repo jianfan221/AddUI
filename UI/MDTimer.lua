@@ -56,14 +56,15 @@ end)
 
 --自动对话（按住 Shift 跳过）
 ns.event("GOSSIP_SHOW", function()
-	if not C_ChallengeMode.IsChallengeModeActive() or IsShiftKeyDown() then return end -- 非大秘境/按住Shift跳过
+	local inInstance, instanceType = IsInInstance()
+	if not (inInstance and instanceType == "party") or IsShiftKeyDown() then return end -- 非5人本/按住Shift跳过
 	local opts = C_GossipInfo.GetOptions()
 	if not opts or not opts[1] then return end -- 无对话选项跳过
 	if #opts ~= 1 then return end -- 非唯一选项跳过（修理/出售等）
 	local icon = opts[1].icon
 	if icon ~= 132053 and icon ~= 1019848 then return end -- 非八卦图标跳过
 	C_GossipInfo.SelectOption(opts[1].gossipOptionID)
-	UIErrorsFrame:AddExternalWarningMessage(WOWLABS_AREA_MAP_AUTO_SELECT.." "..opts[1].name)
+	UIErrorsFrame:AddExternalWarningMessage(opts[1].name)
 	C_Timer.After(0, function()
 		if not StaticPopup_IsAnyDialogShown() then
 			C_GossipInfo.CloseGossip()
