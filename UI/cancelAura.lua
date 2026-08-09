@@ -130,16 +130,11 @@ local function CreateFrames()
 	f.SAA:Hide()
 end
 
-local playerClass
 local function OnCancelAuraEvent(event, unit, _, spellId)
 	if event == "PLAYER_ENTERING_WORLD" then
 		CreateFrames()
 		return
 	end
-	if not playerClass then
-		_, playerClass = UnitClass("player")
-	end
-	if playerClass ~= "MAGE" then return end
 	if unit ~= "player" then return end
 
 	if spellId == 342245 then      -- 施放操控时间 → 显示
@@ -149,8 +144,11 @@ local function OnCancelAuraEvent(event, unit, _, spellId)
 	end
 end
 
-ns.event('PLAYER_ENTERING_WORLD', OnCancelAuraEvent)
-ns.event('UNIT_SPELLCAST_SUCCEEDED', OnCancelAuraEvent)
+local _, cls = UnitClass("player")
+if cls == "MAGE" then
+	ns.event('PLAYER_ENTERING_WORLD', OnCancelAuraEvent)
+	ns.event('UNIT_SPELLCAST_SUCCEEDED', OnCancelAuraEvent)
+end
 
 
 
