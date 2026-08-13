@@ -56,6 +56,12 @@ SetMove("CollectionsJournal", "Blizzard_Collections")		--收藏（坐骑/宠物�
 SetMove("EncounterJournal", "Blizzard_EncounterJournal")	--冒险指南
 SetMove("HousingDashboardFrame", "Blizzard_HousingDashboard")	--住宅信息板
 
+-- 聆听对话框（小地图下方部件）固定到屏幕正上方（布局后被拉回则再钉回）
+hooksecurefunc("ManageFramePositions", function()
+	local f = UIWidgetBelowMinimapContainerFrame
+	if f then f:ClearAllPoints(); f:SetPoint("TOP", UIParent, "TOP", 0, -5) end
+end)
+
 -- K键专业页面添加打开订单按钮
 EventUtil.ContinueOnAddOnLoaded("Blizzard_ProfessionsBook", function()
 	if bookOpenPro then return end
