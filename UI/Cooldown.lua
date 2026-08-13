@@ -117,14 +117,6 @@ ns.event("PLAYER_LOGIN", function()
 		--BUFF居中生长
 		function ns.SetBuffIconPoint(self)
 			local activeFrames = {}
-			for itemFrame in self.itemFramePool:EnumerateActive() do
-				if itemFrame:IsShown() then
-					table.insert(activeFrames, itemFrame)
-				end
-				if itemFrame.DebuffBorder then
-					itemFrame.DebuffBorder = nil--CooldownViewerItemMixin:RefreshIconBorder()
-				end
-			end
 			--获取CooldownItem
 			ns.ItemBuffTable = ns.ItemBuffTable or {}
 			for i, frame in pairs(ns.ItemBuffTable) do
@@ -133,6 +125,20 @@ ns.event("PLAYER_LOGIN", function()
 					table.insert(activeFrames, frame["frame"])
 				end
 			end
+			--获取CooldownViewer的图标
+			for itemFrame in self.itemFramePool:EnumerateActive() do
+				if itemFrame:IsShown() then
+					table.insert(activeFrames, itemFrame)
+				end
+				if itemFrame.DebuffBorder then
+					itemFrame.DebuffBorder = nil--CooldownViewerItemMixin:RefreshIconBorder()
+				end
+			end
+			-- EnumerateActive 的遍历顺序不保证与布局顺序一致，按 layoutIndex 排序以保持原生顺序
+			table.sort(activeFrames, function(a, b)
+				return (a.layoutIndex or 0) < (b.layoutIndex or 0)
+			end)
+			
 			
 			local count = #activeFrames
 			if count == 0 then return end
@@ -142,8 +148,8 @@ ns.event("PLAYER_LOGIN", function()
 				local padding = self.iconPadding + self:GetAdditionalPaddingOffset()
 				local itemWidth = activeFrames[1]:GetWidth() or 40
 				for i, frame in ipairs(activeFrames) do
+					-- 保持原始顺序：第 i 个显示的图标在中心左侧，依次向右排
 					local offsetFromCenter = (i - (count + 1) / 2) * (itemWidth + padding)
-					offsetFromCenter = -offsetFromCenter  -- 反转方向
 					frame:ClearAllPoints()
 					frame:SetPoint("CENTER", container, "CENTER", offsetFromCenter, 0)
 				end
