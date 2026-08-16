@@ -4,7 +4,11 @@ ns.event("PLAYER_ENTERING_WORLD", function()
     if C_AddOns.IsAddOnLoaded("MeetingStone") then return end
     --配置PGF
     if C_AddOns.IsAddOnLoaded("PremadeGroupsFilter") then
-	if UsePGFButtonText then UsePGFButtonText:SetText("PGF") end
+	if UsePGFButtonText then 
+		UsePGFButton:ClearAllPoints()
+		UsePGFButton:SetPoint("LEFT", LFGListFrame.SearchPanel.RefreshButton, "LEFT", -62, 0)
+		UsePGFButton:SetPoint("TOP", LFGListFrame.SearchPanel.RefreshButton, "TOP", 0, -3)
+	end
 	if PremadeGroupsFilterSettings then
 		PremadeGroupsFilterSettings.ratingInfo = false	--队长评分
 		PremadeGroupsFilterSettings.classBar = false	--职业颜色栏
