@@ -8,10 +8,10 @@ ns.hook("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
 	if mode == 1 then
 		if parent and parent:GetName() and string.match(parent:GetName(),"CompactPartyFrameMember") then
 			tooltip:ClearAllPoints()
-			tooltip:SetOwner(CompactPartyFrameMember1, "ANCHOR_TOPLEFT", 0, 13)
+			tooltip:SetOwner(CompactPartyFrameMember1 or parent, "ANCHOR_TOPLEFT", 0, 13)
 		elseif parent and parent:GetName() and string.match(parent:GetName(),"CompactRaidGroup") then
 			tooltip:ClearAllPoints()
-			tooltip:SetOwner(CompactRaidGroup1Member1, "ANCHOR_TOPLEFT", 0, 13)
+			tooltip:SetOwner(CompactRaidGroup1Member1 or parent, "ANCHOR_TOPLEFT", 0, 13)
 		elseif parent and UnitExists("mouseover") then
 			tooltip:ClearAllPoints()
 			tooltip:SetOwner(parent, "ANCHOR_CURSOR_RIGHT", 40, -145)
@@ -27,10 +27,10 @@ ns.hook("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
 		else
 			if parent and parent:GetName() and string.match(parent:GetName(),"CompactPartyFrameMember") then
 				tooltip:ClearAllPoints()
-				tooltip:SetOwner(CompactPartyFrameMember1, "ANCHOR_TOPLEFT", 0, 13)
+				tooltip:SetOwner(CompactPartyFrameMember1 or parent, "ANCHOR_TOPLEFT", 0, 13)
 			elseif parent and parent:GetName() and string.match(parent:GetName(),"CompactRaidGroup") then
 				tooltip:ClearAllPoints()
-				tooltip:SetOwner(CompactRaidGroup1Member1, "ANCHOR_TOPLEFT", 0, 13)
+				tooltip:SetOwner(CompactRaidGroup1Member1 or parent, "ANCHOR_TOPLEFT", 0, 13)
 			elseif parent and UnitExists("mouseover")  then
 				tooltip:ClearAllPoints()
 				tooltip:SetOwner(parent, "ANCHOR_CURSOR_RIGHT", 40, -145)
