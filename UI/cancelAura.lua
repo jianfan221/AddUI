@@ -2,13 +2,14 @@
 
 ns.tips("奥术涌动4秒声音提醒")
 EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
-	if unit == "player" and spellID == 365350 then
-		C_Timer.After(14.5, function()
-			if UnitIsDead("player") then return end
-			if not C_SpellBook.IsSpellKnown(449619) then return end
-			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
-		end)
-	end
+	if unit ~= "player" then return end
+	if spellID ~= 365350 then return end
+	if not C_SpellBook.IsSpellKnown(449619) then return end
+	local s = C_SpellBook.IsSpellKnown(449412) and 17.4 or 15
+	C_Timer.After(s-4.1, function()
+		if UnitIsDead("player") then return end
+		PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+	end)
 end)
 
 
