@@ -1,1 +1,3 @@
 ﻿local _,ns = ...
+C_AddOns.DisableAddOn("163UI_Info")
+C_AddOns.DisableAddOn("NewBeeBox")
