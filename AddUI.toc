@@ -41,6 +41,7 @@ Func\zu.lua
 
 SetAddon\CVar.lua
 SetAddon\Details.lua
+SetAddon\SettingsCVar.lua
 
 UI\AlreadyKnown.lua
 UI\cancelAura.lua
