@@ -20,3 +20,11 @@ EventRegistry:RegisterFrameEventAndCallback("PLAYER_ENTERING_WORLD", function()
         end
     end
 end)
+
+
+--12.1更新后各种帮助气泡 拦截掉参考https://addons.wago.io/addons/hide-help-frames
+if HelpTipTemplateMixin and HelpTipTemplateMixin.OnShow then
+    hooksecurefunc(HelpTipTemplateMixin, "OnShow", function(self)
+        self:Hide()
+    end)
+end
