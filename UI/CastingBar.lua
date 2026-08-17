@@ -27,12 +27,11 @@ local function OnCastingEvent(event, castunit)
 	PlayerCastingBarFrame.Border:SetTexture(nil)	--施法条边框
 	PlayerCastingBarFrame.Border:Hide()
 	PlayerCastingBarFrame.BorderMask:SetTexture(nil)--闪光尾巴
-	
+
 	PlayerCastingBarFrame:SetFrameStrata("TOOLTIP")	--施法条框架优先级
 	PlayerCastingBarFrame.Text:ClearAllPoints()--文本位置
 	PlayerCastingBarFrame.Text:SetPoint("CENTER",PlayerCastingBarFrame,"CENTER",0,0)--文本位置
-	
-	
+
 	if not AddUIDB.SCastTexture then return end
 	PlayerCastingBarFrame.Background:SetTexture(130937)--背景材质
 	PlayerCastingBarFrame.Background:SetColorTexture(0,0,0,.5)--背景颜色
@@ -45,11 +44,11 @@ local function OnCastingEvent(event, castunit)
 			local chargeTierName = "ChargeTier" .. i
 			local tierFrame = PlayerCastingBarFrame.ChargeTierPool[chargeTierName]
 			local color = stageColors[i] or {r=1, g=1, b=1}
-			
+
 			if tierFrame then
 				tierFrame.Normal:SetTexture(130937)
 				tierFrame.Normal:SetVertexColor(color.r, color.g, color.b)
-				
+
 				tierFrame.Disabled:SetTexture(130937)
 				tierFrame.Disabled:SetVertexColor(color.r, color.g, color.b)
 
@@ -61,16 +60,14 @@ local function OnCastingEvent(event, castunit)
 		return
 	end
 	PlayerCastingBarFrame.ChargeFlash:Hide()
-	
+
 	useTexture = ns.RerollTextrue[math.random(1, #ns.RerollTextrue)]
 	if AddUIDB.CastTexture == "随机使用材质" then
 		PlayerCastingBarFrame:SetStatusBarTexture(ns.CastBarTextrue[useTexture])
 	else
 		PlayerCastingBarFrame:SetStatusBarTexture(ns.CastBarTextrue[AddUIDB.CastTexture])
 	end
-	
 end
-
 ns.event('UNIT_SPELLCAST_EMPOWER_START', OnCastingEvent)	--蓄力
 ns.event('UNIT_SPELLCAST_CHANNEL_START', OnCastingEvent)	--引导
 ns.event('UNIT_SPELLCAST_START', OnCastingEvent)	--读条
@@ -116,3 +113,34 @@ else
 end
 end
 PlayerCastingBarFrame:HookScript("OnUpdate", ShowMyCasting)
+
+
+--奥术飞弹(5143)通道分段：自身法术非秘密，可正常计算
+local ArcaneMissileLines = {}
+ns.event('UNIT_SPELLCAST_CHANNEL_START', function(event, unit, castGUID, spellID)
+	-- 非奥术飞弹的引导：隐藏已有分割线（避免残留），仅奥术飞弹才显示
+	if not AddUIDB.cast or unit ~= "player" or spellID ~= 5143 then
+		for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
+		return
+	end
+	if not UnitChannelInfo("player") then return end	--确认正在引导法术
+	-- 7波飞弹：第一下在最左侧、最右侧结束处都不画线，共画6条分界线(1/7~6/7)
+	local ticks = 7
+	local width = AddUIDB.castWidth
+	for i = 1, ticks - 1 do
+		local line = ArcaneMissileLines[i]
+		if not line then
+			line = PlayerCastingBarFrame:CreateTexture(nil, "OVERLAY")
+			line:SetWidth(1)
+			line:SetHeight(AddUIDB.castHeight)
+			line:SetColorTexture(1, 1, 1, 0.8)
+			ArcaneMissileLines[i] = line
+		end
+		line:ClearAllPoints()
+		line:SetPoint("LEFT", PlayerCastingBarFrame, "LEFT", width * i / ticks, 0)
+		line:Show()
+	end
+end)
+ns.event('UNIT_SPELLCAST_CHANNEL_STOP', function()
+	for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
+end)
