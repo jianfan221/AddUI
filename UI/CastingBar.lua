@@ -115,17 +115,19 @@ end
 PlayerCastingBarFrame:HookScript("OnUpdate", ShowMyCasting)
 
 
---奥术飞弹(5143)通道分段：自身法术非秘密，可正常计算
+-- 通道分段法术表：spellID → 分段波数(ticks)，后续新增技能只需在此添加
+local ChannelTickMap = {
+	[5143] = 7, -- 奥术飞弹
+}
 local ArcaneMissileLines = {}
 ns.event('UNIT_SPELLCAST_CHANNEL_START', function(event, unit, castGUID, spellID)
-	-- 非奥术飞弹的引导：隐藏已有分割线（避免残留），仅奥术飞弹才显示
 	if unit ~= "player" then return end
-	if not AddUIDB.cast or spellID ~= 5143 then
-		for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
+	-- 先隐藏所有分割线：既清理上次分段比本次多的残留，也覆盖非分段法术
+	for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
+	local ticks = ChannelTickMap[spellID]
+	if not AddUIDB.cast or not ticks then
 		return
 	end
-	-- 7波飞弹：第一下在最左侧、最右侧结束处都不画线，共画6条分界线(1/7~6/7)
-	local ticks = 7
 	for i = 1, ticks - 1 do
 		local line = ArcaneMissileLines[i]
 		if not line then
@@ -133,10 +135,10 @@ ns.event('UNIT_SPELLCAST_CHANNEL_START', function(event, unit, castGUID, spellID
 			line:SetWidth(1)
 			line:SetHeight(AddUIDB.castHeight)
 			line:SetColorTexture(1, 1, 1, 0.8)
-			line:ClearAllPoints()
-			line:SetPoint("LEFT", PlayerCastingBarFrame, "LEFT", AddUIDB.castWidth * i / ticks, 0)
 			ArcaneMissileLines[i] = line
 		end
+		line:ClearAllPoints()
+		line:SetPoint("LEFT", PlayerCastingBarFrame, "LEFT", AddUIDB.castWidth * i / ticks, 0)
 		line:Show()
 	end
 end)
