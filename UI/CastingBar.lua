@@ -119,14 +119,13 @@ PlayerCastingBarFrame:HookScript("OnUpdate", ShowMyCasting)
 local ArcaneMissileLines = {}
 ns.event('UNIT_SPELLCAST_CHANNEL_START', function(event, unit, castGUID, spellID)
 	-- 非奥术飞弹的引导：隐藏已有分割线（避免残留），仅奥术飞弹才显示
-	if not AddUIDB.cast or unit ~= "player" or spellID ~= 5143 then
+	if unit ~= "player" then return end
+	if not AddUIDB.cast or spellID ~= 5143 then
 		for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
 		return
 	end
-	if not UnitChannelInfo("player") then return end	--确认正在引导法术
 	-- 7波飞弹：第一下在最左侧、最右侧结束处都不画线，共画6条分界线(1/7~6/7)
 	local ticks = 7
-	local width = AddUIDB.castWidth
 	for i = 1, ticks - 1 do
 		local line = ArcaneMissileLines[i]
 		if not line then
@@ -134,13 +133,14 @@ ns.event('UNIT_SPELLCAST_CHANNEL_START', function(event, unit, castGUID, spellID
 			line:SetWidth(1)
 			line:SetHeight(AddUIDB.castHeight)
 			line:SetColorTexture(1, 1, 1, 0.8)
+			line:ClearAllPoints()
+			line:SetPoint("LEFT", PlayerCastingBarFrame, "LEFT", AddUIDB.castWidth * i / ticks, 0)
 			ArcaneMissileLines[i] = line
 		end
-		line:ClearAllPoints()
-		line:SetPoint("LEFT", PlayerCastingBarFrame, "LEFT", width * i / ticks, 0)
 		line:Show()
 	end
 end)
-ns.event('UNIT_SPELLCAST_CHANNEL_STOP', function()
+ns.event('UNIT_SPELLCAST_CHANNEL_STOP', function(event, unit, castGUID, spellID)
+	if unit ~= "player" then return end
 	for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
 end)
