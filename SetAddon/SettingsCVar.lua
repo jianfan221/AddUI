@@ -1,6 +1,6 @@
 local _,ns = ...
 if 1 == 1 then return end
-ns.tips("系统设置(Esc)CVar 备份/恢复")
+ns.tips("系统设置(Esc选项) 账号共享设置")
 
 -- ================= 系统设置(Esc→选项)CVar 清单 =================
 -- 来源：暴雪 wow-ui-source（live/12.x）Blizzard_SettingsDefinitions_Shared / _Frame 各面板注册代码
