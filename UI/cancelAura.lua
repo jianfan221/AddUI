@@ -1,16 +1,19 @@
 ﻿local _,ns = ...
 
 ns.tips("奥术涌动4秒声音提醒")
-EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
-	if unit ~= "player" then return end
-	if spellID ~= 365350 then return end
-	if not C_SpellBook.IsSpellKnown(449619) then return end
-	local s = C_SpellBook.IsSpellKnown(449412) and 17.4 or 15
-	C_Timer.After(s-4.1, function()
-		if UnitIsDead("player") then return end
-		PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+local _, cls = UnitClass("player")
+if cls == "MAGE" then
+	EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
+		if unit ~= "player" then return end
+		if spellID ~= 365350 then return end
+		if not C_SpellBook.IsSpellKnown(449619) then return end
+		local s = C_SpellBook.IsSpellKnown(449412) and 17.4 or 15
+		C_Timer.After(s-4.1, function()
+			if UnitIsDead("player") then return end
+			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+		end)
 	end)
-end)
+end
 
 
 ns.tips("BUFF栏左侧取消光环按钮")
@@ -158,7 +161,6 @@ local function OnCancelAuraEvent(event, unit, _, spellId)
 	end
 end
 
-local _, cls = UnitClass("player")
 if cls == "MAGE" then
 	ns.event('PLAYER_ENTERING_WORLD', OnCancelAuraEvent)
 	ns.event('UNIT_SPELLCAST_SUCCEEDED', OnCancelAuraEvent)
