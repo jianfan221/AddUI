@@ -28,3 +28,12 @@ if HelpTipTemplateMixin and HelpTipTemplateMixin.OnShow then
         self:Hide()
     end)
 end
+
+
+-- 屏蔽空的 CHAT_MSG_SYSTEM 消息（空行会导致聊天框信息被莫名压缩）
+ChatFrameUtil.AddMessageEventFilter("CHAT_MSG_SYSTEM", function(self, event, msg, ...)
+    if msg == "" then
+        return true
+    end
+    return false
+end)
