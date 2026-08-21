@@ -6,6 +6,7 @@ ns.event("PLAYER_LOGIN", function()
 	ns.hook("CompactUnitFrame_UpdateRoleIcon",function(frame)
 		if not frame.roleIcon then return end
 		local role = UnitGroupRolesAssigned(frame.unit)
+		if ns.MM(role) then return end
 		if role == "TANK" then
 			frame.roleIcon:SetTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\ROLE-TDPS",true)
 			frame.roleIcon:SetTexCoord(0.02,.28,.35,.63)
