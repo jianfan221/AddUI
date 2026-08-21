@@ -95,6 +95,17 @@ local function ADDUIUpdateManaBar(s)
 end
 ns.hook("UnitFrameManaBar_OnUpdate", ADDUIUpdateManaBar)
 
+--[[
+if AlternatePowerBar and AlternatePowerBarText then
+	ns.hook(AlternatePowerBar,"OnUpdate", function(self)
+		if not AddUIDB.unitf then return end
+		if statusTextDisplay ~= "PERCENT" then 
+			AlternatePowerBarText:SetText(ns.value(AlternatePowerBar:GetValue()))
+		end
+	end)
+end
+]]
+--[[
 local function SetTargetSpellBar(self)
 	if not AddUIDB.unitf then return end
 	local parentFrame = self:GetParent();
@@ -117,7 +128,7 @@ local function SetTargetSpellBar(self)
 	end
 end
 ns.hook(TargetFrameSpellBar, "AdjustPosition", SetTargetSpellBar)
-
+]]
 ns.event("PLAYER_LOGIN", function()
 	if not AddUIDB.unitf then return end
 
