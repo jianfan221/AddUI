@@ -102,13 +102,13 @@ ns.LazyBuild(ADDUIGUI, function()
 
 	-- ═══════ 滚动框架（固定坐标锚点，充满搜索框下方到底部按钮上方）═══════
 	local scrollBG = CreateFrame("Frame", nil, ADDUIGUI, "BackdropTemplate")
-	scrollBG:SetPoint("TOPLEFT", ADDUIGUI, "TOPLEFT", -14, -65)
+	scrollBG:SetPoint("TOPLEFT", ADDUIGUI, "TOPLEFT", -14, -64)
 	scrollBG:SetPoint("BOTTOMRIGHT", ADDUIGUI, "BOTTOMRIGHT", 0, 0)
 	scrollBG:SetBackdrop({ bgFile = "Interface\\Tooltips\\UI-Tooltip-Background" })
 	scrollBG:SetBackdropColor(0, 0, 0, 0.55)
 
 	local scroll = CreateFrame("ScrollFrame", nil, ADDUIGUI, "ScrollFrameTemplate")
-	scroll:SetPoint("TOPLEFT", scrollBG, "TOPLEFT", 0, 0)
+	scroll:SetPoint("TOPLEFT", scrollBG, "TOPLEFT", 0, -2)
 	scroll:SetPoint("BOTTOMRIGHT", scrollBG, "BOTTOMRIGHT", -20, 0)
 	scroll:SetScript("OnMouseWheel", function(self, value)
 		local step = 24
@@ -271,20 +271,40 @@ ns.LazyBuild(ADDUIGUI, function()
 
 	-- ═══════ 构建行 ═══════
 	local function BuildRows()
-		-- 通用悬停变色：鼠标进入 frame 时文本变黄，离开恢复
-		local function SetHover(frame, label)
+		-- 通用悬停变色：鼠标进入 frame 时文本变黄 + 背景高亮，离开恢复
+		local function SetHover(frame, label, row)
 			frame:SetScript("OnEnter", function(self)
 				if label then label:SetTextColor(1, 1, 0) end
+				if row and row.bg then
+					row.bg:SetColorTexture(1, 1, 1, 0.32)
+				end
 			end)
 			frame:SetScript("OnLeave", function(self)
 				if label then label:SetTextColor(0.88, 0.88, 0.88) end
+				if row and row.bg and row.bgColor then
+					row.bg:SetColorTexture(row.bgColor[1], row.bgColor[2], row.bgColor[3], row.bgColor[4])
+				end
 			end)
 		end
 
-		for _, row in ipairs(rows) do
+		for i, row in ipairs(rows) do
 			local container = CreateFrame("Frame", nil, content)
 			container:SetHeight(rowHeight)
 			row.container = container
+
+			-- 行背景：深浅交替（斑马纹）
+			local bg = container:CreateTexture(nil, "BACKGROUND")
+			bg:SetPoint("TOPLEFT", container, "TOPLEFT", 0, 0)
+			bg:SetPoint("BOTTOMRIGHT", container, "BOTTOMRIGHT", 0, 0)
+			local bgColor
+			if i % 2 == 0 then
+				bgColor = { 1, 1, 1, 0.04 }
+			else
+				bgColor = { 1, 1, 1, 0.10 }
+			end
+			bg:SetColorTexture(bgColor[1], bgColor[2], bgColor[3], bgColor[4])
+			row.bg = bg
+			row.bgColor = bgColor
 
 			-- 左侧文本（标题与说明合并成一个文本：标题白 + 说明灰）
 			-- 左侧文本：自然宽度显示（有多少显示多少，不换行）
@@ -299,7 +319,7 @@ ns.LazyBuild(ADDUIGUI, function()
 
 			-- 整行悬停变色（锚定到 container）
 			container:EnableMouse(true)
-			SetHover(container, label)
+			SetHover(container, label, row)
 
 			-- 行底分隔线
 			local line = container:CreateTexture(nil, "BACKGROUND")
@@ -318,7 +338,7 @@ ns.LazyBuild(ADDUIGUI, function()
 					AddUIDB[row.db] = self:GetChecked()
 				end)
 				-- 悬停在勾选框时文本变黄
-				SetHover(check, label)
+				SetHover(check, label, row)
 				row.check = check
 			elseif row.type == "slider" then
 				local slider = CreateFrame("Slider", nil, container, "MinimalSliderWithSteppersTemplate")
@@ -339,12 +359,12 @@ ns.LazyBuild(ADDUIGUI, function()
 					if row.onChanged then row.onChanged(v) end
 				end)
 				-- 悬停在滑动条时文本变黄（绑定到内部滑轨 slider.Slider，覆盖整条滑轨）
-				SetHover(slider.Slider or slider, label)
+				SetHover(slider.Slider or slider, label, row)
 				row.slider = slider
 			elseif row.type == "dropdown" then
 				row.control = row.setup(container)
 				-- 悬停在下拉菜单时文本变黄
-				SetHover(row.control, label)
+				SetHover(row.control, label, row)
 			end
 		end
 	end
