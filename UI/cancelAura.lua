@@ -13,6 +13,16 @@ if cls == "MAGE" then
 			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
 		end)
 	end)
+elseif cls == "SHAMAN" then
+	EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
+		if unit ~= "player" then return end
+		if spellID ~= 114050 then return end
+		local s = 15
+		C_Timer.After(s-4.1, function()
+			if UnitIsDead("player") then return end
+			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+		end)
+	end)
 end
 
 
@@ -85,7 +95,7 @@ local function CreateFrames()
 		f.Background:SetColorTexture(0, 0, 0, 0)
 		f.tiptext:Hide()
 	end)
-	btn:SetScript("OnClick", HideAura)
+	btn:HookScript("OnClick", HideAura)  -- 保留模板安全 OnClick 执行取消宏，再隐藏按钮
 
 	-- 子按钮覆盖父框架拦截拖动 → 编辑模式下让子按钮也响应拖动
 	local function ToggleChildDrag()
