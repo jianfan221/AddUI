@@ -53,7 +53,8 @@ ns.event("PLAYER_REGEN_ENABLED", function()
 end)
 
 --编辑模式拖动位置
-function ns.AddEdit(frame,name)
+-- 可选参数 center：为 true 时进入编辑模式自动水平居中
+function ns.AddEdit(frame,name,center)
     -- 自动生成数据库键名
     local dbName = frame:GetName() and frame:GetName().."_Edit"
 	if not dbName then
@@ -68,14 +69,40 @@ function ns.AddEdit(frame,name)
     frame:SetClampedToScreen(true)  --限制拖动范围
 	frame:SetClampRectInsets(30, -30, -30, 30)  --允许拖出屏幕30像素左右上下
 	-- 创建背景框
-    local bg = frame:CreateTexture(nil, "BACKGROUND")
-    bg:SetPoint("TOPLEFT", frame, "TOPLEFT", -5, 5)
-	bg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 5, -5)
-    bg:SetAtlas("editmode-actionbar-highlight-nineslice-center")
-	bg:SetAlpha(0.5)
-    bg:Hide()
-	
-	local text = frame:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    -- 高亮层：独立的高层级子框架，确保编辑模式下显示在所有内容（如光环预览图标）之上
+    local highlight = CreateFrame("Frame", nil, frame)
+    highlight:SetAllPoints(frame)
+    highlight:SetFrameLevel(100)
+    highlight:Hide()
+
+    -- 用暴雪编辑模式系统框的九宫格材质（不选中高亮），鼠标指向时调亮
+    -- 暴雪 EditModeSystemSelectionBaseTemplate 的 texture kit：editmode-actionbar-highlight（不选中/高亮）、-selected（选中）
+    local bg
+    local selectionLayout = {
+        TopLeftCorner = { atlas = "%s-NineSlice-Corner", x = -8, y = 8 },
+        TopRightCorner = { atlas = "%s-NineSlice-Corner", mirrorLayout = true, x = 8, y = 8 },
+        BottomLeftCorner = { atlas = "%s-NineSlice-Corner", mirrorLayout = true, x = -8, y = -8 },
+        BottomRightCorner = { atlas = "%s-NineSlice-Corner", mirrorLayout = true, x = 8, y = -8 },
+        TopEdge = { atlas = "_%s-NineSlice-EdgeTop" },
+        BottomEdge = { atlas = "_%s-NineSlice-EdgeBottom" },
+        LeftEdge = { atlas = "!%s-NineSlice-EdgeLeft" },
+        RightEdge = { atlas = "!%s-NineSlice-EdgeRight" },
+        Center = { atlas = "%s-NineSlice-Center", x = -8, y = 8, x1 = 8, y1 = -8 },
+    }
+    if NineSliceUtil and NineSliceUtil.ApplyLayout
+        and C_Texture and C_Texture.GetAtlasInfo("editmode-actionbar-highlight-NineSlice-Center") then
+        pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-highlight")
+        highlight:SetAlpha(1) -- 默认半透明高亮，鼠标指向时调亮到 1
+    else
+        bg = highlight:CreateTexture(nil, "OVERLAY")
+        bg:SetPoint("TOPLEFT", frame, "TOPLEFT", -5, 5)
+        bg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 5, -5)
+        bg:SetAtlas("editmode-actionbar-highlight-nineslice-center")
+        bg:SetAlpha(0.5)
+        bg:Hide()
+    end
+
+	local text = highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
 	text:SetPoint("CENTER", 0, 0)
 	text:SetFont("fonts\\ARHei.ttf", 30, "OUTLINE")
 	text:SetText(name or "AddUI")
@@ -95,8 +122,19 @@ function ns.AddEdit(frame,name)
     local function EnterEditMode()
 		frame:Show()
 		frame:SetAlpha(1)
-        bg:Show()
-		text:Show()
+        -- 可选：编辑模式自动水平居中（仿 Cooldown.lua：TOP 锚到 UIParent 水平中心，保持垂直位置）
+        if center then
+            if not InCombatLockdown() then
+                local bottom = frame:GetBottom()
+                local height = frame:GetHeight() or 0
+                local X, Y = UIParent:GetWidth() / 2, bottom + height
+                frame:ClearAllPoints()
+                frame:SetPoint("TOP", UIParent, "BOTTOMLEFT", X, Y)
+            end
+        end
+        highlight:Show()
+        if bg then bg:Show() end
+		text:Hide() -- 文字默认隐藏，鼠标指向时才显示
         frame:SetMovable(true)
         frame:EnableMouse(true)
         frame:RegisterForDrag("LeftButton")
@@ -105,23 +143,42 @@ function ns.AddEdit(frame,name)
 		end)
         frame:SetScript("OnDragStop", function()
             frame:StopMovingOrSizing()
-            if not AddUIDB then AddUIDB = {} end
-            local left, bottom = frame:GetLeft(), frame:GetBottom()
-			AddUIDB[dbName] = {"BOTTOMLEFT", "UIParent", "BOTTOMLEFT", left, bottom}
+            if center then
+                -- 每次拖动松手后自动水平居中（垂直保持拖后位置）
+                local bottom = frame:GetBottom()
+                local height = frame:GetHeight() or 0
+                local X, Y = UIParent:GetWidth() / 2, bottom + height
+                frame:ClearAllPoints()
+                frame:SetPoint("TOP", UIParent, "BOTTOMLEFT", X, Y)
+                -- 保存位置（直接用上面算好的 TOP 锚点，保证与加载/居中逻辑一致）
+                if not AddUIDB then AddUIDB = {} end
+                AddUIDB[dbName] = {"TOP", "UIParent", "BOTTOMLEFT", X, Y}
+            else
+                if not AddUIDB then AddUIDB = {} end
+                local left, bottom = frame:GetLeft(), frame:GetBottom()
+				AddUIDB[dbName] = {"BOTTOMLEFT", "UIParent", "BOTTOMLEFT", left, bottom}
+            end
         end)
 		frame:SetScript("OnEnter", function(self)
-			bg:SetAlpha(1.0)
+			-- 鼠标指向：换成选中材质 + 显示文字
+			if not bg then pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-selected") end
+			if bg then bg:SetAlpha(1.0) end
+			text:Show()
 		end)
 
 		frame:SetScript("OnLeave", function(self)
-			bg:SetAlpha(0.5)
+			-- 离开：换回不选中高亮材质 + 隐藏文字
+			if not bg then pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-highlight") end
+			if bg then bg:SetAlpha(0.5) end
+			text:Hide()
 		end)
     end
     
     local function LeaveEditMode()
 		frame:SetShown(isshow)
         frame:SetAlpha(isalpha)
-        bg:Hide()
+        highlight:Hide()
+        if bg then bg:Hide() end
 		text:Hide()
         frame:SetMovable(false)
         frame:EnableMouse(false)
