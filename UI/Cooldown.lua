@@ -117,14 +117,6 @@ ns.event("PLAYER_LOGIN", function()
 		--BUFF居中生长
 		function ns.SetBuffIconPoint(self)
 			local activeFrames = {}
-			--获取CooldownItem
-			ns.ItemBuffTable = ns.ItemBuffTable or {}
-			for i, frame in pairs(ns.ItemBuffTable) do
-				if frame["frame"] and frame["frame"]:IsShown() then
-					frame["frame"]:SetScale(self.iconScale or 1)
-					table.insert(activeFrames, frame["frame"])
-				end
-			end
 			--获取CooldownViewer的图标
 			for itemFrame in self.itemFramePool:EnumerateActive() do
 				if itemFrame:IsShown() then
@@ -164,6 +156,12 @@ ns.event("PLAYER_LOGIN", function()
 		ns.hook(BuffIconCooldownViewer, "RefreshData", function(self,event)
 			ns.SetBuffIconPoint(self)
 		end)
+		--冷却管理器设置界面打开时也重新排列
+		if CooldownViewerSettings then
+			CooldownViewerSettings:HookScript("OnShow", function()
+				ns.SetBuffIconPoint(BuffIconCooldownViewer)
+			end)
+		end
 		--位置居中
 		local function CooldowPoint(self)
 			if InCombatLockdown() then return end
