@@ -192,6 +192,7 @@ newCheckbox(3,"Log快捷开关","聊天按钮后面的log按钮", "lotbnt")
 newCheckbox(3,"聊天框战斗战复计时器","聊天框右上角战斗战复计时器(战复在编辑模式拖动)", "chatCombatTimer")
 newCheckbox(3,"打断记录","小队打断记录,编辑模式拖动位置\n只记录打断成功的人,持续记录20秒", "interrupt")
 
+
 --材质下拉菜单
 local RadioDropdown = CreateFrame("DropdownButton", nil, ADDUIGUI, "WowStyle1DropdownTemplate")
 RadioDropdown:SetPoint("TOPLEFT", 20, -490)
@@ -313,6 +314,23 @@ local spellqq = newSlider("Spell", 225, -538, 0, 400, AddUIDB.SpellQ, 1, "施法
 spellqq:RegisterCallback("OnValueChanged", function(self, value)
 	AddUIDB.SpellQ = tonumber(string.format("%d", value))
 	SetCVar("SpellQueueWindow", AddUIDB.SpellQ) 
+end)
+
+-- 自身BUFF列表按钮（固定放在第三列下方，避免与 checkbox 重叠）
+local OpenSelfBuff = CreateFrame("Button", "AddUIOpenSelfBuffList", ADDUIGUI, "UIPanelButtonTemplate")
+OpenSelfBuff:SetText("自身BUFF列表")
+OpenSelfBuff:SetSize(150, 24)
+OpenSelfBuff:SetPoint("TOPLEFT", 440, -533)
+OpenSelfBuff:SetScript("OnClick", function()
+	ns.OpenSelfBuffAuraList()
+end)
+OpenSelfBuff:SetScript("OnEnter", function(self)
+	GameTooltip:SetOwner(self, "ANCHOR_TOP")
+	GameTooltip:SetText("打开自身BUFF监控法术列表\n|cff00FF00冷却管理器|r标题栏或|cff00FF00编辑模式|r下右键自身BUFF框体也可打开",1,1,1,1)
+	GameTooltip:Show()
+end)
+OpenSelfBuff:SetScript("OnLeave", function()
+	GameTooltip:Hide()
 end)
 
 end)
