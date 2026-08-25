@@ -77,10 +77,19 @@ ns.event("PLAYER_LOGIN", function()
 	holder:SetSize(285, 45)
 	holder:SetPoint("CENTER", 0, -100)
 	holder:Show()
+	-- 非编辑模式下禁用鼠标并透传点击：外框无背景且常显，避免隐形拦截挡住下层 UI / 右键转视角
+	holder:EnableMouse(false)
+	pcall(holder.SetPropagateMouseClicks, holder, true)
 
 	container = CreateFrame("AuraContainer", "ADUISelfBuffAura", holder, "CustomAuraContainerTemplate")
 	container:SetPoint("CENTER", holder, "CENTER", 0, 0)
 	container:SetUnit("player")
+	-- AuraContainer 属 ScriptRegion，鼠标拦截由 SetMouseClickEnabled/SetMouseMotionEnabled 控制，标准 EnableMouse 对其无效。
+	-- 非编辑模式下完全禁用鼠标并透传点击：空容器不再拦截点击，鼠标可穿透（不影响右键转视角、下层拖动）。
+	-- 编辑模式拖动走 holder 外框，容器本身无需接收鼠标，故可一直保持禁用。
+	container:SetMouseClickEnabled(false)
+	container:SetMouseMotionEnabled(false)
+	pcall(container.SetPropagateMouseClicks, container, true)
 
 	container:AddAuraGroup("selfBuff", "HELPFUL|PLAYER", {
 		maxFrameCount = 10,
