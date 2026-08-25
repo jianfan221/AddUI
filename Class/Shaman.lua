@@ -7,43 +7,47 @@ if cls == "SHAMAN" then
 
 	local SpellID = 31616
 	local DURATION = 30
+	local _,hh = CompactPartyFrameMember1:GetSize()
+	local size = hh
 
-	local frame = CreateFrame("Frame", "AddUIClassShamanCountdown", PlayerFrame, "CooldownViewerBuffIconItemTemplate")
-	local size = PlayerFrame.PlayerFrameContainer.PlayerPortrait:GetSize()
+	local frame = CreateFrame("Frame", "AddUIClassShamanCountdown", CompactPartyFrameMember1, "CooldownViewerBuffIconItemTemplate")
+	
 	frame:SetSize(size, size)
-	frame:SetPoint("LEFT", PlayerFrame.PlayerFrameContainer.PlayerPortrait or UIParent, "LEFT", 0, 0)
-	frame:Hide()
-	frame.Icon:SetTexture(C_Spell.GetSpellTexture(SpellID))
+	frame:SetPoint("TOPRIGHT", CompactPartyFrameMember1, "TOPLEFT", -1, 0)
+	frame.DebuffBorder = nil -- 去掉减益边框
+	frame:Show() -- 常驻显示
+	frame.Icon:SetTexture(136060)--C_Spell.GetSpellTexture(SpellID)
 	frame.Cooldown:SetReverse(false)
 	frame.Cooldown:SetCountdownAbbrevThreshold(600)
-	frame.Cooldown:GetCountdownFontString():SetFont(STANDARD_TEXT_FONT, 25, "OUTLINE")
+	frame.Cooldown:GetCountdownFontString():SetFont(STANDARD_TEXT_FONT, size*0.5, "OUTLINE")
 
-	-- 圆形遮罩，与头像一致裁剪（图标 + 冷却圈内部纹理）
-	local mask = frame:CreateMaskTexture()
-	mask:SetAllPoints(frame.Icon)
-	mask:SetTexture("Interface\\CharacterFrame\\TempPortraitAlphaMask")
-	frame.Icon:AddMaskTexture(mask)
-	local function MaskRegions(parent)
-		for _, region in ipairs({parent:GetRegions()}) do
-			if region.AddMaskTexture then
-				region:AddMaskTexture(mask)
-			end
-		end
-		for _, child in ipairs({parent:GetChildren()}) do
-			MaskRegions(child)
-		end
-	end
-	MaskRegions(frame.Cooldown)
+	-- 触发时闪光
+	frame.SAA = CreateFrame("Frame", nil, frame, "ActionButtonSpellAlertTemplate")
+	frame.SAA:SetSize(size * 1.4, size * 1.4)
+	frame.SAA:SetPoint("CENTER", frame, "CENTER", 0, 0)
+	-- 青蓝色
+	if frame.SAA.ProcStartFlipbook then frame.SAA.ProcStartFlipbook:SetVertexColor(0, 0.8, 1) end
+	if frame.SAA.ProcLoopFlipbook then frame.SAA.ProcLoopFlipbook:SetVertexColor(0, 0.8, 1) end
+	if frame.SAA.ProcAltGlow then frame.SAA.ProcAltGlow:SetVertexColor(0, 0.8, 1) end
+	frame.SAA:Hide()
 
 	ns.event("SPELL_UPDATE_COOLDOWN", function(event, spellID)
 		if spellID ~= SpellID then return end
-		if frame:IsShown() then return end -- 已在倒数中，避免重复重置
-		frame:Show()
+		if frame:IsShown() and frame.Icon:IsDesaturated() then return end -- 已在倒数中，避免重复重置
 		frame.Cooldown:SetCooldown(GetTime(), DURATION)
+		frame.Icon:SetDesaturated(true) -- 触发后褪色
+		frame.SAA:Show()
+		frame.SAA.ProcStartAnim:Play()
+		C_Timer.After(5, function()
+			if frame.SAA then
+				frame.SAA.ProcStartAnim:Stop()
+				frame.SAA:Hide()
+			end
+		end)
 	end)
 
-	-- 冷却结束自动隐藏
+	-- 冷却结束取消褪色（常驻显示，不隐藏）
 	frame.Cooldown:SetScript("OnCooldownDone", function()
-		frame:Hide()
+		frame.Icon:SetDesaturated(false)
 	end)
 end
