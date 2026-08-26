@@ -95,16 +95,15 @@ local function ADDUIUpdateManaBar(s)
 end
 ns.hook("UnitFrameManaBar_OnUpdate", ADDUIUpdateManaBar)
 
---[[
-if AlternatePowerBar and AlternatePowerBarText then
-	ns.hook(AlternatePowerBar,"OnUpdate", function(self)
-		if not AddUIDB.unitf then return end
-		if statusTextDisplay ~= "PERCENT" then 
-			AlternatePowerBarText:SetText(ns.value(AlternatePowerBar:GetValue()))
-		end
-	end)
-end
-]]
+--头像替换能量条数值简化
+	if AlternatePowerBar and AlternatePowerBarText then
+		ns.hook(AlternatePowerBar, "UpdateTextString", function()
+			if not AddUIDB.unitf then return end
+			if statusTextDisplay ~= "PERCENT" then
+				AlternatePowerBarText:SetText(ns.value(AlternatePowerBar:GetValue()))
+			end
+		end)
+	end
 --[[
 local function SetTargetSpellBar(self)
 	if not AddUIDB.unitf then return end
