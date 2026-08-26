@@ -38,6 +38,7 @@ ns.Defaults = {
 	lotbnt = true, -- Log快捷开关
 	chatCombatTimer = true, -- 聊天框战斗战复计时器
 	interrupt = true, -- 打断记录
+	movspeed = true, -- 角色面板移动速度
 
 	-- ═══════ 下拉菜单 & 滑条 ═══════
 	CastTexture = "Rainbow", -- 施法条材质（下拉菜单选择）
