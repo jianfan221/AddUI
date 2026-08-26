@@ -20,15 +20,8 @@ ns.event('READY_CHECK', function()
 	ReadyCheckFrame:SetFrameStrata("TOOLTIP")
 end)
 
-ns.tips("区域文字位置(大秘境开门快速选怪会碍事)")
-EventToastManagerFrame:HookScript("OnShow",function(self)
-	self:ClearAllPoints()
-	if C_Secrets and C_Secrets.ShouldAurasBeSecret and C_Secrets.ShouldAurasBeSecret() then
-		self:SetPoint("TOP",UIParent,"TOP",0,-30)
-	else
-		self:SetPoint("TOP",UIParent,"TOP",0,-190)
-	end
-end)
+ns.tips("区域文字鼠标穿透(大秘境开门快速选怪会碍事)")
+EventToastManagerFrame:EnableMouse(false) -- 鼠标穿透，悬停/点击不产生任何影响
 
 
 ns.tips("聊天反和谐")
