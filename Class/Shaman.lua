@@ -8,12 +8,60 @@ if cls == "SHAMAN" then
 	local SpellID = 31616
 	local DURATION = 30
 	local _,hh = CompactPartyFrameMember1:GetSize()
-	local size = hh
+	local size = hh or 40
 
-	local frame = CreateFrame("Frame", "AddUIClassShamanCountdown", CompactPartyFrameMember1, "CooldownViewerBuffIconItemTemplate")
+	-- 父级初始 UIParent，AnchorToSelf 时会随锚定目标切换（团队→anchor，小队→小队框体）
+	local frame = CreateFrame("Frame", "AddUIClassShamanCountdown", UIParent, "CooldownViewerBuffIconItemTemplate")
 	
 	frame:SetSize(size, size)
-	frame:SetPoint("TOPRIGHT", CompactPartyFrameMember1, "TOPLEFT", -1, 0)
+
+	-- 可拖动的锚定框架（UIParent），团队时自然守护者锚到这里，尺寸 40*40
+	local anchor = CreateFrame("Frame", "AddUIClassShamanAnchor", UIParent)
+	anchor:SetSize(40, 40)
+	anchor:SetPoint("LEFT", UIParent, "LEFT", 100, 0)
+
+	-- 锚定到自己所在的小队框体（1-5 谁是自己就锚到谁）
+	local function FindSelfMember()
+		for i = 1, 5 do
+			local member = _G["CompactPartyFrameMember"..i]
+			if member and member.unit == "player" then
+				return member
+			end
+		end
+		return CompactPartyFrameMember1 -- 不在小队时回退到框体1
+	end
+
+	-- 团队时锚到可拖动框架(40x40)，否则锚到小队框体(原尺寸)，野外无小队时回退到可拖动框架
+	local function AnchorToSelf()
+		local target, tsize
+		if IsInRaid() then
+			target, tsize = anchor, 40
+		else
+			target = FindSelfMember()
+			if target then
+				tsize = size
+			else
+				target, tsize = anchor, 40 -- 不在小队时回退到可拖动框架
+			end
+		end
+		frame:SetParent(target) -- 父框体跟随锚定目标
+		frame:ClearAllPoints()
+		if IsInRaid() then
+			-- 团队：居中显示在可拖动框架上
+			frame:SetPoint("CENTER", target, "CENTER", 0, 0)
+			ns.AddEdit(anchor, "自然守护者")
+		else
+			-- 小队/野外：显示在目标左侧
+			frame:SetPoint("TOPRIGHT", target, "TOPLEFT", -1, 0)
+		end
+		frame:SetSize(tsize, tsize)
+		frame.Cooldown:GetCountdownFontString():SetFont(STANDARD_TEXT_FONT, tsize*0.5, "OUTLINE")
+		if frame.SAA then frame.SAA:SetSize(tsize * 1.4, tsize * 1.4) end
+	end
+
+	ns.event("GROUP_ROSTER_UPDATE", AnchorToSelf)
+	ns.event("PLAYER_ENTERING_WORLD", AnchorToSelf)
+
 	frame.DebuffBorder = nil -- 去掉减益边框
 	frame:Show() -- 常驻显示
 	frame.Icon:SetTexture(136060)--C_Spell.GetSpellTexture(SpellID)
@@ -33,7 +81,6 @@ if cls == "SHAMAN" then
 
 	ns.event("SPELL_UPDATE_COOLDOWN", function(event, spellID)
 		if spellID ~= SpellID then return end
-		if frame:IsShown() and frame.Icon:IsDesaturated() then return end -- 已在倒数中，避免重复重置
 		frame.Cooldown:SetCooldown(GetTime(), DURATION)
 		frame.Icon:SetDesaturated(true) -- 触发后褪色
 		frame.SAA:Show()
