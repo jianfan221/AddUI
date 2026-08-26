@@ -73,6 +73,7 @@ ns.event('UNIT_SPELLCAST_CHANNEL_START', OnCastingEvent)	--引导
 ns.event('UNIT_SPELLCAST_START', OnCastingEvent)	--读条
 
 local function HideAnims(self)
+	if not AddUIDB.cast then return end
 	if not AddUIDB.SCastTexture then return end
 	if empowerCast then return end
        -- self.FadeOutAnim:Stop() --淡出
