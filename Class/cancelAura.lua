@@ -1,6 +1,5 @@
 ﻿local _,ns = ...
 
-ns.tips("奥术涌动4秒声音提醒")
 local _, cls = UnitClass("player")
 
 -- 法师：奥术涌动倒数提醒（设置-职业 开关 mageCountdown）
@@ -34,8 +33,6 @@ elseif cls == "SHAMAN" then
 	end)
 end
 
-
-ns.tips("BUFF栏左侧取消光环按钮")
 
 local needcancel = [[
 /cancelAura 操控时间
