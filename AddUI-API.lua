@@ -55,29 +55,22 @@ end)
 --编辑模式拖动位置
 -- 可选参数 center：为 true 时进入编辑模式自动水平居中
 function ns.AddEdit(frame,name,center)
-    -- 自动生成数据库键名
     local dbName = frame:GetName() and frame:GetName().."_Edit"
-	if not dbName then
-		print("编辑模式拖动位置功能没有找到框体名")
-		return
-	end
-	if not EditModeManagerFrame then
-		print("编辑模式拖动位置功能没有找到编辑模式框架")
-		return
-	end
-	
-    frame:SetClampedToScreen(true)  --限制拖动范围
-	frame:SetClampRectInsets(30, -30, -30, 30)  --允许拖出屏幕30像素左右上下
-	-- 创建背景框
-    -- 高亮层：独立的高层级子框架，确保编辑模式下显示在所有内容（如光环预览图标）之上
+    if not dbName or not EditModeManagerFrame then
+        print("编辑模式拖动位置功能缺少框体名或编辑模式框架")
+        return
+    end
+
+    frame:SetClampedToScreen(true)
+    frame:SetClampRectInsets(30, -30, -30, 30)
+
+    -- 高亮层：独立高层级子框架，显示在 frame 内容之上
     local highlight = CreateFrame("Frame", nil, frame)
     highlight:SetAllPoints(frame)
     highlight:SetFrameLevel(100)
     highlight:Hide()
 
-    -- 用暴雪编辑模式系统框的九宫格材质（不选中高亮），鼠标指向时调亮
-    -- 暴雪 EditModeSystemSelectionBaseTemplate 的 texture kit：editmode-actionbar-highlight（不选中/高亮）、-selected（选中）
-    local bg
+    -- 高亮材质（暴雪 editmode-actionbar 九宫格）
     local selectionLayout = {
         TopLeftCorner = { atlas = "%s-NineSlice-Corner", x = -8, y = 8 },
         TopRightCorner = { atlas = "%s-NineSlice-Corner", mirrorLayout = true, x = 8, y = 8 },
@@ -89,108 +82,92 @@ function ns.AddEdit(frame,name,center)
         RightEdge = { atlas = "!%s-NineSlice-EdgeRight" },
         Center = { atlas = "%s-NineSlice-Center", x = -8, y = 8, x1 = 8, y1 = -8 },
     }
-    if NineSliceUtil and NineSliceUtil.ApplyLayout
-        and C_Texture and C_Texture.GetAtlasInfo("editmode-actionbar-highlight-NineSlice-Center") then
-        pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-highlight")
-        highlight:SetAlpha(1) -- 默认半透明高亮，鼠标指向时调亮到 1
-    else
-        bg = highlight:CreateTexture(nil, "OVERLAY")
-        bg:SetPoint("TOPLEFT", frame, "TOPLEFT", -5, 5)
-        bg:SetPoint("BOTTOMRIGHT", frame, "BOTTOMRIGHT", 5, -5)
-        bg:SetAtlas("editmode-actionbar-highlight-nineslice-center")
-        bg:SetAlpha(0.5)
-        bg:Hide()
+
+    local text = highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    text:SetPoint("CENTER", 0, 0)
+    text:SetFont("fonts\\ARHei.ttf", 30, "OUTLINE")
+    text:SetText(name or "AddUI")
+    text:SetVertexColor(1,1,1,0.7)
+
+    -- 高亮材质切换（"selected" 选中 / "highlight" 未选中）
+    local function ApplyHighlight(kit)
+        pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-"..kit)
     end
 
-	local text = highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-	text:SetPoint("CENTER", 0, 0)
-	text:SetFont("fonts\\ARHei.ttf", 30, "OUTLINE")
-	text:SetText(name or "AddUI")
-	text:Hide()
-	text:SetVertexColor(1,1,1,0.7)
-    
     -- 加载保存的位置
     if AddUIDB and AddUIDB[dbName] then
-		frame:ClearAllPoints()
+        frame:ClearAllPoints()
         frame:SetPoint(unpack(AddUIDB[dbName]))
     end
-	
-    
-    -- 编辑模式切换函数
-	local isshow = frame:IsShown()--储存框体原始显示状态
-	local isalpha = frame:GetAlpha()--储存框体原始透明度
-    local function EnterEditMode()
-		frame:Show()
-		frame:SetAlpha(1)
-        -- 可选：编辑模式自动水平居中（仿 Cooldown.lua：TOP 锚到 UIParent 水平中心，保持垂直位置）
+
+    -- 自动水平居中（保持垂直位置）
+    local function CenterFrame()
+        local bottom = frame:GetBottom()
+        local height = frame:GetHeight() or 0
+        local X, Y = UIParent:GetWidth() / 2, bottom + height
+        frame:ClearAllPoints()
+        frame:SetPoint("TOP", UIParent, "BOTTOMLEFT", X, Y)
+        return X, Y
+    end
+
+    -- 拖动松手后保存位置
+    local function SavePosition()
+        AddUIDB = AddUIDB or {}
         if center then
-            if not InCombatLockdown() then
-                local bottom = frame:GetBottom()
-                local height = frame:GetHeight() or 0
-                local X, Y = UIParent:GetWidth() / 2, bottom + height
-                frame:ClearAllPoints()
-                frame:SetPoint("TOP", UIParent, "BOTTOMLEFT", X, Y)
-            end
+            local X, Y = CenterFrame()
+            AddUIDB[dbName] = {"TOP", "UIParent", "BOTTOMLEFT", X, Y}
+        else
+            local left, bottom = frame:GetLeft(), frame:GetBottom()
+            AddUIDB[dbName] = {"BOTTOMLEFT", "UIParent", "BOTTOMLEFT", left, bottom}
+        end
+    end
+
+    local isshow = frame:IsShown() -- 储存框体原始显示状态
+    local isalpha = frame:GetAlpha() -- 储存框体原始透明度
+
+    local function EnterEditMode()
+        frame:Show()
+        frame:SetAlpha(1)
+        if center and not InCombatLockdown() then
+            CenterFrame()
         end
         highlight:Show()
-        if bg then bg:Show() end
-		text:Hide() -- 文字默认隐藏，鼠标指向时才显示
-        frame:SetMovable(true)
-        frame:EnableMouse(true)
-        frame:RegisterForDrag("LeftButton")
-        frame:SetScript("OnDragStart", function(self)
-			self:StartMoving()
-		end)
-        frame:SetScript("OnDragStop", function()
+        ApplyHighlight("highlight") -- 进入编辑模式默认显示未选中高亮框
+        text:Hide() -- 文字默认隐藏，鼠标指向时才显示
+        frame:SetMovable(true) -- frame 负责移动，highlight 负责接收鼠标（层级最高，避免被内部元素遮挡拖不动）
+        highlight:EnableMouse(true)
+        highlight:RegisterForDrag("LeftButton")
+        highlight:SetScript("OnDragStart", function() frame:StartMoving() end)
+        highlight:SetScript("OnDragStop", function()
             frame:StopMovingOrSizing()
-            if center then
-                -- 每次拖动松手后自动水平居中（垂直保持拖后位置）
-                local bottom = frame:GetBottom()
-                local height = frame:GetHeight() or 0
-                local X, Y = UIParent:GetWidth() / 2, bottom + height
-                frame:ClearAllPoints()
-                frame:SetPoint("TOP", UIParent, "BOTTOMLEFT", X, Y)
-                -- 保存位置（直接用上面算好的 TOP 锚点，保证与加载/居中逻辑一致）
-                if not AddUIDB then AddUIDB = {} end
-                AddUIDB[dbName] = {"TOP", "UIParent", "BOTTOMLEFT", X, Y}
-            else
-                if not AddUIDB then AddUIDB = {} end
-                local left, bottom = frame:GetLeft(), frame:GetBottom()
-				AddUIDB[dbName] = {"BOTTOMLEFT", "UIParent", "BOTTOMLEFT", left, bottom}
-            end
+            SavePosition()
         end)
-		frame:SetScript("OnEnter", function(self)
-			-- 鼠标指向：换成选中材质 + 显示文字
-			if not bg then pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-selected") end
-			if bg then bg:SetAlpha(1.0) end
-			text:Show()
-		end)
-
-		frame:SetScript("OnLeave", function(self)
-			-- 离开：换回不选中高亮材质 + 隐藏文字
-			if not bg then pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-highlight") end
-			if bg then bg:SetAlpha(0.5) end
-			text:Hide()
-		end)
+        highlight:SetScript("OnEnter", function()
+            ApplyHighlight("selected")
+            text:Show()
+        end)
+        highlight:SetScript("OnLeave", function()
+            ApplyHighlight("highlight")
+            text:Hide()
+        end)
     end
-    
+
     local function LeaveEditMode()
-		frame:SetShown(isshow)
+        frame:SetShown(isshow)
         frame:SetAlpha(isalpha)
         highlight:Hide()
-        if bg then bg:Hide() end
-		text:Hide()
+        text:Hide()
         frame:SetMovable(false)
-        frame:EnableMouse(false)
-        frame:SetScript("OnDragStart", nil)
-        frame:SetScript("OnDragStop", nil)
+        highlight:EnableMouse(false)
+        highlight:SetScript("OnDragStart", nil)
+        highlight:SetScript("OnDragStop", nil)
+        highlight:SetScript("OnEnter", nil)
+        highlight:SetScript("OnLeave", nil)
     end
-    
-    -- 注册编辑模式事件
+
     EditModeManagerFrame:HookScript("OnShow", EnterEditMode)
     EditModeManagerFrame:HookScript("OnHide", LeaveEditMode)
-    
-    -- 初始检查
+
     if EditModeManagerFrame:IsShown() then
         EnterEditMode()
     end
