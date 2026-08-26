@@ -1,7 +1,7 @@
 local _, ns = ...
 
 -- 自身增益监控法术列表默认值 {[法术ID]=boolean}（true=启用, false=取消；ADDON_LOADED 时由 AddUIDB 合并进 AddUIDB）
-ns.AddUIDefaultDB.SelfBuffAuraList = {
+ns.Defaults.SelfBuffAuraList = {
     --[1263768] = true,   --光塔核心
     --[1236616] = true,   --圣光潜力
     --[1236994] = true,   --圣鲁莽药水
