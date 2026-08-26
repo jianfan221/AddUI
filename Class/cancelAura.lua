@@ -2,25 +2,34 @@
 
 ns.tips("奥术涌动4秒声音提醒")
 local _, cls = UnitClass("player")
+
+-- 法师：奥术涌动倒数提醒（设置-职业 开关 mageCountdown）
 if cls == "MAGE" then
-	EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
-		if unit ~= "player" then return end
-		if spellID ~= 365350 then return end
-		if not C_SpellBook.IsSpellKnown(449619) then return end
-		local s = C_SpellBook.IsSpellKnown(449412) and 17.4 or 15
-		C_Timer.After(s-4.1, function()
-			if UnitIsDead("player") then return end
-			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+	ns.event("PLAYER_LOGIN", function()
+		if not (ns.DB and ns.DB.mageCountdown) then return end
+		EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
+			if unit ~= "player" then return end
+			if spellID ~= 365350 then return end
+			if not C_SpellBook.IsSpellKnown(449619) then return end
+			local s = C_SpellBook.IsSpellKnown(449412) and 17.4 or 15
+			C_Timer.After(s-4.1, function()
+				if UnitIsDead("player") then return end
+				PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+			end)
 		end)
 	end)
+-- 萨满：技能倒数提醒（设置-职业 开关 shamanCountdown）
 elseif cls == "SHAMAN" then
-	EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
-		if unit ~= "player" then return end
-		if spellID ~= 114050 then return end
-		local s = 15
-		C_Timer.After(s-4.1, function()
-			if UnitIsDead("player") then return end
-			PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+	ns.event("PLAYER_LOGIN", function()
+		if not (ns.DB and ns.DB.shamanCountdown) then return end
+		EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
+			if unit ~= "player" then return end
+			if spellID ~= 114050 then return end
+			local s = 15
+			C_Timer.After(s-4.1, function()
+				if UnitIsDead("player") then return end
+				PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\568154.mp3", "Master")
+			end)
 		end)
 	end)
 end
@@ -158,6 +167,7 @@ local function CreateFrames()
 end
 
 local function OnCancelAuraEvent(event, unit, _, spellId)
+	if not (ns.DB and ns.DB.cancelAuraBtn) then return end
 	if event == "PLAYER_ENTERING_WORLD" then
 		CreateFrames()
 		return
