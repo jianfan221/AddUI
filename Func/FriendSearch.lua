@@ -3,7 +3,6 @@
 -- SocialUIFrame 搜索框即时搜索（12.1 PTR 新好友列表）
 -- 暴雪默认只在按回车时触发搜索，改为文字改变时即时触发
 do
-	ns.tips("好友列表搜索优化")
 	local view = SocialUIFrame and SocialUIFrame.FriendsList
 	local sb = view and view.FilterBar and view.FilterBar.SearchBar
 
@@ -40,7 +39,6 @@ do
 
 end
 
-ns.tips("好友列表添加搜索好友按钮") -- 12.1 正式上线后可删除（已被 SocialUI 取代）
 --抄自FriendListHelper
 local function UpdateFriendList(searchText)
 	if not FriendsListFrame or not FriendsListFrame:IsShown() then return end
