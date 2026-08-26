@@ -80,6 +80,7 @@ ns.AddTab("其他", function()
 	
 	ns.AddCheck("聊天框战斗战复计时器", "聊天框右上角战斗战复计时器,战复在编辑模式拖动", "chatCombatTimer")
 	ns.AddCheck("打断记录", "小队打断记录,只记录打断成功的人,持续20秒,编辑模式拖动位置", "interrupt")
+	ns.AddCheck("角色面板移动速度", "C键角色面板右下显示移动速度,悬停显示奔跑/飞行/游泳速度", "movspeed")
 	ns.AddButton("自身BUFF列表", "打开自身BUFF监控法术列表\n冷却管理器标题栏或编辑模式下右键自身BUFF框体也可打开", function()
 		ns.OpenSelfBuffAuraList()
 	end)
