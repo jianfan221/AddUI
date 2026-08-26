@@ -1,6 +1,5 @@
 ﻿local AddonName,ns = ...
-ns.ADDUIBB = C_AddOns.GetAddOnMetadata(AddonName,"Version")
-ns.AddUIDefaultDB = {
+ns.Defaults = {
 	Gname = nil, -- 存放插件名（内部字段）
 
 	-- ═══════ 第一列 ═══════
@@ -81,6 +80,12 @@ ns.AddUIDefaultDB = {
 	AHFilterRestoreDB = {}, -- 拍卖行筛选恢复
 	CooldownDate = {}, -- 冷却管理器布局存储
 	OpenTalentScale = false, -- 天赋界面小窗缩放
+
+	-- ═══════ 职业 ═══════
+	mageCountdown = true, -- 奥术涌动倒数提醒(法师)
+	shamanCountdown = true, -- 萨满技能倒数提醒
+	shamanIconSwap = true, -- 萨满动作条图标切换
+	cancelAuraBtn = true, -- 取消操控按钮(法师)
 }
 
 ns.CastBarTextrue = {
@@ -154,11 +159,10 @@ end
 ----------ONLOAD EVENT---------
 local loadFrame = CreateFrame("FRAME"); 
 loadFrame:RegisterEvent("ADDON_LOADED"); 
-loadFrame:RegisterEvent("PLAYER_LOGOUT"); 
 loadFrame:SetScript("OnEvent", function(_, _, addon)
 	if addon ~= AddonName then return end
 	if type(AddUIDB) ~= "table" then AddUIDB = {} end
-	for i, j in pairs(ns.AddUIDefaultDB) do
+	for i, j in pairs(ns.Defaults) do
 		if type(j) == "table" then
 			if AddUIDB[i] == nil then AddUIDB[i] = {} end
 			for k, v in pairs(j) do
@@ -170,5 +174,6 @@ loadFrame:SetScript("OnEvent", function(_, _, addon)
 			if AddUIDB[i] == nil then AddUIDB[i] = j end
 		end
 	end
+	ns.DB = AddUIDB
 end)
 ----------------------------------
