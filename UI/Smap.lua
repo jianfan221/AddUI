@@ -1,6 +1,4 @@
 ﻿local _,ns = ...
-ns.tips("小地图标题栏显示位面ID")
-ns.tips("大地图输入坐标标记")
 ns.event("PLAYER_ENTERING_WORLD", function()
 if AddUIDB.smap ==  false  then return end
 
