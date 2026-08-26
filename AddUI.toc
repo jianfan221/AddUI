@@ -11,7 +11,8 @@
 AddUI-API.lua
 AddUIDB.lua
 Update.lua
-Options.lua
+Setting-Core.lua
+Setting.lua
 FixBlizzard.lua
 Test.lua
 
@@ -22,6 +23,8 @@ Chat\ChatTab.lua
 Class\cancelAura.lua
 Class\SetMacro.lua
 Class\Shaman.lua
+##Class\AuraContainer.lua
+Class\ActionBarIcon.lua
 
 Func\AH.lua
 Func\AHCorruptionInfo.lua
