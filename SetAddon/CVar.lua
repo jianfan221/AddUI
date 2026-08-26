@@ -1,5 +1,4 @@
 ﻿local _,ns = ...
-ns.tips("套装管理器20套上限")
 ns.event("PLAYER_ENTERING_WORLD", function()
 
 SetCVar('predictedHealth', 1)	--解决团队框架加血延迟
