@@ -96,7 +96,7 @@ local SPEED_FORMAT_OPTIONS = {
 -- 说明：往 PAPERDOLL_STATCATEGORIES 插入统计行会在 12.0.5 秘密值时代污染
 --       PaperDollFrame_UpdateStats 刷新循环导致报错，故用独立 Frame 显示。
 ns.event("PLAYER_LOGIN", function()
-    if not (ns.DB and ns.DB.movspeed) then return end
+    if not (AddUIDB and AddUIDB.movspeed) then return end
     if not CharacterFrame or not CharacterFrame.Background then return end
     local frame = CreateFrame("Frame", nil, CharacterFrame)
     frame:SetFrameStrata("HIGH")
