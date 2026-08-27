@@ -1,4 +1,12 @@
 local addonName,ns = ...
+
+-- 创建文本（原 ns.AddText，独立于此文件定义）
+local function AddText(frame,size)
+	local text = frame:CreateFontString(nil, "ARTWORK")
+	text:SetFont(STANDARD_TEXT_FONT, size, 'OUTLINE')
+	return text
+end
+
 ns.event("PLAYER_LOGIN", function()
 if not AddUIDB.dimi then return end
 --金币
@@ -10,11 +18,11 @@ goldText:SetFont(STANDARD_TEXT_FONT, 13, 'OUTLINE')
 goldText:SetPoint("RIGHT", gold, "RIGHT", 0, 0)
 
 --耐久
-local durable = ns.AddText(UIParent,13)
+local durable = AddText(UIParent,13)
 durable:SetPoint("BOTTOMRIGHT",UIParent,-120,0)
 
 --帧数
-local fps = ns.AddText(UIParent,13)
+local fps = AddText(UIParent,13)
 fps:SetPoint("BOTTOMRIGHT",UIParent,-240,0)
 
 -----------金币----------
