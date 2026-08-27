@@ -19,6 +19,7 @@ if cls == "SHAMAN" then
 	local anchor = CreateFrame("Frame", "AddUIClassShamanAnchor", UIParent)
 	anchor:SetSize(40, 40)
 	anchor:SetPoint("LEFT", UIParent, "LEFT", 100, 0)
+	ns.AddEdit(anchor, "自然守护者")
 
 	-- 锚定到自己所在的小队框体（1-5 谁是自己就锚到谁）
 	local function FindSelfMember()
