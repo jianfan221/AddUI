@@ -4,7 +4,7 @@ local _,ns = ...
 local _, cls = UnitClass("player")
 if cls == "SHAMAN" then
 	ns.event("PLAYER_LOGIN", function()
-		if not (ns.DB and ns.DB.shamanIconSwap) then return end
+		if not (AddUIDB and AddUIDB.shamanIconSwap) then return end
 
 		local BUFF_ID = 1259491      -- 替换成的图标(法术)-净化烈焰
 		local BAR_SPELL_ID = 51505   -- 被替换图标的按钮法术-熔岩爆裂
