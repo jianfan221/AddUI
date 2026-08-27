@@ -11,15 +11,14 @@ local L = {
     leaveCombat = { default = "Leave Combat", zhTW = "離開戰鬥", zhCN = "离开战斗" },
 }
 local alertFrame = CreateFrame("Frame","进入战斗",UIParent)
-alertFrame:SetSize(400, 65)
+alertFrame:SetSize(360, 59) -- 原 400×65 缩放 0.9 的视觉尺寸，去掉 SetScale 后直接用视觉尺寸
 alertFrame:SetPoint("TOP", 0, -280)
-alertFrame:SetScale(0.9)
 alertFrame:Hide()
 ns.AddEdit(alertFrame,"ADDUI进入战斗",true)
 alertFrame.Bg = alertFrame:CreateTexture(nil, "BACKGROUND")
 alertFrame.Bg:SetTexture("Interface\\LevelUp\\MinorTalents")
 alertFrame.Bg:SetPoint("TOP")
-alertFrame.Bg:SetSize(400, 67)
+alertFrame.Bg:SetSize(360, 60) -- 与 frame 视觉尺寸同步（原 400×67×0.9）
 alertFrame.Bg:SetTexCoord(0, 400/512, 341/512, 407/512)
 alertFrame.Bg:SetVertexColor(1, 1, 1, 0.4)
 alertFrame.text = alertFrame:CreateFontString(nil, "ARTWORK", "GameFont_Gigantic")
