@@ -415,7 +415,7 @@ ns.LazyBuild(SettingsFrame, function()
 end)
 
 -- ═══════════════════════════════════════════════════════════════════
--- ns.Add* 行构建 API（类似 PlateColor 的 API-Options.lua，数据读写使用 AddUIDB）
+-- ns.Add* 行构建 API（类似 PlateColor 的 API-Options.lua，数据读写使用 ns.DB，可复用）
 -- 通过隐式"当前构建上下文"（Cur）工作：AddSettingsTab 构建某个标签时，
 -- Setting.lua 里的行调用无需再传 content、y 参数。
 -- ═══════════════════════════════════════════════════════════════════
@@ -856,6 +856,8 @@ function ns.BuildCoreTabs()
 	-- ═══════ 配置 ═══════
 	local cfgTab = ns.AddTab("配置", function()
 		local cf = Cur.content
+		-- 导入数据中转（局部变量闭包传递，避免使用全局变量 ADDUIImportData）
+		local importData
 		-- 校验并合并导入的配置（缺失 key 用默认值补全，同 PlateColor 思路）
 		local function ValidateAndMergeImport(importDB)
 			if type(importDB) ~= "table" then return nil, "配置格式错误" end
@@ -864,44 +866,65 @@ function ns.BuildCoreTabs()
 				if importDB[k] ~= nil then hasAny = true break end
 			end
 			if not hasAny then return nil, "配置与当前版本不匹配" end
+			-- 收集导入配置缺失的字段，用默认值补全并打印
+			local missing = {}
 			for k, v in pairs(ns.Defaults) do
 				if type(v) == "table" then
-					if importDB[k] == nil then importDB[k] = {} end
+					if importDB[k] == nil then
+						importDB[k] = {}
+						table.insert(missing, tostring(k))
+					end
 					for k2, v2 in pairs(v) do
 						if type(k2) ~= "number" and importDB[k][k2] == nil then
 							importDB[k][k2] = v2
+							table.insert(missing, tostring(k) .. "." .. tostring(k2))
 						end
 					end
 				else
-					if importDB[k] == nil then importDB[k] = v end
+					if importDB[k] == nil then
+						importDB[k] = v
+						table.insert(missing, tostring(k))
+					end
+				end
+			end
+			if #missing > 0 then
+				print("|cff00FFFF["..addonName.."]|r 导入配置缺失以下字段，已用默认值补全：")
+				for _, m in ipairs(missing) do
+					print("  |cffCCCCCC" .. m .. "|r")
 				end
 			end
 			return importDB, nil
 		end
 		-- 恢复默认确认弹窗
-		StaticPopupDialogs["ADDUICONFIG_RESET"] = {
+		StaticPopupDialogs[addonName .. "CONFIG_RESET"] = {
 			text = "即将恢复默认设置并重载，是否继续？",
 			button1 = "重载",
 			button2 = "取消",
 			OnAccept = function()
-				local keep = {}
-				if AddUIDB and AddUIDB.DungeonBossKill then keep.DungeonBossKill = AddUIDB.DungeonBossKill end
-				AddUIDB = ns.Defaults
-				ns.DB = ns.Defaults
-				if keep.DungeonBossKill then AddUIDB.DungeonBossKill = keep.DungeonBossKill end
+				-- 恢复默认：遍历默认表，默认值为空表的字段（收藏、副本记录、冷却布局等用户数据）直接排除、保留原数据
+				for k, v in pairs(ns.Defaults) do
+					if type(v) == "table" and not next(v) then
+						-- 空表默认字段 = 用户数据容器，保留 ns.DB 原有数据
+					else
+						ns.DB[k] = type(v) == "table" and CopyTable(v) or v
+					end
+				end
 				ReloadUI()
 			end,
 			timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
 		}
 		-- 导入确认弹窗
-		StaticPopupDialogs["ADDUICONFIG_IMPORT"] = {
+		StaticPopupDialogs[addonName .. "CONFIG_IMPORT"] = {
 			text = "即将导入配置并重载，是否继续？",
 			button1 = "重载",
 			button2 = "取消",
 			OnAccept = function()
-				if type(ADDUIImportData) == "table" then
-					AddUIDB = ADDUIImportData
-					ns.DB = ADDUIImportData
+				if type(importData) == "table" then
+					-- 导入：原地清空重填 ns.DB（保持同一引用，重载后存档才生效）
+					wipe(ns.DB)
+					for k, v in pairs(importData) do
+						ns.DB[k] = type(v) == "table" and CopyTable(v) or v
+					end
 					ReloadUI()
 				end
 			end,
@@ -941,19 +964,19 @@ function ns.BuildCoreTabs()
 		end
 		-- 第一行：恢复默认
 		local resetBtn = MakeBtn("恢复默认", function()
-			StaticPopup_Show("ADDUICONFIG_RESET")
+			StaticPopup_Show(addonName .. "CONFIG_RESET")
 		end)
 		resetBtn:SetPoint("TOPLEFT", cf, "TOPLEFT", 10, -8)
 		-- 第二行：导出 / 导入
 		local exportBtn = MakeBtn("导出配置", function()
 			-- 递归净化深拷贝：把每个子表规范成可序列化结构（纯数组/纯对象保留，混合表转对象形式），
 			-- 这样大表也能完整导出，且不会触发 SerializeJSON 的"无法表示"报错
-			local seen = {}
+			local active = {} -- 递归栈检测：仅表处于当前递归路径上才算循环，避免误杀共享引用
 			local function MakeExportable(v)
 				local tv = type(v)
 				if tv == "string" then
-					-- 过滤控制字符（如 \u0000），否则复制粘贴往返时会损坏导致无法解析
-					return (v:gsub("[%z\1-\31]", ""))
+					-- 直接返回字符串（去除可疑的 gsub，避免 WoW 下控制字符模式导致字符串异常）
+					return v
 				end
 				if tv == "number" then
 					-- NaN / Infinity 不是合法 JSON 值，转为 0
@@ -961,8 +984,8 @@ function ns.BuildCoreTabs()
 					return v
 				end
 				if tv ~= "table" then return v end
-				if seen[v] then return nil end -- 防循环引用
-				seen[v] = true
+				if active[v] then return nil end -- 真循环引用才丢弃
+				active[v] = true
 				local isArray, count = true, 0
 				for k in pairs(v) do
 					if type(k) == "number" then
@@ -984,6 +1007,7 @@ function ns.BuildCoreTabs()
 				else
 					for k, val in pairs(v) do out[tostring(k)] = MakeExportable(val) end
 				end
+				active[v] = nil
 				return out
 			end
 			ebox:SetText(C_EncodingUtil.SerializeJSON(MakeExportable(ns.DB)))
@@ -1010,8 +1034,8 @@ function ns.BuildCoreTabs()
 				print("|cffff0000["..addonName.."]|r 导入失败：" .. tostring(err))
 				return
 			end
-			ADDUIImportData = merged
-			StaticPopup_Show("ADDUICONFIG_IMPORT")
+			importData = merged
+			StaticPopup_Show(addonName .. "CONFIG_IMPORT")
 		end)
 		importBtn:SetPoint("LEFT", exportBtn, "RIGHT", 8, 0)
 		Cur.maxContentHeight = 430
