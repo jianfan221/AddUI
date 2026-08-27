@@ -54,8 +54,16 @@ end)
 
 --编辑模式拖动位置
 -- 可选参数 center：为 true 时进入编辑模式自动水平居中
+-- 防重复：以 frame.highlight 是否存在判断是否已处理（避免重复创建高亮层、重复注册编辑模式 hook）
 function ns.AddEdit(frame,name,center)
     local dbName = frame:GetName() and frame:GetName().."_Edit"
+    -- 先加载保存的位置（即使已处理过也重新应用，便于单独调用只加载位置）
+    if dbName and AddUIDB and AddUIDB[dbName] then
+        frame:ClearAllPoints()
+        frame:SetPoint(unpack(AddUIDB[dbName]))
+    end
+    -- 防重复：已创建过高亮层则不再重复初始化
+    if frame.highlight then return end
     if not dbName or not EditModeManagerFrame then
         print("编辑模式拖动位置功能缺少框体名或编辑模式框架")
         return
@@ -64,11 +72,11 @@ function ns.AddEdit(frame,name,center)
     frame:SetClampedToScreen(true)
     frame:SetClampRectInsets(30, -30, -30, 30)
 
-    -- 高亮层：独立高层级子框架，显示在 frame 内容之上
-    local highlight = CreateFrame("Frame", nil, frame)
-    highlight:SetAllPoints(frame)
-    highlight:SetFrameLevel(100)
-    highlight:Hide()
+    -- 高亮层：独立高层级子框架，显示在 frame 内容之上（挂到 frame 上，重复调用只覆盖不累积）
+    frame.highlight = CreateFrame("Frame", nil, frame)
+    frame.highlight:SetAllPoints(frame)
+    frame.highlight:SetFrameLevel(100)
+    frame.highlight:Hide()
 
     -- 高亮材质（暴雪 editmode-actionbar 九宫格）
     local selectionLayout = {
@@ -83,21 +91,15 @@ function ns.AddEdit(frame,name,center)
         Center = { atlas = "%s-NineSlice-Center", x = -8, y = 8, x1 = 8, y1 = -8 },
     }
 
-    local text = highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    text:SetPoint("CENTER", 0, 0)
-    text:SetFont("fonts\\ARHei.ttf", 30, "OUTLINE")
-    text:SetText(name or "AddUI")
-    text:SetVertexColor(1,1,1,0.7)
+    frame.text = frame.highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    frame.text:SetPoint("CENTER", 0, 0)
+    frame.text:SetFont("fonts\\ARHei.ttf", 30, "OUTLINE")
+    frame.text:SetText(name or "AddUI")
+    frame.text:SetVertexColor(1,1,1,0.7)
 
     -- 高亮材质切换（"selected" 选中 / "highlight" 未选中）
     local function ApplyHighlight(kit)
-        pcall(NineSliceUtil.ApplyLayout, highlight, selectionLayout, "editmode-actionbar-"..kit)
-    end
-
-    -- 加载保存的位置
-    if AddUIDB and AddUIDB[dbName] then
-        frame:ClearAllPoints()
-        frame:SetPoint(unpack(AddUIDB[dbName]))
+        pcall(NineSliceUtil.ApplyLayout, frame.highlight, selectionLayout, "editmode-actionbar-"..kit)
     end
 
     -- 自动水平居中（保持垂直位置）
@@ -131,38 +133,38 @@ function ns.AddEdit(frame,name,center)
         if center and not InCombatLockdown() then
             CenterFrame()
         end
-        highlight:Show()
+        frame.highlight:Show()
         ApplyHighlight("highlight") -- 进入编辑模式默认显示未选中高亮框
-        text:Hide() -- 文字默认隐藏，鼠标指向时才显示
-        frame:SetMovable(true) -- frame 负责移动，highlight 负责接收鼠标（层级最高，避免被内部元素遮挡拖不动）
-        highlight:EnableMouse(true)
-        highlight:RegisterForDrag("LeftButton")
-        highlight:SetScript("OnDragStart", function() frame:StartMoving() end)
-        highlight:SetScript("OnDragStop", function()
+        frame.text:Hide() -- 文字默认隐藏，鼠标指向时才显示
+        frame:SetMovable(true) -- frame 负责移动，frame.highlight 负责接收鼠标（层级最高，避免被内部元素遮挡拖不动）
+        frame.highlight:EnableMouse(true)
+        frame.highlight:RegisterForDrag("LeftButton")
+        frame.highlight:SetScript("OnDragStart", function() frame:StartMoving() end)
+        frame.highlight:SetScript("OnDragStop", function()
             frame:StopMovingOrSizing()
             SavePosition()
         end)
-        highlight:SetScript("OnEnter", function()
+        frame.highlight:SetScript("OnEnter", function()
             ApplyHighlight("selected")
-            text:Show()
+            frame.text:Show()
         end)
-        highlight:SetScript("OnLeave", function()
+        frame.highlight:SetScript("OnLeave", function()
             ApplyHighlight("highlight")
-            text:Hide()
+            frame.text:Hide()
         end)
     end
 
     local function LeaveEditMode()
         frame:SetShown(isshow)
         frame:SetAlpha(isalpha)
-        highlight:Hide()
-        text:Hide()
+        frame.highlight:Hide()
+        frame.text:Hide()
         frame:SetMovable(false)
-        highlight:EnableMouse(false)
-        highlight:SetScript("OnDragStart", nil)
-        highlight:SetScript("OnDragStop", nil)
-        highlight:SetScript("OnEnter", nil)
-        highlight:SetScript("OnLeave", nil)
+        frame.highlight:EnableMouse(false)
+        frame.highlight:SetScript("OnDragStart", nil)
+        frame.highlight:SetScript("OnDragStop", nil)
+        frame.highlight:SetScript("OnEnter", nil)
+        frame.highlight:SetScript("OnLeave", nil)
     end
 
     EditModeManagerFrame:HookScript("OnShow", EnterEditMode)
@@ -203,14 +205,6 @@ function ns.AATEXT(text)
         adcfont.fadeTimer:Cancel()
         adcfont.fadeTimer = nil
     end, 1)
-end
-
---创建文本
-function ns.AddText(frame,size)
-	local text = frame:CreateFontString(nil, "ARTWORK")
-	text:SetFont(STANDARD_TEXT_FONT, size, 'OUTLINE')
-	
-	return text
 end
 
 --驱散颜色
