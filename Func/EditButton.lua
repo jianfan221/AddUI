@@ -28,7 +28,7 @@ local layoutString = [[
 				end
 			end
 			if account >= Constants.EditModeConsts.EditModeMaxLayoutsPerType then
-				print("|cffFF0000通用布局数量已达上限,需要先删除一个|r")
+				ns.AATEXT("|cffFF0000通用布局数量已达上限,需要先删除一个|r")
 			else
 				-- 3. 插入数据
 				table.insert(layoutsList, mylayout)
@@ -36,13 +36,15 @@ local layoutString = [[
 				-- 4. 保存刚才修改过的那个变量
 				C_EditMode.SaveLayouts(allLayouts)
 				
-				-- 5. 激活最新添加的布局（通常是最后一个）
-				C_EditMode.SetActiveLayout(#layoutsList+1)
+				-- 5. 激活刚添加的布局
+				-- 注意：GetLayouts() 的 layouts 只含自定义布局，但 SetActiveLayout 用的是"预设布局在前、自定义布局在后"的完整索引，
+				-- 所以要在自定义数组位置 #layoutsList 上加上预设布局数量偏移（Enum.EditModePresetLayoutsMeta.NumValues = 2）。
+				C_EditMode.SetActiveLayout(Enum.EditModePresetLayoutsMeta.NumValues + #layoutsList)
 				
-				print("|cff00FFFF简繁|r|cff00FF00的布局已成功保存并启用|r")
+				ns.AATEXT("|cff00FFFF简繁|r|cff00FF00的布局已成功保存并启用|r")
 			end
 		else
-			print("|cffFF0000错误: 字符串格式非法, 无法转换|r")
+			ns.AATEXT("|cffFF0000错误: 字符串格式非法, 无法转换|r")
 		end
 	end)
 
