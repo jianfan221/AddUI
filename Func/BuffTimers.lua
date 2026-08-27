@@ -97,8 +97,8 @@ local SPEED_FORMAT_OPTIONS = {
 --       PaperDollFrame_UpdateStats 刷新循环导致报错，故用独立 Frame 显示。
 ns.event("PLAYER_LOGIN", function()
     if not (AddUIDB and AddUIDB.movspeed) then return end
-    if not CharacterFrame or not CharacterFrame.Background then return end
-    local frame = CreateFrame("Frame", nil, CharacterFrame)
+    if not PaperDollFrame or not CharacterFrame or not CharacterFrame.Background then return end
+    local frame = CreateFrame("Frame", nil, PaperDollFrame)
     frame:SetFrameStrata("HIGH")
     frame:SetSize(1, 1)
     frame:SetPoint("BOTTOMLEFT", CharacterFrame.Background, "BOTTOMRIGHT", -108, 8)
