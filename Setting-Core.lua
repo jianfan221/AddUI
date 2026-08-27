@@ -969,58 +969,14 @@ function ns.BuildCoreTabs()
 		resetBtn:SetPoint("TOPLEFT", cf, "TOPLEFT", 10, -8)
 		-- 第二行：导出 / 导入
 		local exportBtn = MakeBtn("导出配置", function()
-			-- 递归净化深拷贝：把每个子表规范成可序列化结构（纯数组/纯对象保留，混合表转对象形式），
-			-- 这样大表也能完整导出，且不会触发 SerializeJSON 的"无法表示"报错
-			local active = {} -- 递归栈检测：仅表处于当前递归路径上才算循环，避免误杀共享引用
-			local function MakeExportable(v)
-				local tv = type(v)
-				if tv == "string" then
-					-- 直接返回字符串（去除可疑的 gsub，避免 WoW 下控制字符模式导致字符串异常）
-					return v
-				end
-				if tv == "number" then
-					-- NaN / Infinity 不是合法 JSON 值，转为 0
-					if v ~= v or v == math.huge or v == -math.huge then return 0 end
-					return v
-				end
-				if tv ~= "table" then return v end
-				if active[v] then return nil end -- 真循环引用才丢弃
-				active[v] = true
-				local isArray, count = true, 0
-				for k in pairs(v) do
-					if type(k) == "number" then
-						count = count + 1
-						if k < 1 or k ~= math.floor(k) then isArray = false end
-					else
-						isArray = false
-					end
-				end
-				local out = {}
-				if isArray then
-					-- 必须是 1..count 连续才算纯数组，否则按对象处理
-					for i = 1, count do
-						if v[i] == nil then isArray = false break end
-					end
-				end
-				if isArray then
-					for i = 1, count do out[i] = MakeExportable(v[i]) end
-				else
-					for k, val in pairs(v) do out[tostring(k)] = MakeExportable(val) end
-				end
-				active[v] = nil
-				return out
-			end
-			ebox:SetText(C_EncodingUtil.SerializeJSON(MakeExportable(ns.DB)))
+			-- CBOR 直接序列化整表：保留数字键等所有 Lua 类型，无需净化；再转 Base64 便于复制分享
+			ebox:SetText(C_EncodingUtil.EncodeBase64(C_EncodingUtil.SerializeCBOR(ns.DB)))
 		end)
 		exportBtn:SetPoint("TOPLEFT", cf, "TOPLEFT", 10, -42)
 		local importBtn = MakeBtn("导入配置", function()
-			-- 去掉首尾空白，并清除控制字符及其 \u00XX 转义（DeserializeJSON 不支持，会报 unknown json value）
-			local text = (ebox:GetText() or "")
-				:gsub("^%s+", ""):gsub("%s+$", "")
-				:gsub("[%z\1-\31]", "")          -- 实际控制字符字节
-				:gsub("\\u000[0-9a-fA-F]", "")   -- \u0000-\u000f
-				:gsub("\\u001[0-9a-fA-F]", "")   -- \u0010-\u001f
-			local ok, data = pcall(C_EncodingUtil.DeserializeJSON, text)
+			-- CBOR 反序列化：Base64 解码后直接还原整表，数字键原样保留，无需额外处理
+			local text = (ebox:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", "")
+			local ok, data = pcall(C_EncodingUtil.DeserializeCBOR, C_EncodingUtil.DecodeBase64(text))
 			if not ok then
 				print("|cffff0000["..addonName.."]|r 导入失败（解析错误）：" .. tostring(data))
 				return
