@@ -5,7 +5,7 @@ local _, cls = UnitClass("player")
 -- 法师：奥术涌动倒数提醒（设置-职业 开关 mageCountdown）
 if cls == "MAGE" then
 	ns.event("PLAYER_LOGIN", function()
-		if not (ns.DB and ns.DB.mageCountdown) then return end
+		if not (AddUIDB and AddUIDB.mageCountdown) then return end
 		EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
 			if unit ~= "player" then return end
 			if spellID ~= 365350 then return end
@@ -20,7 +20,7 @@ if cls == "MAGE" then
 -- 萨满：技能倒数提醒（设置-职业 开关 shamanCountdown）
 elseif cls == "SHAMAN" then
 	ns.event("PLAYER_LOGIN", function()
-		if not (ns.DB and ns.DB.shamanCountdown) then return end
+		if not (AddUIDB and AddUIDB.shamanCountdown) then return end
 		EventRegistry:RegisterFrameEventAndCallback("UNIT_SPELLCAST_SUCCEEDED",function(_,unit,_,spellID)
 			if unit ~= "player" then return end
 			if spellID ~= 114050 then return end
@@ -164,7 +164,7 @@ local function CreateFrames()
 end
 
 local function OnCancelAuraEvent(event, unit, _, spellId)
-	if not (ns.DB and ns.DB.cancelAuraBtn) then return end
+	if not (AddUIDB and AddUIDB.cancelAuraBtn) then return end
 	if event == "PLAYER_ENTERING_WORLD" then
 		CreateFrames()
 		return
