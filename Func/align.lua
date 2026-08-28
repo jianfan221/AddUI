@@ -21,7 +21,20 @@ ns.event('READY_CHECK', function()
 end)
 
 ns.tips("区域文字鼠标穿透(大秘境开门快速选怪会碍事)")
-EventToastManagerFrame:EnableMouse(false) -- 鼠标穿透，悬停/点击不产生任何影响
+-- toast 内容框架是动态创建(池化)的,需对主框架及每次动态生成的 toast 递归禁用鼠标
+local function SetToastMousePassthrough(frame)
+	if not frame then return end
+	frame:EnableMouse(false)
+	for i = 1, frame:GetNumChildren() do
+		SetToastMousePassthrough(select(i, frame:GetChildren()))
+	end
+end
+if EventToastManagerFrame then
+	SetToastMousePassthrough(EventToastManagerFrame)
+	hooksecurefunc(EventToastManagerFrame, "DisplayToast", function(self)
+		SetToastMousePassthrough(self.currentDisplayingToast)
+	end)
+end
 
 
 ns.tips("聊天反和谐")
