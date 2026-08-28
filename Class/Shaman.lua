@@ -3,7 +3,6 @@ local _,ns = ...
 -- 萨满专属：自然守护者(31616)触发30秒倒数,显示在头像位置
 local _, cls = UnitClass("player")
 if cls == "SHAMAN" then
-	ns.tips("萨满自然守护者触发30秒倒数(头像位置)")
 
 	local SpellID = 31616
 	local DURATION = 30
