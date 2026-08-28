@@ -220,6 +220,7 @@ fps:SetScript("OnEnter", function(self)
 		if a and b then
 			return a[2] > b[2]
 		end
+		return false
 	end)
 	for i = 1, #MemoryTabel  do
 		if MemoryTabel[i][3] then
