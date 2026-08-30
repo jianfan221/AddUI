@@ -374,5 +374,5 @@ function ns.tips(text)
 	table.insert(ns.TIPTEXTS, "|cffFFFFFF"..tipsindex..": "..text.."|r")
 	tipsindex = tipsindex + 1
 end
-ns.tips("这里是一些没有开关的功能,如需开关联系我")
+ns.tips("|cff00FF00这里是一些没有开关的功能,如需开关联系我|r")
 
