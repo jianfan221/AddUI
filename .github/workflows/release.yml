@@ -33,6 +33,7 @@ jobs:
 
           CHANGES=""
           MD_CHANGES=""
+          FIRST=1
           # 最多处理10个标签段
           for ((i = 0; i < 10 && i + 1 < TAG_COUNT; i++)); do
             CUR="${TAGS[i]}"
@@ -51,14 +52,18 @@ jobs:
               CHANGES+="|cff3cff00## $CUR|r"$'\n'
               # CHANGELOG.md：markdown 版本块（版本链接 + 日期 + 变更链接）
               CUR_DATE=$(git show -s --format=%cs "$CUR")
-              MD_CHANGES+="## [<span style=\"color:#3cff00\">$CUR</span>](https://github.com/$REPO/tree/$CUR) ($CUR_DATE)"$'\n'
-              MD_CHANGES+="[Full Changelog](https://github.com/$REPO/compare/$NEXT...$CUR) [Previous Releases](https://github.com/$REPO/releases)"$'\n'
+              MD_CHANGES+="## **$CUR**"$'\n'
+              if [ "$FIRST" = "1" ]; then
+                # 最新版本额外加变更链接
+                MD_CHANGES+="[Full Changelog](https://github.com/$REPO/compare/$NEXT...$CUR) [Previous Releases](https://github.com/$REPO/releases)"$'\n'
+                FIRST=0
+              fi
               while IFS= read -r line; do
                 [ -z "$line" ] && continue
                 f="${line%%|*}"
                 m="${line#*|}"
-                CHANGES+="* $m |cfff0ff00$f|r"$'\n'
-                MD_CHANGES+="- $m <span style=\"color:#f0ff00\">$f</span>"$'\n'
+                CHANGES+="* $m |cffFF8C00$f|r"$'\n'
+                MD_CHANGES+="- $m <span style=\"color:#FF8C00\">$f</span>"$'\n'
               done <<< "$ENTRIES"
               CHANGES+=$'\n'
               MD_CHANGES+=$'\n'
