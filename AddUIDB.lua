@@ -85,6 +85,8 @@ ns.Defaults = {
 	-- ═══════ 职业 ═══════
 	mageCountdown = true, -- 奥术涌动倒数提醒(法师)
 	shamanCountdown = true, -- 萨满技能倒数提醒
+	shamanGuardianCountdown = true, -- 萨满自然守护者冷却倒数
+	shamanThunderClaw = true, -- 萨满雷霆之爪图标（依赖自然守护者）
 	shamanIconSwap = true, -- 萨满动作条图标切换
 	cancelAuraBtn = true, -- 取消操控按钮(法师)
 }
