@@ -84,12 +84,9 @@ ns.event("PLAYER_LOGIN", function()
 	container = CreateFrame("AuraContainer", "ADUISelfBuffAura", holder, "CustomAuraContainerTemplate")
 	container:SetPoint("CENTER", holder, "CENTER", 0, 0)
 	container:SetUnit("player")
-	-- AuraContainer 属 ScriptRegion，鼠标拦截由 SetMouseClickEnabled/SetMouseMotionEnabled 控制，标准 EnableMouse 对其无效。
 	-- 非编辑模式下完全禁用鼠标并透传点击：空容器不再拦截点击，鼠标可穿透（不影响右键转视角、下层拖动）。
 	-- 编辑模式拖动走 holder 外框，容器本身无需接收鼠标，故可一直保持禁用。
-	container:SetMouseClickEnabled(false)
-	container:SetMouseMotionEnabled(false)
-	pcall(container.SetPropagateMouseClicks, container, true)
+	container:EnableMouse(false)--完全鼠标穿透，不阻挡点击
 
 	container:AddAuraGroup("selfBuff", "HELPFUL|PLAYER", {
 		maxFrameCount = 10,
@@ -97,8 +94,7 @@ ns.event("PLAYER_LOGIN", function()
 		sortDirection = AuraContainerSortDirection.Normal,
 		initializeFrame = function(auraButton)
 			auraButton:SetSize(40, 40)
-			auraButton:SetTooltipAnchorPoint("ANCHOR_TOP") -- 工具提示锚点
-			auraButton:SetHideTooltipInCombat(true)          -- 战斗中隐藏工具提示
+			auraButton:EnableMouse(false)--完全鼠标穿透，不阻挡点击
 
 			local icon = auraButton:CreateTexture(nil, "ARTWORK")
 			icon:SetAllPoints(auraButton)
