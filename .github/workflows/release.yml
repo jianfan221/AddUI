@@ -42,9 +42,7 @@ jobs:
             ENTRIES=""
             for hash in $(git rev-list "$NEXT..$CUR" 2>/dev/null); do
               MSG=$(git log --format="%s" -1 "$hash" 2>/dev/null)
-              FILES=$(git show --name-only --format="" "$hash" 2>/dev/null | tr '\n' ', ' | sed 's/^, //' | sed 's/, *$//' | sed 's/, ,//g')
-              [ -z "$FILES" ] && FILES="$hash"
-              ENTRIES+="$FILES|$MSG"$'\n'
+              [ -n "$MSG" ] && ENTRIES+="$MSG"$'\n'
             done
 
             if [ -n "$ENTRIES" ]; then
@@ -60,10 +58,8 @@ jobs:
               fi
               while IFS= read -r line; do
                 [ -z "$line" ] && continue
-                f="${line%%|*}"
-                m="${line#*|}"
-                CHANGES+="* $m |cffFF8C00$f|r"$'\n'
-                MD_CHANGES+="- $m <span style=\"color:#FF8C00\">$f</span>"$'\n'
+                CHANGES+="* $line"$'\n'
+                MD_CHANGES+="- $line"$'\n'
               done <<< "$ENTRIES"
               CHANGES+=$'\n'
               MD_CHANGES+=$'\n'
