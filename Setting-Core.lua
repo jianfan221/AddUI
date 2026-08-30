@@ -1,23 +1,82 @@
--- Setting-Core.lua：AddUI 新设置界面核心（已在 toc 中加载，替代 Options.lua）
--- 负责：
---   1. 创建设置页面（插件名、/ad /addui 命令、Settings 分类）
+-- Setting-Core.lua：通用设置界面核心（供任意插件复用）
+--   1. 创建设置页面（插件名、slash 命令、Settings 分类注册）
 --   2. 左右布局（左侧标签栏 + 右侧内容区）
---   3. 提供所有行构建工具（类似 PlateColor 的 API-Options.lua），供 Setting.lua 构建右侧滚动菜单
+--   3. 提供所有行构建工具（ns.Add* 系列），供各插件的标签文件构建右侧滚动菜单
 --
--- 结构：
---   上方：基础设施 + 页面构建
---   下方：ns.Add* 行构建 API（Setting.lua 使用）
+-- 数据读写使用 ns.DB 与默认值 ns.Defaults，均由各插件自行提供（如 SavedVariables 与默认模板）。
+-- 插件特有内容（slash 命令、副标题、彩色标题等）由各插件在标签文件顶部注入 ns。
 local addonName, ns = ...
+
+-- ═══════ 本地化（国服/台服中文，其他英文；键名固定中文，值按语言翻译）═══════
+local Locale = GetLocale()
+local L
+if Locale == "zhCN" or Locale == "zhTW" then
+	L = {
+		["重载"] = "重载",
+		["版本"] = "版本: ",
+		["设置"] = "设置",
+		["一键勾选"] = "一键勾选本页面所有选项",
+		["构建出错"] = "设置界面 [%s] 构建出错: ",
+		["点击更改颜色"] = "点击更改颜色",
+		["配置"] = "配置",
+		["配置格式错误"] = "配置格式错误",
+		["配置版本不匹配"] = "配置与当前版本不匹配",
+		["导入缺失补全"] = "导入配置缺失以下字段，已用默认值补全：",
+		["恢复默认确认"] = "即将恢复默认设置并重载，是否继续？",
+		["导入确认"] = "即将导入配置并重载，是否继续？",
+		["导出配置"] = "导出配置",
+		["导入配置"] = "导入配置",
+		["导入失败非本插件"] = "导入失败：不是本插件的配置字符串",
+		["导入失败解析"] = "导入失败（解析错误）：",
+		["导入失败无效"] = "导入失败：字符串不是有效配置",
+		["导入失败"] = "导入失败：",
+		["导出导入搜索"] = " 导出配置 导入配置",
+		["更新记录"] = "更新记录",
+		["暂无更新记录"] = "暂无更新记录",
+		["战斗中"] = "正在战斗中，脱战后打开设置界面",
+		["更新日志"] = "更新日志",
+	}
+else
+	L = {
+		["重载"] = "Reload",
+		["版本"] = "Version: ",
+		["设置"] = "Settings",
+		["一键勾选"] = "Toggle all options on this page",
+		["构建出错"] = "Settings interface [%s] build error: ",
+		["点击更改颜色"] = "Click to change color",
+		["配置"] = "Config",
+		["配置格式错误"] = "Invalid config format",
+		["配置版本不匹配"] = "Config does not match current version",
+		["导入缺失补全"] = "Import config missing the following fields, filled with defaults:",
+		["恢复默认确认"] = "Reset to default settings and reload, continue?",
+		["导入确认"] = "Import config and reload, continue?",
+		["导出配置"] = "Export Config",
+		["导入配置"] = "Import Config",
+		["导入失败非本插件"] = "Import failed: not this addon's config string",
+		["导入失败解析"] = "Import failed (parse error): ",
+		["导入失败无效"] = "Import failed: string is not a valid config",
+		["导入失败"] = "Import failed: ",
+		["导出导入搜索"] = " Export Config Import Config",
+		["更新记录"] = "Update Log",
+		["暂无更新记录"] = "No update records",
+		["战斗中"] = "In combat, opening settings after leaving combat",
+		["更新日志"] = "Update Log",
+	}
+end
 
 -- ═══════════════════════════════════════════════════════════════════
 -- 基础设施（页面构建与 API 共用）
 -- ═══════════════════════════════════════════════════════════════════
+-- 说明：ns.DB 实时引用与 ns.Defaults 默认模板均由各插件自行提供，
+--       核心文件不写死具体插件的 DB 表，以保证多插件通用。
+
 local Cur = {}  -- 当前正在构建的标签上下文：Cur.content（右侧内容框）、Cur.y（标签序号）
+ns.Cur = Cur    -- 暴露给标签文件，便于在 build 内自由创建 UI / 撑高滚动条（ns.Cur.maxHeight）
 
 -- 每个标签页的行计数器（key = 标签序号）
 ns.RowCount = {}
 
--- 标签页注册表（由 Setting.lua 通过 ns.AddSettingsTab 填充）
+-- 标签页注册表（由各插件的标签文件通过 ns.AddTab 填充）
 ns.SettingsTabs = {}
 
 -- 懒构建：frame 首次显示时才执行 builder（只执行一次）
@@ -54,18 +113,15 @@ end
 -- 页面构建
 -- ═══════════════════════════════════════════════════════════════════
 local SettingsFrame = CreateFrame("Frame", addonName .. "SettingsFrame", UIParent)
-local category = Settings.RegisterCanvasLayoutCategory(SettingsFrame, addonName)
+ns.SettingsFrame = SettingsFrame  -- 暴露主框架，供插件其他模块在此页面添加自定义内容（如特有的提示、按钮、装饰）
+-- 标题用彩色标题（ns.RCTexts 可自定义，缺省用插件名）
+local category = Settings.RegisterCanvasLayoutCategory(SettingsFrame, ns.RCTexts and ns.RCTexts(addonName) or addonName)
 Settings.RegisterAddOnCategory(category)
 
 ns.LazyBuild(SettingsFrame, function()
-	-- ═══════ 底部：联系方式（左）+ 重载（右）═══════
-	local qqun = SettingsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
-	qqun:SetPoint("BOTTOMLEFT", SettingsFrame, "BOTTOMLEFT", 0, -28)
-	qqun:SetJustifyH("LEFT")
-	if ns.Contact then qqun:SetText(ns.Contact) else qqun:Hide() end
-
+	-- ═══════ 底部：重载（右）═══════
 	local reload = CreateFrame("Button", addonName .. "rl", SettingsFrame, "UIPanelButtonTemplate")
-	reload:SetText("重载")
+	reload:SetText(L["重载"])
 	reload:SetWidth(92)
 	reload:SetHeight(22)
 	reload:SetPoint("BOTTOMRIGHT", SettingsFrame, "BOTTOMRIGHT", -132, -31)
@@ -83,7 +139,7 @@ ns.LazyBuild(SettingsFrame, function()
 	local title = SettingsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
 	title:SetPoint("BOTTOMLEFT", divider, "TOPLEFT", 10, 0)
 	title:SetFontHeight(33)
-	title:SetText(addonName)
+	title:SetText(ns.RCTexts and ns.RCTexts(addonName) or addonName)
 
 	local subtitle = SettingsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
 	subtitle:SetPoint("BOTTOMLEFT", divider, "TOPLEFT", 110, 5)
@@ -92,7 +148,7 @@ ns.LazyBuild(SettingsFrame, function()
 	local versionText = SettingsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
 	versionText:SetPoint("BOTTOMRIGHT", divider, "TOPRIGHT", 0, 3)
 	versionText:SetTextColor(0.8, 0.8, 0.8)
-	versionText:SetText("版本: |cff00FFFF"..(C_AddOns.GetAddOnMetadata(addonName, "Version") or "").."|r")
+	versionText:SetText(L["版本"] .. "|cff00FFFF"..(C_AddOns.GetAddOnMetadata(addonName, "Version") or "").."|r")
 
 	-- ═══════ 搜索框（可搜索左侧标签名或右侧设置内容）═══════
 	local searchBox = CreateFrame("EditBox", nil, SettingsFrame, "SearchBoxTemplate")
@@ -144,18 +200,18 @@ ns.LazyBuild(SettingsFrame, function()
 		btn:SetSize(tabBarContent:GetWidth() - 8, 26)
 	end
 	local selected = 1
-	-- 搜索栏右边：提示文本 + "设置"按钮（MDTimer 现代风格，一键勾选本页面所有选项）
+	-- 搜索栏右边：提示文本 + "设置"按钮（一键勾选本页面所有选项）
 	local toggleAllOn = false
 	local toggleBtn = CreateFrame("Button", nil, SettingsFrame)
 	toggleBtn:SetSize(56, 22)
 	toggleBtn:SetNormalFontObject("GameFontNormal")
 	toggleBtn:SetHighlightTexture([[Interface\Buttons\ButtonHilight-Square]])
 	toggleBtn:SetPoint("TOPRIGHT", SettingsFrame, "TOPRIGHT", -30, -50)
-	toggleBtn:SetText("设置")
+	toggleBtn:SetText(L["设置"])
 	local toggleLabel = SettingsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalSmall")
 	toggleLabel:SetPoint("RIGHT", toggleBtn, "LEFT", -6, 0)
 	toggleLabel:SetJustifyH("RIGHT")
-	toggleLabel:SetText("一键勾选本页面所有选项")
+	toggleLabel:SetText(L["一键勾选"])
 	toggleBtn.bg = toggleBtn:CreateTexture(nil, "BACKGROUND")
 	toggleBtn.bg:SetAllPoints()
 	toggleBtn.bg:SetColorTexture(0.2, 0.2, 0.2, 0.7)
@@ -233,13 +289,13 @@ ns.LazyBuild(SettingsFrame, function()
 		ns.RowCount[i] = 0
 		Cur.rows = {}
 		Cur.dependencies = {}
-		Cur.maxContentHeight = nil
-		local ok, err = pcall(tab.build)
+		Cur.maxHeight = nil
+		local ok, err = pcall(tab.build, content)
 		if not ok then
-			print("|cffff0000["..addonName.."]|r 设置界面 ["..tab.name.."] 构建出错: " .. tostring(err))
+			print("|cffff0000["..addonName.."]|r " .. string.format(L["构建出错"], tab.name) .. tostring(err))
 		end
 		tab.rows = Cur.rows
-		tab.maxContentHeight = Cur.maxContentHeight or 0
+		tab.maxContentHeight = Cur.maxHeight or 0
 		-- 记录该标签是否含勾选框（决定"全部开启/关闭"按钮是否可点）
 		tab.hasCheck = false
 		for _, row in ipairs(tab.rows) do
@@ -415,12 +471,11 @@ ns.LazyBuild(SettingsFrame, function()
 end)
 
 -- ═══════════════════════════════════════════════════════════════════
--- ns.Add* 行构建 API（类似 PlateColor 的 API-Options.lua，数据读写使用 ns.DB，可复用）
--- 通过隐式"当前构建上下文"（Cur）工作：AddSettingsTab 构建某个标签时，
--- Setting.lua 里的行调用无需再传 content、y 参数。
+-- ns.Add* 行构建 API（数据读写使用 ns.DB，可复用）
+-- 通过隐式"当前构建上下文"（Cur）工作：AddTab 构建某个标签时，Tab*.lua 里的行调用无需再传 content、y 参数。
 -- ═══════════════════════════════════════════════════════════════════
 
--- 标签页注册（由 Setting.lua 调用；build 无参数，内部直接使用下方行工具）
+-- 标签页注册（由 Tab*.lua 调用；build 无参数，内部直接使用下方行工具）
 function ns.AddTab(name, build)
 	local t = { name = name, build = build }
 	table.insert(ns.SettingsTabs, t)
@@ -486,7 +541,7 @@ local function RegisterRow(frame, isTitle, ox, originalIndex)
 	return row
 end
 
--- 行框架（PlateColor 样式：悬停高亮 + 左侧金色文本）
+-- 行框架（悬停高亮 + 左侧金色文本）
 local function NewRow()
 	local rowFrame = CreateFrame("Frame", nil, Cur.content)
 	rowFrame:SetHeight(26)
@@ -537,7 +592,7 @@ function ns.AddCheck(name, tip, db, setfun)
 	check:SetScript("OnClick", function()
 		ns.DB[db] = check:GetChecked()
 		if InCombatLockdown() then return end
-		if setfun then setfun(check:GetChecked()) end
+		ns.ApplyChange(setfun, check:GetChecked())
 	end)
 	rowFrame.__row.check = check
 	rowFrame.__row.control = check
@@ -567,7 +622,7 @@ function ns.AddSlider(name, tip, min, max, step, fmt, db, setfun)
 		righttext:SetText(string.format(fmt, value))
 		ns.DB[db] = value
 		if InCombatLockdown() then return end
-		if setfun then setfun(value) end
+		ns.ApplyChange(setfun, value)
 	end)
 	SetRowHover(slider.Slider or slider, bg, tip, rowFrame)
 	SetRowHover(slider.Back or slider, bg, tip, rowFrame)
@@ -590,7 +645,7 @@ function ns.AddDropdown(name, tip, opts, db, setfun)
 	local function IsSelected(v) return v == ns.DB[db] end
 	local function SetSelected(v)
 		ns.DB[db] = v
-		if setfun then setfun(v) end
+		ns.ApplyChange(setfun, v)
 	end
 	rowFrame.__row.db = db
 	rowFrame.__row.control = dd
@@ -627,15 +682,23 @@ local function SetCVarBit(cvar, bitIndex, enabled)
 end
 
 -- 基于 CVar 的勾选框（不保存到 DB，状态由 CVar 决定，自动同步外部变化）
--- cvarName: CVar 名称  enumValue: (可选)位域 CVar 的位索引，传则按位读写
--- setfun: (可选)切换后回调，收到 checked
 function ns.AddCVarCheck(name, tip, cvarName, enumValue, setfun)
 	if not C_CVar.GetCVar(cvarName) then return end
+	-- 鼠标提示中追加暴雪默认值（文本青蓝、值绿色）
+	-- 位域 CVar（enumValue 非 nil）用默认掩码 GetCVarBitfieldDefault 判断该位；普通 CVar 直接取默认值
+	local defText
+	if enumValue then
+		local defMask = CVarCallbackRegistry:GetCVarBitfieldDefault(cvarName)
+		defText = (bit.band(defMask, bit.lshift(1, enumValue - 1)) ~= 0) and "1" or "0"
+	else
+		defText = tostring(C_CVar.GetCVarDefault(cvarName))
+	end
+	local tipText = (tip and tip .. "\n" or "") .. "|cff00FFFFCVar " .. SYSTEM_DEFAULT .. " :|r|cff00FF00" .. defText .. "|r"
 	local rowFrame, bg, lefttext = NewRow()
 	lefttext:SetText(name)
 	rowFrame.__row.searchText = name .. " " .. (tip or "")
 	rowFrame:EnableMouse(true)
-	SetRowHover(rowFrame, bg, tip)
+	SetRowHover(rowFrame, bg, tipText)
 	local check = CreateFrame("CheckButton", nil, rowFrame, "InterfaceOptionsCheckButtonTemplate")
 	check:SetPoint("RIGHT", rowFrame, "RIGHT", -8, 0)
 	check:SetSize(30, 30)
@@ -655,9 +718,9 @@ function ns.AddCVarCheck(name, tip, cvarName, enumValue, setfun)
 			C_CVar.SetCVar(cvarName, checked and "1" or "0")
 		end
 		if InCombatLockdown() then return end
-		if setfun then setfun(checked) end
+		ns.ApplyChange(setfun, checked)
 	end)
-	SetRowHover(check, bg, tip, rowFrame)
+	SetRowHover(check, bg, tipText, rowFrame)
 	rowFrame.__row.db = cvarName
 	rowFrame.__row.control = check
 	CVarCallbackRegistry:RegisterCallback(cvarName, function()
@@ -667,14 +730,16 @@ function ns.AddCVarCheck(name, tip, cvarName, enumValue, setfun)
 end
 
 -- 基于 CVar 的滑条（不保存到 DB，值由 CVar 决定，自动同步外部变化）
--- cvarName: CVar 名称  setfun: (可选)值变化后回调，收到当前值
 function ns.AddCVarSlider(name, tip, min, max, step, fmt, cvarName, setfun)
 	if not C_CVar.GetCVar(cvarName) then return end
+	-- 鼠标提示中追加暴雪默认值（文本青蓝、值绿色；用 fmt 格式化避免长小数）
+	local defVal = tonumber(C_CVar.GetCVarDefault(cvarName))
+	local tipText = (tip and tip .. "\n" or "") .. "|cff00FFFFCVar " .. SYSTEM_DEFAULT .. " :|r|cff00FF00" .. (defVal and string.format(fmt, defVal) or tostring(C_CVar.GetCVarDefault(cvarName))) .. "|r"
 	local rowFrame, bg, lefttext = NewRow()
 	lefttext:SetText(name)
 	rowFrame.__row.searchText = name .. " " .. (tip or "")
 	rowFrame:EnableMouse(true)
-	SetRowHover(rowFrame, bg, tip)
+	SetRowHover(rowFrame, bg, tipText)
 	local slider = CreateFrame("Slider", nil, rowFrame, "MinimalSliderWithSteppersTemplate")
 	slider:SetPoint("RIGHT", rowFrame, "RIGHT", -2, 0)
 	slider:SetSize(230, 20)
@@ -695,11 +760,11 @@ function ns.AddCVarSlider(name, tip, min, max, step, fmt, cvarName, setfun)
 		Refresh(value)
 		if InCombatLockdown() then return end
 		C_CVar.SetCVar(cvarName, value)
-		if setfun then setfun(value) end
+		ns.ApplyChange(setfun, value)
 	end)
-	SetRowHover(slider.Slider or slider, bg, tip, rowFrame)
-	SetRowHover(slider.Back or slider, bg, tip, rowFrame)
-	SetRowHover(slider.Forward or slider, bg, tip, rowFrame)
+	SetRowHover(slider.Slider or slider, bg, tipText, rowFrame)
+	SetRowHover(slider.Back or slider, bg, tipText, rowFrame)
+	SetRowHover(slider.Forward or slider, bg, tipText, rowFrame)
 	rowFrame.__row.db = cvarName
 	rowFrame.__row.control = slider
 	rowFrame.__row.righttext = righttext
@@ -712,7 +777,6 @@ function ns.AddCVarSlider(name, tip, min, max, step, fmt, cvarName, setfun)
 end
 
 -- 依赖控制：masterDb 勾选框控制一组行（按 DB 字段）的启用/禁用
--- 在标签 build 内调用；masterDb 未勾选时，dependents 对应的行不可点击并置灰
 function ns.AddDep(masterDb, dependents)
 	table.insert(Cur.dependencies, { master = masterDb, dependents = dependents })
 end
@@ -724,7 +788,6 @@ local function IsOwnTexture(path)
 end
 
 -- 材质下拉（带预览纹理）
--- name: 行名称  tip: 鼠标提示  db: 保存的 DB 字段  textureTable: 纹理表 { key = 路径/图集 }
 function ns.AddTexture(name, tip, db, textureTable, setfun)
 	local rowFrame, bg, lefttext = NewRow()
 	lefttext:SetText(name)
@@ -764,7 +827,7 @@ function ns.AddTexture(name, tip, db, textureTable, setfun)
 		ns.DB[db] = v
 		dd:SetDefaultText(v)
 		ApplyTexture(v)
-		if setfun then setfun(v) end
+		ns.ApplyChange(setfun, v)
 	end
 	local sorted = {}
 	for k in pairs(textureTable) do table.insert(sorted, k) end
@@ -798,7 +861,6 @@ function ns.AddTexture(name, tip, db, textureTable, setfun)
 end
 
 -- 按钮行
--- name: 行名称  tip: 提示  callback: 点击回调
 function ns.AddButton(name, tip, callback)
 	local rowFrame, bg, lefttext = NewRow()
 	lefttext:SetText(name)
@@ -831,7 +893,6 @@ function ns.AddLog(text)
 	t:SetTextColor(1, 1, 1)
 	t:SetSpacing(4) -- 增加行间距，让更新日志更易读
 	t:SetText(text or "")
-	-- 用实际渲染高度；build 早期宽度未定时，按 SettingsFrame 布局估算宽度再测量
 	local width = rowFrame:GetWidth() or (Cur.content and Cur.content:GetWidth())
 	if not width or width <= 0 then
 		width = (SettingsFrame and SettingsFrame:GetWidth() or 680) - 130
@@ -842,30 +903,390 @@ function ns.AddLog(text)
 	rowFrame:SetHeight(height)
 	local row = RegisterRow(rowFrame, false, 8, idx)
 	row.searchText = text or ""
-	-- 记录内容所需最大高度（供滚动区高度计算，padding 尽量小贴合文本）
-	Cur.maxContentHeight = math.max(Cur.maxContentHeight or 0, -top + height + 16)
+	Cur.maxHeight = math.max(Cur.maxHeight or 0, -top + height + 16)
 	ns.RowCount[Cur.y] = ns.RowCount[Cur.y] + 1
 	return { frame = rowFrame, text = t }
 end
 
 -- ═══════════════════════════════════════════════════════════════════
+-- 其余行构建函数（改用 Cur 上下文）
+-- 说明：所有行构建函数的 setfun 回调统一经 ns.ApplyChange 分发，实现多插件通用。
+--       本文件（通用核心）默认 ns.ApplyChange = 传值调用；
+--       各插件可在标签文件顶部覆盖为自定义刷新版本（如遍历单位刷新，忽略 value）
+-- ═══════════════════════════════════════════════════════════════════
+
+-- 统一回调入口（默认 = 传值调用）
+-- 各插件可覆盖 ns.ApplyChange 以适配自身回调约定（如忽略 value、遍历单位刷新）
+function ns.ApplyChange(setfun, value)
+	if not setfun then return end
+	if setfun then setfun(value) end
+end
+
+-- 功能按钮行（返回按钮，供外部 HookScript("OnClick")；分类标题直接用 AddSection）
+function ns.AddFuncButton(name, tip)
+	local rowFrame, bg, lefttext = NewRow()
+	lefttext:SetText(name)
+	rowFrame.__row.searchText = name .. " " .. (tip or "")
+	rowFrame:EnableMouse(true)
+	SetRowHover(rowFrame, bg, tip)
+	local btn = CreateFrame("Button", nil, rowFrame, "UIPanelButtonTemplate")
+	btn:SetPoint("RIGHT", rowFrame, "RIGHT", -8, 0)
+	btn:SetSize(230, 25)
+	btn:SetText(name)
+	rowFrame.__row.control = btn
+	SetRowHover(btn, bg, tip, rowFrame)
+	return btn
+end
+
+-- 材质下拉（右侧小图标预览；pc 原 AddSetDropdTexture2）
+function ns.AddTextureIcon(name, tip, db, TextureTable, setfun)
+	local rowFrame, bg, lefttext = NewRow()
+	lefttext:SetText(name)
+	rowFrame.__row.searchText = name .. " " .. (tip or "")
+	rowFrame.__row.db = db
+	rowFrame:EnableMouse(true)
+	SetRowHover(rowFrame, bg, tip)
+	local dd = CreateFrame("DropdownButton", nil, rowFrame, "WowStyle1DropdownTemplate")
+	dd:SetPoint("RIGHT", rowFrame, "RIGHT", -8, 0)
+	dd:SetWidth(200)
+	dd:SetDefaultText(ns.DB[db])
+	dd.selectTexture = dd:CreateTexture(nil, "ARTWORK")
+	dd.selectTexture:SetPoint("RIGHT", dd, "RIGHT", -30, 0)
+	dd.selectTexture:SetSize(25, 25)
+	dd.selectTexture:SetVertexColor(1, 1, 1, 1)
+	dd.selectTexture:SetTexture(TextureTable[ns.DB[db]])
+	local function IsSelected(v) return v == ns.DB[db] end
+	local function SetSelected(v)
+		ns.DB[db] = v
+		dd.selectTexture:SetTexture(TextureTable[ns.DB[db]])
+		ns.ApplyChange(setfun, v)
+	end
+	local sortedTable = {}
+	for k in pairs(TextureTable) do table.insert(sortedTable, k) end
+	table.sort(sortedTable)
+	local function GeneratorFunction(dropdown, rootDescription)
+		rootDescription:SetScrollMode(400)
+		for _, text in ipairs(sortedTable) do
+			local radio = rootDescription:CreateRadio(text, IsSelected, SetSelected, text)
+			radio:AddInitializer(function(button)
+				local bgTexture = button:AttachTexture()
+				bgTexture:SetSize(20, 20)
+				bgTexture:SetPoint("RIGHT", 0, 0)
+				bgTexture:SetTexture(TextureTable[text])
+				bgTexture:SetDrawLayer("BACKGROUND")
+			end)
+		end
+	end
+	dd:SetupMenu(GeneratorFunction)
+	rowFrame.__row.control = dd
+	SetRowHover(dd, bg, tip, rowFrame)
+	return { text = lefttext, control = dd }
+end
+
+-- 色块（挂在 ColorPickerFrame 左上角的"设为默认"按钮，全插件共用一份）
+local defaultBtn        -- 挂在 ColorPickerFrame 左上角的"设为默认"按钮（本插件色块打开时显示）
+local defaultBtnHandler -- 当前色块的默认设置回调
+-- 创建色块按钮（不创建行，由调用方传入 rowFrame；pc 原 AddColorFrame 的块逻辑）
+-- 参数：rowFrame 所在行框架，tip 提示，width/height 色块尺寸，DB 颜色 DB 字段，setfun 回调，texture 可选纹理
+local function CreateColorBlock(rowFrame, tip, width, height, DB, setfun, texture)
+	local tip = tip or L["点击更改颜色"]
+	local width, height = width or 75, height or 15
+
+	local btn = CreateFrame("Button", nil, rowFrame, "GameMenuButtonTemplate")
+	btn:SetPoint("RIGHT", rowFrame, "RIGHT", -8, 0)
+	btn:SetSize(width, height)
+	btn:SetAlpha(0)
+	btn:SetNormalFontObject("GameFontNormalLarge")
+	btn:SetHighlightFontObject("GameFontHighlightLarge")
+	-- 色块纹理挂在 rowFrame（行框架）上而非按钮上：
+	-- btn:SetAlpha(0) 会连同子元素一起透明，若色块作为按钮子纹理则会被隐藏
+	-- 挂在行框架上并锚定按钮四角，即可正常显示且跟随按钮移动
+	btn.color = rowFrame:CreateTexture(nil, "ARTWORK")
+	btn.color:SetPoint("TOPLEFT", btn, "TOPLEFT")
+	btn.color:SetPoint("BOTTOMRIGHT", btn, "BOTTOMRIGHT")
+	-- 传入 texture 时用该材质代替纯色块，并用所选颜色着色
+	if texture then
+		btn.color:SetTexture(texture)
+		btn.color:SetVertexColor(ns.DB[DB]["r"], ns.DB[DB]["g"], ns.DB[DB]["b"], ns.DB[DB]["a"] or 1)
+	else
+		btn.color:SetColorTexture(ns.DB[DB]["r"], ns.DB[DB]["g"], ns.DB[DB]["b"], ns.DB[DB]["a"] or 1)
+	end
+
+	local savedColor = {}  -- 打开前存储的 DB 值快照（用于取消回退）
+
+	-- 懒创建 ColorPickerFrame 左上角外部的"设为默认"按钮（全局字符串 RETURN_TO_DEFAULT）
+	if not defaultBtn then
+		defaultBtn = CreateFrame("Button", nil, ColorPickerFrame, "UIPanelButtonTemplate")
+		defaultBtn:SetSize(90, 22)
+		defaultBtn:SetPoint("LEFT", ColorPickerFrame, "TOPLEFT", 9, -7)
+		defaultBtn:SetText(RETURN_TO_DEFAULT)
+		defaultBtn:SetScript("OnClick", function()
+			if defaultBtnHandler then defaultBtnHandler() end
+		end)
+		defaultBtn:Hide()
+		ColorPickerFrame:HookScript("OnHide", function()
+			defaultBtn:Hide()
+		end)
+	end
+
+	local onUpdate = function(restore)
+		local r, g, b = ColorPickerFrame:GetColorRGB()
+		if texture then
+			btn.color:SetVertexColor(r, g, b, ns.DB[DB]["a"] or 1)
+		else
+			btn.color:SetColorTexture(r, g, b, ns.DB[DB]["a"] or 1)
+		end
+		ns.DB[DB]["r"] = r
+		ns.DB[DB]["g"] = g
+		ns.DB[DB]["b"] = b
+		if ns.DB[DB] and ns.DB[DB].a ~= nil then
+			ns.DB[DB]["a"] = ColorPickerFrame:GetColorAlpha()
+		end
+		ns.ApplyChange(setfun)
+	end
+	local onCancel = function()
+		local r, g, b, a = savedColor.r, savedColor.g, savedColor.b, savedColor.a or 1
+		ns.DB[DB]["r"] = r
+		ns.DB[DB]["g"] = g
+		ns.DB[DB]["b"] = b
+		if ns.DB[DB] and ns.DB[DB].a ~= nil then
+			ns.DB[DB]["a"] = a
+		end
+		if texture then
+			btn.color:SetVertexColor(r, g, b, a)
+		else
+			btn.color:SetColorTexture(r, g, b, a)
+		end
+		ns.ApplyChange(setfun)
+	end
+
+	btn:SetScript("OnClick", function()
+		local hasOpacity = ns.DB[DB] and ns.DB[DB].a ~= nil
+		ColorPickerFrame.swatchFunc = onUpdate
+		ColorPickerFrame.opacityFunc = onUpdate
+		ColorPickerFrame.cancelFunc = onCancel
+		ColorPickerFrame.hasOpacity = hasOpacity
+		savedColor.r = ns.DB[DB]["r"]
+		savedColor.g = ns.DB[DB]["g"]
+		savedColor.b = ns.DB[DB]["b"]
+		savedColor.a = ns.DB[DB]["a"] or 1
+		ColorPickerFrame.previousValues = {
+			r = ns.DB[DB]["r"],
+			g = ns.DB[DB]["g"],
+			b = ns.DB[DB]["b"],
+			a = ns.DB[DB]["a"] or 1,
+		}
+		if hasOpacity then
+			ColorPickerFrame.opacity = ns.DB[DB]["a"] or 1
+		end
+		local picker = ColorPickerFrame.Content and ColorPickerFrame.Content.ColorPicker or ColorPickerFrame
+		picker:SetColorRGB(ns.DB[DB]["r"], ns.DB[DB]["g"], ns.DB[DB]["b"])
+		if defaultBtn then
+			defaultBtnHandler = function()
+				local d = ns.Defaults and ns.Defaults[DB] or ns.DB[DB]
+				ns.DB[DB]["r"] = d.r
+				ns.DB[DB]["g"] = d.g
+				ns.DB[DB]["b"] = d.b
+				if ns.DB[DB].a ~= nil then ns.DB[DB]["a"] = d.a or 1 end
+				if hasOpacity then
+					ColorPickerFrame.opacity = d.a or 1
+					picker:SetColorAlpha(d.a or 1)
+				end
+				picker:SetColorRGB(d.r, d.g, d.b)
+				if texture then
+					btn.color:SetVertexColor(d.r, d.g, d.b, d.a or 1)
+				else
+					btn.color:SetColorTexture(d.r, d.g, d.b, d.a or 1)
+				end
+				ns.ApplyChange(setfun)
+			end
+			defaultBtn:Show()
+		end
+		ColorPickerFrame:Show()
+	end)
+	btn:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(btn, "ANCHOR_TOP")
+		GameTooltip:SetText(tip, 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	btn:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+	return btn
+end
+
+-- 兼容旧签名的色块按钮（供独立窗口如 PlateDotList.lua 使用）
+-- 旧签名：ns.AddColorFrame(parent, x, y, tip, width, height, DB, setfun, texture)
+-- 直接以绝对坐标挂在 parent 上，不参与 Cur 行上下文
+function ns.AddColorFrame(parent, x, y, tip, width, height, DB, setfun, texture)
+	local parent = parent or UIParent	--父框体
+	local x, y = x or 0, y or 0	--锚点坐标
+	local tip = tip or L["点击更改颜色"]
+	local width, height = width or 75, height or 15
+
+	local btn = CreateFrame("Button", nil, parent, "GameMenuButtonTemplate")
+	btn:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+	btn:SetSize(width, height)
+	btn:SetAlpha(0)
+	btn:SetNormalFontObject("GameFontNormalLarge")
+	btn:SetHighlightFontObject("GameFontHighlightLarge")
+	btn.color = parent:CreateTexture(nil, "ARTWORK")
+	btn.color:SetPoint("TOPLEFT", parent, "TOPLEFT", x, y)
+	btn.color:SetSize(width, height)
+	-- 传入 texture 时用该材质代替纯色块，并用所选颜色着色
+	if texture then
+		btn.color:SetTexture(texture)
+		btn.color:SetVertexColor(ns.DB[DB]["r"], ns.DB[DB]["g"], ns.DB[DB]["b"], ns.DB[DB]["a"] or 1)
+	else
+		btn.color:SetColorTexture(ns.DB[DB]["r"], ns.DB[DB]["g"], ns.DB[DB]["b"], ns.DB[DB]["a"] or 1)
+	end
+
+	local savedColor = {}  -- 打开前存储的 DB 值快照（用于取消回退）
+
+	local onUpdate = function(restore)
+		local r, g, b = ColorPickerFrame:GetColorRGB()
+		if texture then
+			btn.color:SetVertexColor(r, g, b, ns.DB[DB]["a"] or 1)
+		else
+			btn.color:SetColorTexture(r, g, b, ns.DB[DB]["a"] or 1)
+		end
+		ns.DB[DB]["r"] = r
+		ns.DB[DB]["g"] = g
+		ns.DB[DB]["b"] = b
+		if ns.DB[DB] and ns.DB[DB].a ~= nil then
+			ns.DB[DB]["a"] = ColorPickerFrame:GetColorAlpha()
+		end
+		ns.ApplyChange(setfun)
+	end
+	local onCancel = function()
+		local r, g, b, a = savedColor.r, savedColor.g, savedColor.b, savedColor.a or 1
+		ns.DB[DB]["r"] = r
+		ns.DB[DB]["g"] = g
+		ns.DB[DB]["b"] = b
+		if ns.DB[DB] and ns.DB[DB].a ~= nil then
+			ns.DB[DB]["a"] = a
+		end
+		if texture then
+			btn.color:SetVertexColor(r, g, b, a)
+		else
+			btn.color:SetColorTexture(r, g, b, a)
+		end
+		ns.ApplyChange(setfun)
+	end
+
+	btn:SetScript("OnClick", function()
+		local hasOpacity = ns.DB[DB] and ns.DB[DB].a ~= nil
+		ColorPickerFrame.swatchFunc = onUpdate
+		ColorPickerFrame.opacityFunc = onUpdate
+		ColorPickerFrame.cancelFunc = onCancel
+		ColorPickerFrame.hasOpacity = hasOpacity
+		savedColor.r = ns.DB[DB]["r"]
+		savedColor.g = ns.DB[DB]["g"]
+		savedColor.b = ns.DB[DB]["b"]
+		savedColor.a = ns.DB[DB]["a"] or 1
+		ColorPickerFrame.previousValues = {
+			r = ns.DB[DB]["r"],
+			g = ns.DB[DB]["g"],
+			b = ns.DB[DB]["b"],
+			a = ns.DB[DB]["a"] or 1,
+		}
+		if hasOpacity then
+			ColorPickerFrame.opacity = ns.DB[DB]["a"] or 1
+		end
+		local picker = ColorPickerFrame.Content and ColorPickerFrame.Content.ColorPicker or ColorPickerFrame
+		picker:SetColorRGB(ns.DB[DB]["r"], ns.DB[DB]["g"], ns.DB[DB]["b"])
+		if defaultBtn then
+			defaultBtnHandler = function()
+				local d = ns.Defaults and ns.Defaults[DB] or ns.DB[DB]
+				ns.DB[DB]["r"] = d.r
+				ns.DB[DB]["g"] = d.g
+				ns.DB[DB]["b"] = d.b
+				if ns.DB[DB].a ~= nil then ns.DB[DB]["a"] = d.a or 1 end
+				if hasOpacity then
+					ColorPickerFrame.opacity = d.a or 1
+					picker:SetColorAlpha(d.a or 1)
+				end
+				picker:SetColorRGB(d.r, d.g, d.b)
+				if texture then
+					btn.color:SetVertexColor(d.r, d.g, d.b, d.a or 1)
+				else
+					btn.color:SetColorTexture(d.r, d.g, d.b, d.a or 1)
+				end
+				ns.ApplyChange(setfun)
+			end
+			defaultBtn:Show()
+		end
+		ColorPickerFrame:Show()
+	end)
+	btn:SetScript("OnEnter", function()
+		GameTooltip:SetOwner(btn, "ANCHOR_TOP")
+		GameTooltip:SetText(tip, 1, 1, 1)
+		GameTooltip:Show()
+	end)
+	btn:SetScript("OnLeave", function()
+		GameTooltip:Hide()
+	end)
+	return btn
+end
+
+-- 界面颜色选项行（右侧色块）
+function ns.AddColor(name, tip, DB, setfun)
+	local rowFrame, bg, lefttext = NewRow()
+	lefttext:SetText(name)
+	rowFrame.__row.searchText = name .. " " .. (tip or "")
+	rowFrame.__row.db = DB
+	rowFrame:EnableMouse(true)
+	SetRowHover(rowFrame, bg, tip)
+	local Color = CreateColorBlock(rowFrame, tip, 217, 20, DB, setfun)
+	rowFrame.__row.control = Color
+	return { text = lefttext, color = Color }
+end
+
+-- 点击 + 颜色选项行（左侧勾选 + 右侧色块）
+function ns.AddCheckColor(name, tip, db, db2, setfun)
+	local rowFrame, bg, lefttext = NewRow()
+	lefttext:SetText(name)
+	rowFrame.__row.searchText = name .. " " .. (tip or "")
+	rowFrame.__row.db = db
+	rowFrame:EnableMouse(true)
+	SetRowHover(rowFrame, bg, tip)
+	local check = CreateFrame("CheckButton", nil, rowFrame, "InterfaceOptionsCheckButtonTemplate")
+	check:SetPoint("LEFT", rowFrame, "LEFT", 297, 0)
+	check:SetSize(30, 30)
+	check:SetChecked(ns.DB[db])
+	check:SetScript("OnClick", function()
+		ns.DB[db] = check:GetChecked()
+		if InCombatLockdown() then return end
+		ns.ApplyChange(setfun)
+	end)
+	local Color = CreateColorBlock(rowFrame, tip, 167, 20, db2, setfun)
+	Color:ClearAllPoints()
+	Color:SetPoint("LEFT", check, "RIGHT", 20, 0)
+	Color:SetSize(167, 20)
+	rowFrame.__row.check = check
+	rowFrame.__row.control = check
+	SetRowHover(check, bg, tip, rowFrame)
+	return { text = lefttext, check = check, color = Color }
+end
+
+-- ═══════════════════════════════════════════════════════════════════
 -- 核心附加标签：配置（恢复默认/导入导出）与更新日志
--- 由 Setting.lua 末尾调用 ns.BuildCoreTabs() 以排在最后
+-- 由 Setting-Core 末尾 C_Timer.After(0) 调用 ns.BuildCoreTabs() 以排在所有标签之后
 -- ═══════════════════════════════════════════════════════════════════
 function ns.BuildCoreTabs()
 	-- ═══════ 配置 ═══════
-	local cfgTab = ns.AddTab("配置", function()
+	local cfgTab = ns.AddTab(L["配置"], function()
 		local cf = Cur.content
-		-- 导入数据中转（局部变量闭包传递，避免使用全局变量 ADDUIImportData）
+		-- 导入数据中转（局部变量闭包传递，避免使用全局变量）
 		local importData
-		-- 校验并合并导入的配置（缺失 key 用默认值补全，同 PlateColor 思路）
+		-- 校验并合并导入的配置（缺失 key 用默认值补全）
 		local function ValidateAndMergeImport(importDB)
-			if type(importDB) ~= "table" then return nil, "配置格式错误" end
+			if type(importDB) ~= "table" then return nil, L["配置格式错误"] end
 			local hasAny = false
 			for k in pairs(ns.Defaults) do
 				if importDB[k] ~= nil then hasAny = true break end
 			end
-			if not hasAny then return nil, "配置与当前版本不匹配" end
+			if not hasAny then return nil, L["配置版本不匹配"] end
 			-- 收集导入配置缺失的字段，用默认值补全并打印
 			local missing = {}
 			for k, v in pairs(ns.Defaults) do
@@ -888,7 +1309,7 @@ function ns.BuildCoreTabs()
 				end
 			end
 			if #missing > 0 then
-				print("|cff00FFFF["..addonName.."]|r 导入配置缺失以下字段，已用默认值补全：")
+				print("|cff00FFFF["..addonName.."]|r " .. L["导入缺失补全"])
 				for _, m in ipairs(missing) do
 					print("  |cffCCCCCC" .. m .. "|r")
 				end
@@ -897,11 +1318,11 @@ function ns.BuildCoreTabs()
 		end
 		-- 恢复默认确认弹窗
 		StaticPopupDialogs[addonName .. "CONFIG_RESET"] = {
-			text = "即将恢复默认设置并重载，是否继续？",
-			button1 = "重载",
-			button2 = "取消",
+			text = L["恢复默认确认"],
+			button1 = RESET_TO_DEFAULT,
+			button2 = CANCEL,
 			OnAccept = function()
-				-- 恢复默认：遍历默认表，默认值为空表的字段（收藏、副本记录、冷却布局等用户数据）直接排除、保留原数据
+				-- 恢复默认：遍历默认表，默认值为空表的字段（用户数据容器）直接排除、保留原数据
 				for k, v in pairs(ns.Defaults) do
 					if type(v) == "table" and not next(v) then
 						-- 空表默认字段 = 用户数据容器，保留 ns.DB 原有数据
@@ -915,9 +1336,9 @@ function ns.BuildCoreTabs()
 		}
 		-- 导入确认弹窗
 		StaticPopupDialogs[addonName .. "CONFIG_IMPORT"] = {
-			text = "即将导入配置并重载，是否继续？",
-			button1 = "重载",
-			button2 = "取消",
+			text = L["导入确认"],
+			button1 = RELOADUI,
+			button2 = CANCEL,
 			OnAccept = function()
 				if type(importData) == "table" then
 					-- 导入：原地清空重填 ns.DB（保持同一引用，重载后存档才生效）
@@ -930,7 +1351,7 @@ function ns.BuildCoreTabs()
 			end,
 			timeout = 0, whileDead = true, hideOnEscape = true, preferredIndex = 3,
 		}
-		-- 多行字符串框（完全参照 PlateColor/Options/EditBox.lua 的写法）
+		-- 多行字符串框
 		local box = CreateFrame("ScrollFrame", nil, cf, "InputScrollFrameTemplate")
 		box:SetPoint("TOPLEFT", cf, "TOPLEFT", 15, -80)
 		box:SetPoint("BOTTOMRIGHT", cf, "TOPRIGHT", -20, -500)
@@ -941,14 +1362,13 @@ function ns.BuildCoreTabs()
 		ebox:SetTextColor(1, 1, 1)
 		ebox:SetMaxLetters(0)
 		ebox:SetTextInsets(8, 8, 6, 6)
-		-- 隐藏字符计数（避免 SetMaxLetters(0) 显示成负数，如 -30742）
+		-- 隐藏字符计数（避免 SetMaxLetters(0) 显示成负数）
 		if box.CharCount then box.CharCount:Hide() end
 		-- 点击输入框内时全选文本（方便一键复制）
 		ebox:SetScript("OnEditFocusGained", function(self)
 			self:HighlightText()
 		end)
-		-- 创建时 cf 内容区可能尚未布局（GetWidth 为 0），需延迟到尺寸确定后再设宽度；
-		-- 高度由多行文本自动决定才能产生滚动范围（若锁死高度则无法滚动）
+		-- 创建时 cf 内容区可能尚未布局（GetWidth 为 0），需延迟到尺寸确定后再设宽度
 		local function SizeEBox()
 			local w = box:GetWidth()
 			if w > 0 then ebox:SetWidth(w - 20) end
@@ -963,60 +1383,80 @@ function ns.BuildCoreTabs()
 			return btn
 		end
 		-- 第一行：恢复默认
-		local resetBtn = MakeBtn("恢复默认", function()
+		local resetBtn = MakeBtn(RETURN_TO_DEFAULT, function()
 			StaticPopup_Show(addonName .. "CONFIG_RESET")
 		end)
 		resetBtn:SetPoint("TOPLEFT", cf, "TOPLEFT", 10, -8)
 		-- 第二行：导出 / 导入
-		local exportBtn = MakeBtn("导出配置", function()
-			-- CBOR 直接序列化整表：保留数字键等所有 Lua 类型，无需净化；再转 Base64 便于复制分享
-			ebox:SetText(C_EncodingUtil.EncodeBase64(C_EncodingUtil.SerializeCBOR(ns.DB)))
+		local exportBtn = MakeBtn(L["导出配置"], function()
+			-- CBOR 直接序列化整表：保留数字键等所有 Lua 类型；再转 Base64 便于复制分享
+			-- 前缀 插件名@ 用于标识本插件字符串，导入时校验
+			ebox:SetText(addonName .. "@" .. C_EncodingUtil.EncodeBase64(C_EncodingUtil.SerializeCBOR(ns.DB)))
 		end)
 		exportBtn:SetPoint("TOPLEFT", cf, "TOPLEFT", 10, -42)
-		local importBtn = MakeBtn("导入配置", function()
-			-- CBOR 反序列化：Base64 解码后直接还原整表，数字键原样保留，无需额外处理
+		local importBtn = MakeBtn(L["导入配置"], function()
+			-- 先校验字符串是否为本插件配置（前缀 插件名@），再解码导入
 			local text = (ebox:GetText() or ""):gsub("^%s+", ""):gsub("%s+$", "")
+			local prefix = addonName .. "@"
+			if strsub(text, 1, #prefix) ~= prefix then
+				print("|cffff0000["..addonName.."]|r " .. L["导入失败非本插件"])
+				return
+			end
+			text = strsub(text, #prefix + 1)
+			-- CBOR 反序列化：Base64 解码后直接还原整表，数字键原样保留
 			local ok, data = pcall(C_EncodingUtil.DeserializeCBOR, C_EncodingUtil.DecodeBase64(text))
 			if not ok then
-				print("|cffff0000["..addonName.."]|r 导入失败（解析错误）：" .. tostring(data))
+				print("|cffff0000["..addonName.."]|r " .. L["导入失败解析"] .. tostring(data))
 				return
 			end
 			if type(data) ~= "table" then
-				print("|cffff0000["..addonName.."]|r 导入失败：字符串不是有效配置")
+				print("|cffff0000["..addonName.."]|r " .. L["导入失败无效"])
 				return
 			end
 			local merged, err = ValidateAndMergeImport(data)
 			if not merged then
-				print("|cffff0000["..addonName.."]|r 导入失败：" .. tostring(err))
+				print("|cffff0000["..addonName.."]|r " .. L["导入失败"] .. tostring(err))
 				return
 			end
 			importData = merged
 			StaticPopup_Show(addonName .. "CONFIG_IMPORT")
 		end)
 		importBtn:SetPoint("LEFT", exportBtn, "RIGHT", 8, 0)
-		Cur.maxContentHeight = 430
+		Cur.maxHeight = 430
 	end)
 	-- 配置标签：整页显示（不参与行过滤），可通过标签名或按钮名搜索命中
-	cfgTab.extraSearch = "恢复默认 导出配置 导入配置"
+	cfgTab.extraSearch = RETURN_TO_DEFAULT .. L["导出导入搜索"]
 	cfgTab.noRowFilter = true
 
 	-- ═══════ 更新日志 ═══════
-	local logTab = ns.AddTab("更新日志", function()
-		ns.AddSection("更新记录")
-		ns.AddLog(ns.UpdateText or "暂无更新记录")
+	local logTab = ns.AddTab(L["更新日志"], function()
+		ns.AddSection(L["更新记录"])
+		ns.AddLog(ns.UpdateText or L["暂无更新记录"])
 	end)
 	-- 更新日志不参与搜索
 	logTab.searchable = false
 end
 
--- 配置/更新日志标签需在所有标签（Setting.lua 的界面/战斗等）注册完成后才追加，
--- 否则会排在最前而非末尾。Setting-Core 先于 Setting.lua 加载，故延迟到下一帧再注册。
+-- 配置/更新日志标签需在所有标签注册完成后才追加，否则会排在最前而非末尾。
+-- Setting-Core 先于各插件的标签文件加载，故延迟到下一帧再注册。
 C_Timer.After(0, function()
 	ns.BuildCoreTabs()
-	-- 动态注册 slash 命令：命令字符串由 Setting.lua 通过 ns.opensetting1/2/... 提供
+	-- 动态注册 slash 命令：命令字符串由各插件的标签文件通过 ns.opensetting1/2/... 提供
 	local slashKey = "Open" .. addonName
 	SlashCmdList[slashKey] = function()
-		Settings.OpenToCategory(category:GetID())
+		-- 战斗中不直接打开，脱战后（PLAYER_REGEN_ENABLED）再打开
+		-- 用 EventRegistry（暴雪官方事件注册）+ handle 注销，不依赖任何 ns 封装
+		if InCombatLockdown() then
+			print("|cffff0000["..addonName.."]|r " .. L["战斗中"])
+			-- Lua 5.1 局部变量作用域不覆盖赋值语句右侧，须先单独声明 handle 再赋值，否则回调里 handle 是全局 nil
+			local handle = nil
+			handle = EventRegistry:RegisterFrameEventAndCallbackWithHandle("PLAYER_REGEN_ENABLED", function()
+				handle:Unregister()
+				Settings.OpenToCategory(category:GetID())
+			end)
+		else
+			Settings.OpenToCategory(category:GetID())
+		end
 	end
 	local i = 1
 	while ns["opensetting" .. i] do
