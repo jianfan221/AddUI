@@ -19,7 +19,12 @@ ns.opensetting2 = "/addui"
 
 -- 顶部标题副标题与底部联系信息（AddUI 特有内容，注入给通用模块 Setting-Core）
 ns.Subtitle = "|cff00ffd2源生界面增强|r"
-ns.Contact = "简繁:|cff00FFFF32655163@qq.com|r       修改设置后重载生效"
+
+-- 底部联系方式文本（核心已不内置，AddUI 直接用 ns.SettingsFrame 创建，锚定底部左侧）
+local qqun = ns.SettingsFrame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
+qqun:SetPoint("BOTTOMLEFT", ns.SettingsFrame, "BOTTOMLEFT", 0, -28)
+qqun:SetJustifyH("LEFT")
+qqun:SetText("简繁:|cff00FFFF32655163@qq.com|r       修改设置后重载生效")
 
 
 -- ═══════ 界面 ═══════
@@ -65,6 +70,9 @@ ns.AddTab("职业", function()
 	ns.AddCheck("取消操控按钮", "BUFF栏左侧取消操控时间的按钮", "cancelAuraBtn")
 	ns.AddSection("萨满")
 	ns.AddCheck("升腾倒数", "萨满升腾结束提前4秒声音提醒", "shamanCountdown")
+	ns.AddCheck("自然守护者冷却", "小队在队伍旁,团队在编辑模式调位置", "shamanGuardianCountdown")
+	ns.AddCheck("雷霆之爪冷却", "自然守护者左侧显示雷霆之爪图标与冷却", "shamanThunderClaw")
+	ns.AddDep("shamanGuardianCountdown", {"shamanThunderClaw"})
 	ns.AddCheck("动作条图标切换", "施放流电炽焰把熔岩爆裂的图标替换成净化烈焰", "shamanIconSwap")
 	
 end)
