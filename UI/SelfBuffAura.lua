@@ -215,7 +215,7 @@ local function EnsureListWindow()
 
 	local title = frame:CreateFontString(nil, "OVERLAY", "GameFontHighlightLarge")
 	title:SetPoint("TOP", 0, -8)
-	title:SetText("自身BUFF监控列表")
+	title:SetText("自身BUFF列表")
 
 	-- 左上角：鼠标提示显示法术ID开关（勾选状态由 cvar 决定，点击临时切换不持久）
 	local spellIDCheck = CreateFrame("CheckButton", nil, frame, "InterfaceOptionsCheckButtonTemplate")
@@ -225,6 +225,10 @@ local function EnsureListWindow()
 		spellIDCheck:SetChecked(GetCVar("tooltipShowAuraSpellIDs") == "1")
 	end
 	RefreshSpellIDCheck()
+
+	-- cvar 变化时同步勾选状态（如通过其他入口/宏修改时保持显示一致）
+	CVarCallbackRegistry:RegisterCallback("tooltipShowAuraSpellIDs", RefreshSpellIDCheck)
+
 	spellIDCheck:SetScript("OnEnter", function(self)
 		GameTooltip:SetOwner(self, "ANCHOR_TOP")
 		GameTooltip:SetText("|cffFFFFFF鼠标提示显示法术ID|r",1,1,1,1)
