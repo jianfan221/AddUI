@@ -99,7 +99,7 @@ if cls == "SHAMAN" then
 			frame.Icon:SetDesaturated(false)
 		end)
 
-		-- 自然守护者左侧：监控 378076 图标（判断学会用 378075，冷却20秒）
+		-- 雷霆之爪：自然守护者左侧监控 378076 图标（判断学会用 378075，冷却20秒）
 		local MONITOR_ID = 378076
 		local KNOWN_ID = 378075
 		local MONITOR_DURATION = 20
@@ -115,9 +115,14 @@ if cls == "SHAMAN" then
 				monitor.Cooldown:SetReverse(false)
 				monitor.Cooldown:SetCountdownAbbrevThreshold(600)
 				monitor.Cooldown:GetCountdownFontString():SetFont(STANDARD_TEXT_FONT, size*0.4, "OUTLINE")
+				-- 冷却时图标褪色，冷却结束恢复（与自然守护者一致）
+				monitor.Cooldown:SetScript("OnCooldownDone", function()
+					monitor.Icon:SetDesaturated(false)
+				end)
 				ns.event("SPELL_UPDATE_COOLDOWN", function(event, spellID)
 					if spellID ~= MONITOR_ID then return end
 					monitor.Cooldown:SetCooldown(GetTime(), MONITOR_DURATION)
+					monitor.Icon:SetDesaturated(true) -- 冷却时褪色
 				end)
 				monitor:Show()
 			elseif not known and monitor then
