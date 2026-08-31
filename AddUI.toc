@@ -23,7 +23,6 @@ Chat\ChatTab.lua
 Class\cancelAura.lua
 Class\SetMacro.lua
 Class\Shaman.lua
-##Class\AuraContainer.lua
 Class\ActionBarIcon.lua
 
 Func\AH.lua
