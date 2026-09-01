@@ -8,8 +8,8 @@ if cls == "SHAMAN" then
 
 		local SpellID = 31616
 		local DURATION = 30
-		-- 固定尺寸，不动态取小队框体高度（PLAYER_LOGIN 时小队框体已初始化，GetSize 会返回偏大的真实高度导致图标特别大）
-		local size = 40
+		-- 尺寸跟随小队框体高度（GetRaidFrameHeight 读的是滑动条 setting 值，不含渲染偏移）
+		local size = EditModeManagerFrame:GetRaidFrameHeight(Enum.EditModeUnitFrameSystemIndices.Party, 36)/1.8
 
 		-- 父级初始 UIParent，AnchorToSelf 时会随锚定目标切换（团队→anchor，小队→小队框体）
 		local frame = CreateFrame("Frame", "AddUIClassShamanCountdown", UIParent, "CooldownViewerBuffIconItemTemplate")
