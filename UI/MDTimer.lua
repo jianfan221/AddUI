@@ -269,3 +269,34 @@ ns.hook(ScenarioTrackerProgressBarMixin,"SetValue", function(self)
 		self.Bar.Label:SetText(string.format("%.2f%%", quantity / criteriaInfo.totalQuantity * 100))
 	end
 end)
+
+--大秘境玩家死亡次数记录（鼠标指向暴雪自带死亡图标时，tooltip 显示每人带职业颜色的死亡数）
+local Deaths = {}
+local hooked = false
+ns.event("CHALLENGE_MODE_START", function() Deaths = {} end)
+ns.event("UNIT_DIED", function(_event, guid)
+	if not C_ChallengeMode.IsChallengeModeActive() then return end	-- 只在大秘境统计
+	if ns.MM(guid) then return end						-- 秘密值 GUID 跳过
+	if not C_PlayerInfo.GUIDIsPlayer(guid) then return end	-- 只统计玩家
+	Deaths[guid] = (Deaths[guid] or 0) + 1
+
+	-- 顺带挂一次 tooltip（hooked 防止重复挂载）
+	if not hooked then
+		local block = ScenarioObjectiveTracker and ScenarioObjectiveTracker.ChallengeModeBlock
+		local deathIcon = block and block.DeathCount
+		if deathIcon then
+			hooked = true
+			deathIcon:HookScript("OnEnter", function()
+				for guid, count in pairs(Deaths) do
+					-- GetPlayerInfoByGUID 返回: localizedClass, classFilename, localizedRace, englishRace, sex, name(角色名), realmName
+					local _, class, _, _, _, name = GetPlayerInfoByGUID(guid)
+					local color = class and RAID_CLASS_COLORS[class]
+					if name then
+						GameTooltip:AddDoubleLine("|c" .. (color and color.colorStr or "fff") .. name .. "|r", "|cffff0000" .. count .. "|r")
+					end
+				end
+				GameTooltip:Show()	-- 已显示的 tooltip 追加行后强制重算背景尺寸
+			end)
+		end
+	end
+end)
