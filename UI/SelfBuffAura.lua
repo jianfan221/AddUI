@@ -93,7 +93,8 @@ ns.event("PLAYER_LOGIN", function()
 		sortMethod = AuraContainerSortMethod.Expiration, -- 按到期时间排序
 		sortDirection = AuraContainerSortDirection.Normal,
 		initializeFrame = function(auraButton)
-			auraButton:SetSize(40, 40)
+			local size = 40
+			auraButton:SetSize(size, size)
 			auraButton:EnableMouse(false)--完全鼠标穿透，不阻挡点击
 
 			local icon = auraButton:CreateTexture(nil, "ARTWORK")
@@ -107,6 +108,11 @@ ns.event("PLAYER_LOGIN", function()
 			cooldown:SetDrawEdge(false)
 			cooldown:SetReverse(true) -- 反转冷却动画方向
 			auraButton:SetDurationCooldown(cooldown)
+			-- 冷却倒数文本字号为光环尺寸的比例（同 RaidFrameDefense）
+			local cdRegion = cooldown:GetRegions()
+			if cdRegion and type(cdRegion.SetFont) == "function" then
+				cdRegion:SetFont(STANDARD_TEXT_FONT, size/1.6, "OUTLINE")
+			end
 
 			-- 叠层数：独立 overlay 容器（层级在冷却之上，不随冷却隐藏）
 			local overlay = CreateFrame("Frame", nil, auraButton)
@@ -115,7 +121,7 @@ ns.event("PLAYER_LOGIN", function()
 			local count = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
 			count:SetPoint("BOTTOMRIGHT", auraButton, 0, 0)
 			count:SetVertexColor(1, 1, 1)
-			count:SetFont(STANDARD_TEXT_FONT, 14, "OUTLINE")
+			count:SetFont(STANDARD_TEXT_FONT, size/1.75, "OUTLINE")
 			auraButton:SetApplicationCount(count, {})
 		end,
 		candidateFilters = {
