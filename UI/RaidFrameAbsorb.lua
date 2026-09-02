@@ -35,7 +35,7 @@ local function UpdateRaidFrameAbsorb(event, unit)
         -- 创建一个独立的系统级置顶 Frame
         local topContainer = CreateFrame("Frame", nil, frame)
         topContainer:SetAllPoints(frame)
-        topContainer:SetFrameStrata("MEDIUM")
+        topContainer:SetFrameStrata("HIGH")
         
         -- 创建治疗吸收数值（紫色）
         frame.healAbsorbText = topContainer:CreateFontString(nil, "OVERLAY")

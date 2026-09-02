@@ -48,12 +48,10 @@ end)
 
 -- ═══════ 战斗 ═══════
 ns.AddTab("战斗", function()
-	ns.AddSection("战斗与团队")
+	ns.AddSection("战斗模块")
 	ns.AddCheck("进入战斗提示", "屏幕中间进入脱离战斗提示", "comb")
 	
 	ns.AddCheck("LFG增强", "预创建双击申请,自动邀请,自动进组 如果你用集合石,此项自动失效", "lfgkg")
-	ns.AddCheck("团队框架模块", "血条材质和职责材质和鼠标指向边框", "raidframebuff")
-	ns.AddCheck("团队框架吸收盾", "团队框架显示治疗吸奶盾和普通吸收盾", "raidabsorb")
 	
 	ns.AddCheck("冷却管理器美化", "冷却管理器美化", "cdset")
 	ns.AddCheck("冷却管理器居中对齐", "冷却管理器居中对齐,饰品药水BUFF整合", "cdcenter")
@@ -61,6 +59,13 @@ ns.AddTab("战斗", function()
 	ns.AddCheck("伤害统计样式美化", "伤害统计样式美化", "setdama")
 	ns.AddCheck("伤害统计自动对齐", "伤害统计自动对齐", "poidama")
 	ns.AddCheck("伤害统计数值简化", "伤害统计数值简化", "valueda")
+end)
+ns.AddTab("团队框架", function()
+	ns.AddSection("团队框架")
+	ns.AddCheck("团队框架职责图标", "团队框架职责图标更换为自定义材质", "raidRoleIcon")
+	ns.AddCheck("团队框架鼠标指向边框", "鼠标指向团队/小队框体时显示边框", "raidMouseHighlight")
+	ns.AddCheck("团队框架吸收盾", "团队框架显示治疗吸奶盾和普通吸收盾", "raidabsorb")
+	ns.AddCheck("团队框架减伤监控", "团队框架中间减伤使用自建,可以自定义id(插件预设),可以同时显示多个\n若要关闭使用系统自带,需要开启ESC-界面-重要防御技能居中", "raidframeDefense")
 end)
 
 -- ═══════ 职业 ═══════

@@ -65,6 +65,7 @@ UI\MainMenuBarIcon.lua
 UI\MDTimer.lua
 UI\RaidFrame.lua
 UI\RaidFrameAbsorb.lua
+UI\RaidFrameDefense.lua
 UI\SelfBuffAura.lua
 UI\Smap.lua
 UI\SmapIcon.lua
