@@ -292,7 +292,7 @@ ns.event("UNIT_DIED", function(_event, guid)
 					local _, class, _, _, _, name = GetPlayerInfoByGUID(guid)
 					local color = class and RAID_CLASS_COLORS[class]
 					if name then
-						GameTooltip:AddDoubleLine("|c" .. (color and color.colorStr or "fff") .. name .. "|r", "|cffff0000" .. count .. "|r")
+						GameTooltip:AddDoubleLine("|c" .. (color and color.colorStr or "fff") .. name .. "|r", "|cffff1a1a" .. count .. "|r")	-- 暴雪标准红 RED_FONT_COLOR
 					end
 				end
 				GameTooltip:Show()	-- 已显示的 tooltip 追加行后强制重算背景尺寸
