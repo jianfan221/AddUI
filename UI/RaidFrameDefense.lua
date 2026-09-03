@@ -13,7 +13,7 @@ local CustomDefenseSpellIDs = {
 
 	--牧师
 	[10060] = true, --能量灌注
-	[62618] = true, --真言术：盾
+	[62618] = true, --真言术：障(团队减伤屏障)
 	[47585] = true, --消散
 	[47788] = true, --守护之魂(外)
 	[33206] = true, --痛苦压制(外)
@@ -22,6 +22,7 @@ local CustomDefenseSpellIDs = {
 
 	--萨满
 	[381755] = true, --萨满土元素+15%血
+	[98008] = true, --灵魂链接图腾(团队减伤)
 	[108271] = true, --星界转移
 	[260881] = true, --幽魂之狼(减伤5%)
 	[355634] = true, --打断减伤
@@ -33,9 +34,10 @@ local CustomDefenseSpellIDs = {
 	[110960] = true, --强化隐身术
 	[414664] = true, --群体隐身
 	[45438] = true, --寒冰屏障(冰棺,免伤10s)
+	[414658] = true, --深寒凝冰
 
 	--圣骑士
-	[31821] = true, --光环掌握
+	[211210] = true, --光环掌握(队友身上)
 	[1044] = true, --自由之手
 	[642] = true, --圣盾术
 	[498] = true, --圣佑术
@@ -46,7 +48,7 @@ local CustomDefenseSpellIDs = {
 	[204018] = true, --破咒祝福(外)
 
 	--战士
-	[97462] = true, --集结呐喊
+	[97463] = true, --集结呐喊
 	[12975] = true, --破釜沉舟
 	[871] = true, --盾墙(减伤40%)
 	[118038] = true, --剑在人在(减伤30%,武器/狂暴)
@@ -58,19 +60,26 @@ local CustomDefenseSpellIDs = {
 	[48707] = true, --反魔法护罩(吸收魔法伤害)
 	[48792] = true, --冰封之韧(减伤30%)
 	[55233] = true, --吸血鬼之血
+	[51052] = true, --反魔法领域(团队魔法减伤15%)
+	[145629] = true, --反魔法领域12.1
 
 	--恶魔猎手
 	[212800] = true, --疾影
 	[187827] = true, --恶魔变形
 	[207771] = true, --烈火烙印
+	[196718] = true, --黑暗(团队减伤)
 
 	--德鲁伊
 	[22812] = true, --树皮术
 	[61336] = true, --生存本能
 	[22842] = true, --狂暴回复(熊形态回血)
+	[106898] = true, --狂奔怒吼
+	[29166] = true, --激活
+	[1850] = true, --疾奔
 
 	--唤魔师
 	[363916] = true, --黑曜鳞片(减伤30%)
+	[374227] = true, --微风
 
 	--猎人
 	[186265] = true, --灵龟守护
@@ -78,6 +87,7 @@ local CustomDefenseSpellIDs = {
 
 	--武僧
 	[115203] = true, --壮胆酒
+	[116849] = true, --作茧缚命(给队友大盾)
 	[125174] = true, --业报之触
 	[132578] = true, --玄牛下凡(召唤玄牛,吸收40%醉拳)
 	[322507] = true, --天神酒(吸收盾)
@@ -99,9 +109,9 @@ local CustomDefenseSpellIDs = {
 -- 小队用小尺寸（Party），团队用大尺寸（Raid）
 local function GetFrameSize()
 	if IsInRaid() then
-		return EditModeManagerFrame:GetRaidFrameHeight(Enum.EditModeUnitFrameSystemIndices.Raid, 36)/2.2
+		return EditModeManagerFrame:GetRaidFrameHeight(Enum.EditModeUnitFrameSystemIndices.Raid, 36)/2.5
 	else
-		return EditModeManagerFrame:GetRaidFrameHeight(Enum.EditModeUnitFrameSystemIndices.Party, 36)/2.2
+		return EditModeManagerFrame:GetRaidFrameHeight(Enum.EditModeUnitFrameSystemIndices.Party, 36)/2.5
 	end
 end
 
@@ -116,20 +126,21 @@ local function InitDefenseButton(btn)
 	local cooldown = CreateFrame("Cooldown", nil, btn, "CooldownFrameTemplate")
 	cooldown:SetAllPoints(btn)
 	cooldown:SetReverse(true)
-	btn:SetDurationCooldown(cooldown)
 	-- 冷却倒数文本字号为光环尺寸的比例（同 PlateAuras，用 SetFontHeight 保留模板字体）
 	local cdRegion = cooldown:GetRegions()
 	if cdRegion and type(cdRegion.SetFontHeight) == "function" then
-		cdRegion:SetFontHeight(size/1.85)
+		cdRegion:SetFontHeight(size/1.8)
 	end
+	btn:SetDurationCooldown(cooldown)
+
 	-- 叠层数：独立 overlay 容器（层级在冷却之上，不随冷却隐藏）
 	local overlay = CreateFrame("Frame", nil, btn)
 	overlay:SetAllPoints(btn)
 	overlay:SetFrameLevel(btn:GetFrameLevel() + 2)
 	local count = overlay:CreateFontString(nil, "OVERLAY")
-	count:SetPoint("BOTTOMRIGHT", btn, 2, -2)
+	count:SetPoint("BOTTOMRIGHT", btn, 3, -3)
 	count:SetVertexColor(1, 1, 1)
-	count:SetFont(STANDARD_TEXT_FONT, size/1.75, "OUTLINE")
+	count:SetFont(STANDARD_TEXT_FONT, size/2, "OUTLINE")
 	btn:SetApplicationCount(count, {})
 end
 
