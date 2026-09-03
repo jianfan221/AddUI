@@ -33,9 +33,12 @@ local function UpdateRaidFrameAbsorb(event, unit)
 
 	if not frame.healAbsorbText then
         -- 创建一个独立的系统级置顶 Frame
+        -- 层级：与减伤光环同放 MEDIUM 层，但 frameLevel 以减伤 overlay 为基准再抬 10，保证盖在减伤光环之上
         local topContainer = CreateFrame("Frame", nil, frame)
         topContainer:SetAllPoints(frame)
-        topContainer:SetFrameStrata("HIGH")
+        topContainer:SetFrameStrata("MEDIUM")
+        local defBase = frame.RDF_Overlay and frame.RDF_Overlay:GetFrameLevel() or frame:GetFrameLevel()
+        topContainer:SetFrameLevel(defBase + 10)
         
         -- 创建治疗吸收数值（紫色）
         frame.healAbsorbText = topContainer:CreateFontString(nil, "OVERLAY")
