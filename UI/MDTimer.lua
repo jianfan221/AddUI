@@ -134,7 +134,13 @@ ns.event("CHALLENGE_MODE_COMPLETED", function()
 		AddUIDB.DungeonBossKill[mapName][keyLevel][COMPLETE] = timeMS
 	end
 
-	print(mapName .. " +" .. keyLevel .. " " .. CRITERIA_COMPLETED_DATE:format(GetTimeAsString(timeMS, nil, true)))
+	-- 完成信息：总用时 + 剩余时间（CLOSES_IN = "剩余时间"，超时为负显示红色），整条延迟0.5秒打印
+	local completeMsg = mapName .. " +" .. keyLevel .. " " .. CRITERIA_COMPLETED_DATE:format(GetTimeAsString(timeMS, nil, true))
+	local timeLimit = select(3, C_ChallengeMode.GetMapUIInfo(info.mapChallengeModeID))
+	if timeLimit then
+		completeMsg = completeMsg .. " " .. CLOSES_IN .. " " .. GetTimeAsString(timeLimit - timeMS)
+	end
+	C_Timer.After(0.5, function() print(completeMsg) end)
 end)
 --
 --Hook文本BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
