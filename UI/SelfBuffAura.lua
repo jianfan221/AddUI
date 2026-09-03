@@ -111,7 +111,7 @@ ns.event("PLAYER_LOGIN", function()
 			-- 冷却倒数文本字号为光环尺寸的比例（同 RaidFrameDefense）
 			local cdRegion = cooldown:GetRegions()
 			if cdRegion and type(cdRegion.SetFont) == "function" then
-				cdRegion:SetFont(STANDARD_TEXT_FONT, size/1.6, "OUTLINE")
+				cdRegion:SetFont(STANDARD_TEXT_FONT, size/1.8, "OUTLINE")
 			end
 
 			-- 叠层数：独立 overlay 容器（层级在冷却之上，不随冷却隐藏）
@@ -119,9 +119,9 @@ ns.event("PLAYER_LOGIN", function()
 			overlay:SetAllPoints(auraButton)
 			overlay:SetFrameLevel(auraButton:GetFrameLevel() + 2)
 			local count = overlay:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-			count:SetPoint("BOTTOMRIGHT", auraButton, 0, 0)
+			count:SetPoint("BOTTOMRIGHT", auraButton, 3, -3)
 			count:SetVertexColor(1, 1, 1)
-			count:SetFont(STANDARD_TEXT_FONT, size/1.75, "OUTLINE")
+			count:SetFont(STANDARD_TEXT_FONT, size/2, "OUTLINE")
 			auraButton:SetApplicationCount(count, {})
 		end,
 		candidateFilters = {
