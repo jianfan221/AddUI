@@ -250,7 +250,5 @@ ns.event("PLAYER_ENTERING_WORLD", RefreshDefense)
 ns.event("PLAYER_LOGIN", function()
 	if AddUIDB and AddUIDB.raidframeDefense then
 		SetCVar("raidFramesCenterBigDefensive", 0)
-	else
-		SetCVar("raidFramesCenterBigDefensive", 1)
 	end
 end)
