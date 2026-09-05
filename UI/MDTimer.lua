@@ -140,7 +140,7 @@ ns.event("CHALLENGE_MODE_COMPLETED", function()
 	if timeLimit then
 		completeMsg = completeMsg .. " " .. CLOSES_IN .. " " .. GetTimeAsString(timeLimit - timeMS)
 	end
-	C_Timer.After(0.5, function() print(completeMsg) end)
+	C_Timer.After(1, function() print(completeMsg) end)
 end)
 --
 --Hook文本BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
