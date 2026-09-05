@@ -14,10 +14,9 @@ local function updateRow(row)
     if not row or not row.rowData then return end
     if not row.bonus then
         row.bonus = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
-        local font, size, flags = row.bonus:GetFont()
-        row.bonus:SetFont(font, 12, flags)
+        row.bonus:SetFontHeight(13)
         row.bonus:SetTextColor(unpack(COLOR))
-        row.bonus:SetPoint("LEFT", row, 475, 0)
+        row.bonus:SetPoint("LEFT", row, 475, -1)
     end
 
     row.bonus:SetText("")
@@ -39,12 +38,68 @@ local function updateRow(row)
     end
 end
 
+-- 副属性（第二属性）：固定 4 列对应 爆击/急速/精通/全能，颜色取自 StatSheet.lua
+local SECONDARY_ORDER = {
+    { name = ITEM_MOD_CRIT_RATING_SHORT,    color = {1, 0.5, 0} },  -- 爆击 橙
+    { name = ITEM_MOD_HASTE_RATING_SHORT,   color = {0, 1, 0} },    -- 急速 绿
+    { name = ITEM_MOD_MASTERY_RATING_SHORT, color = {0, 0.5, 1} },  -- 精通 蓝
+    { name = ITEM_MOD_VERSATILITY,          color = {1, 1, 0} },    -- 全能 黄
+}
+-- 副属性显示（独立于 updateRow，互不影响）
+-- 用 C_TooltipInfo.GetHyperlink 读取该物品 tooltip 数据，识别其中的爆击/急速/精通/全能
+local function updatestats(row)
+    if not row or not row.rowData then return end
+
+    -- 懒创建 4 列副属性文本：row.stats[i] 固定对应 SECONDARY_ORDER[i]
+    if not row.stats then
+        row.stats = {}
+        local x0, gap = 250, 45  -- 第 1 列左起点 x 与列间距（紧凑，按实际界面微调）
+        for i = 1, 4 do
+            local t = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+            t:SetFontHeight(13)
+            t:SetPoint("LEFT", row, x0 + (i - 1) * gap, -1)
+            row.stats[i] = t
+        end
+    end
+
+    for i = 1, 4 do
+        row.stats[i]:SetText("")
+        row.stats[i]:Hide()
+    end
+
+    local link = row.rowData.itemLink
+    if not link then return end
+
+    local tip = C_TooltipInfo.GetHyperlink(link)
+    if not tip or not tip.lines then return end
+
+    for _, line in ipairs(tip.lines) do
+        local leftText = line and line.leftText
+        if leftText then
+            for i, info in ipairs(SECONDARY_ORDER) do
+                if strfind(leftText, info.name) then
+                    -- 只显示数值（如 "268 爆击" → 268），颜色区分是哪一列属性
+                    local value = strmatch(leftText, "(%d[%d,%.]*)")
+                    if value then
+                        local t = row.stats[i]
+                        t:SetText(value)
+                        t:SetTextColor(unpack(info.color))
+                        t:Show()
+                    end
+                    break
+                end
+            end
+        end
+    end
+end
+
 local function refreshAllRows()
     if not AuctionHouseFrame or not AuctionHouseFrame.ItemBuyFrame then return end
     local tb = AuctionHouseFrame.ItemBuyFrame.ItemList and AuctionHouseFrame.ItemBuyFrame.ItemList.tableBuilder
     if not tb or not tb.rows then return end
     for _, row in pairs(tb.rows) do
         updateRow(row)
+        updatestats(row)
     end
 end
 
