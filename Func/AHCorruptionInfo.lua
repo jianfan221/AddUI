@@ -57,6 +57,7 @@ local function updatestats(row)
         for i = 1, 4 do
             local t = row:CreateFontString(nil, "OVERLAY", "GameFontNormal")
             t:SetFontHeight(13)
+            t:SetTextColor(unpack(SECONDARY_ORDER[i].color))  -- 每列颜色固定，创建时设一次
             t:SetPoint("LEFT", row, x0 + (i - 1) * gap, -1)
             row.stats[i] = t
         end
@@ -78,12 +79,11 @@ local function updatestats(row)
         if leftText then
             for i, info in ipairs(SECONDARY_ORDER) do
                 if strfind(leftText, info.name) then
-                    -- 只显示数值（如 "268 爆击" → 268），颜色区分是哪一列属性
+                    -- 只显示数值（如 "268 爆击" → 268），颜色已在创建时按列设好
                     local value = strmatch(leftText, "(%d[%d,%.]*)")
                     if value then
                         local t = row.stats[i]
                         t:SetText(value)
-                        t:SetTextColor(unpack(info.color))
                         t:Show()
                     end
                     break
