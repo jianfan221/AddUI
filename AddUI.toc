@@ -6,7 +6,7 @@
 ## X-ModUs-UID: 22
 ## X-Curse-Project-ID: 299776
 ## SavedVariables: AddUIDB
-## Version: 20260905
+## Version: 20260906
 
 AddUI-API.lua
 AddUIDB.lua
