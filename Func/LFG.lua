@@ -126,7 +126,12 @@ ns.hook("LFGListSearchEntry_Update", function(self)
 end)
 
 --保留搜索内容LFGList.lua
-LFGListSearchPanel_Clear = function() end
+function LFGListSearchPanel_Clear(self)
+	--C_LFGList.ClearSearchResults();
+	--C_LFGList.ClearSearchTextFields();
+	self.selectedResult = nil;
+	LFGListSearchPanel_UpdateResultList(self);
+end
 
 --保留申请留言LFGList.lua
 function LFGListApplicationDialog_Show(self, resultID)
