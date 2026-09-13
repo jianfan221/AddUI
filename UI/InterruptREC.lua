@@ -21,7 +21,7 @@ ns.event("PLAYER_LOGIN", function()
 		bar:SetSize(width, height)
 		bar:SetStatusBarTexture("Interface\\AddOns\\AddUI\\UI\\Textures\\Raid-Bar-Hp-Fill")
 		bar:SetMinMaxValues(0, Max_Time)
-		bar:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, (i - 1) * (height + gap))
+		bar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, (i - 1) * (height + gap))
 		bar:Hide()
 
 		bar.bg = bar:CreateTexture(nil, "BORDER")
@@ -49,7 +49,7 @@ ns.event("PLAYER_LOGIN", function()
 
 		for i, bar in ipairs(t) do
 			bar:ClearAllPoints()
-			bar:SetPoint("TOPLEFT", frame, "TOPLEFT", 0, (i - 1) * (height + gap))
+			bar:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, (i - 1) * (height + gap))
 		end
 
 		if #t > 0 then frame:Show() else frame:Hide() end
@@ -63,7 +63,17 @@ ns.event("PLAYER_LOGIN", function()
 				local r = math.min(Max_Time, bar.elapsed)
 				bar:SetValue(r)
 				bar.time:SetText(string.format("%d", r))
-				if r >= Max_Time then bar:Hide() changed = true end
+				if r >= Max_Time then
+					if bar.preview then
+						-- 预览条走完一轮后重置循环，持续演示计时效果
+						bar.elapsed = 0
+						bar:SetValue(0)
+						bar.time:SetText("0")
+						changed = true
+					else
+						bar:Hide() changed = true
+					end
+				end
 			end
 		end
 		if changed then Layout() end
@@ -87,4 +97,44 @@ ns.event("PLAYER_LOGIN", function()
 		bar:Show()
 		Layout()
 	end)
+
+	-- 编辑模式预览：显示几条假数据条，方便调整位置/大小
+	local previewData = {
+		{ name = "法师",     class = "MAGE",        value = 20, color = { r = 0.25, g = 0.78, b = 0.92 } },
+		{ name = "战士",     class = "WARRIOR",     value = 14, color = { r = 0.78, g = 0.61, b = 0.43 } },
+		{ name = "萨满祭司", class = "SHAMAN",      value = 12, color = { r = 0.00, g = 0.44, b = 0.87 } },
+		{ name = "死亡骑士", class = "DEATHKNIGHT", value = 12, color = { r = 0.77, g = 0.12, b = 0.23 } },
+		{ name = "圣骑士",   class = "PALADIN",     value = 15, color = { r = 0.96, g = 0.55, b = 0.73 } },
+	}
+	local function ShowPreview()
+		for i, data in ipairs(previewData) do
+			local bar = bars[i]
+			if not bar then break end
+			local color = C_ClassColor.GetClassColor(data.class) or data.color
+			bar.preview = true
+			bar.elapsed = data.value
+			bar:SetValue(data.value)
+			bar.name:SetText(data.name)
+			bar:SetStatusBarColor(color.r, color.g, color.b)
+			bar.time:SetText(string.format("%d", data.value))
+			bar:Show()
+		end
+		Layout()
+	end
+
+	local function HidePreview()
+		for _, bar in ipairs(bars) do
+			if bar.preview then
+				bar.preview = nil
+				bar:Hide()
+			end
+		end
+		Layout()
+	end
+
+	if EditModeManagerFrame then
+		EditModeManagerFrame:HookScript("OnShow", ShowPreview)
+		EditModeManagerFrame:HookScript("OnHide", HidePreview)
+		if EditModeManagerFrame:IsShown() then ShowPreview() end
+	end
 end)
