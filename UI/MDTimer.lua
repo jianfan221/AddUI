@@ -266,6 +266,11 @@ ns.hook(ScenarioObjectiveTracker,"UpdateCriteria", function(self,numCriteria)
 	end
 end)
 
+--两个文本（都在下面的 Hook 里创建，只建一次）：
+--  lefttext  = 进度条左侧，本波合计进度（只算仇恨列表里的怪）
+--  righttext = 进度条右侧内部，打完这波的总进度 = 本波合计 + 已完成进度
+local lefttext, righttext
+
 --Hook计量条BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
 ns.hook(ScenarioTrackerProgressBarMixin,"SetValue", function(self)
 	local criteriaIndex = select(3, C_Scenario.GetStepInfo())
@@ -273,6 +278,19 @@ ns.hook(ScenarioTrackerProgressBarMixin,"SetValue", function(self)
 	if criteriaInfo and criteriaInfo.isWeightedProgress and not criteriaInfo.completed and criteriaInfo.quantity and criteriaInfo.totalQuantity then
 		local quantity = tonumber((criteriaInfo.quantityString or ""):match("(%d+)") or 0)--暴雪的API有问题
 		self.Bar.Label:SetText(string.format("%.2f%%", quantity / criteriaInfo.totalQuantity * 100))
+
+		--左：本波合计进度（白色）
+		if not lefttext then
+			lefttext = self.Bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			lefttext:SetPoint("LEFT", self.Bar, "LEFT", 0, 0)
+			lefttext:SetTextColor(1, 1, 1)
+		end
+		--右：打完这波的总进度（绿色）
+		if not righttext then
+			righttext = self.Bar:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+			righttext:SetPoint("RIGHT", self.Bar, "RIGHT", 0, 0)
+			righttext:SetTextColor(0, 1, 0)
+		end
 	end
 end)
 
@@ -306,3 +324,212 @@ ns.event("UNIT_DIED", function(_event, guid)
 		end
 	end
 end)
+
+--=====================================================================
+-- 大秘境"本波合计进度"（逻辑照抄 MythicPlusPullReEstimated 的 CalculatePull）
+--   lefttext  = 本波合计（当前仇恨列表里的怪）
+--   righttext = 打完这波的总进度 = 本波合计 + 已完成
+--
+-- 难点：副本里 C_ScenarioInfo.GetUnitCriteriaProgressValues 返回的是"秘密值"，
+--       既不能相加（secret + secret 报错），也不能相除（换算百分比要 /总量）
+--
+-- 解法：借 StatusBar 布局链，用"几何"代替加法
+--   ① 条宽和量程都 = 总量 totalCount → 填充宽度就是"数量"本身（整数，无换算误差）
+--   ② 条首尾相接排开，读最后一根填充纹理的右端坐标 = 各怪数量之和
+--   ③ 末尾再接一根"已完成数量"的条 → 链尾坐标 = 打完这波的总数量
+--   ④ 用 AbbreviateNumbers（C 函数，可接秘密值）换算成百分比字符串：
+--        finalValue = floor(number / significandDivisor) / fractionDivisor
+--      → 除数 = significandDivisor × fractionDivisor = 总量/100
+--        （sig = 总量/10000、frac = 100 → 读出 ÷ (总量/100) = 百分比，两位小数）
+--      除数随副本总量变，所以按总量缓存配置（见 GetPercentCalculator）
+--
+-- 数据来源（函数名同参考实现）：
+--   总量    GetProgressCriteriaInfo().totalQuantity
+--   每只怪  GetUnitCriteriaProgressValues(unit) 的第 1 个返回值（数量，不是小数）
+--   已完成  同一 criteriaInfo 的 quantityString 抠首个整数
+--           （criteriaInfo.quantity 与 totalQuantity 不是一套单位，暴雪老问题，不用）
+--=====================================================================
+-- 条池：复用框架，不每次新建（照抄参考实现的 statusBarPool）
+local barPool = { index = 0, pool = {} }
+
+local function AcquireBar()
+	barPool.index = barPool.index + 1
+	local bar = barPool.pool[barPool.index]
+	if bar then return bar end
+	bar = CreateFrame("StatusBar")
+	bar:SetAlpha(0)				-- 看不见，只借它的几何
+	barPool.pool[barPool.index] = bar
+	return bar
+end
+
+local function ReleaseAllBars()
+	for i = 1, barPool.index do
+		local bar = barPool.pool[i]
+		if bar then
+			bar:Hide()
+			bar:ClearAllPoints()
+			bar:SetValue(0)
+		end
+	end
+	barPool.index = 0
+end
+
+-- 百分比换算配置：按总量缓存（照抄参考实现的 GetPercentCalculator）
+-- 除数 = significandDivisor × fractionDivisor = (总量/10000) × 100 = 总量/100
+-- → 链尾坐标（数量）÷ 除数 = 百分比；fractionDivisor = 100 决定保留两位小数
+local percentCalculators = {}
+
+local function GetPercentCalculator(totalCount)
+	local fmt = percentCalculators[totalCount]
+	if not fmt then
+		fmt = {
+			config = CreateAbbreviateConfig({
+				{
+					breakpoint = 0.00001,
+					abbreviation = "%",
+					significandDivisor = totalCount / 10000,
+					fractionDivisor = 100,
+					abbreviationIsGlobal = false,
+				},
+			}),
+		}
+		percentCalculators[totalCount] = fmt
+	end
+	return fmt
+end
+
+-- 当前步骤的"加权进度"（敌方部队）criteria：从最后一个 criteria 往前找 isWeightedProgress
+local function GetProgressCriteriaInfo()
+	local numCriteria = select(3, C_Scenario.GetStepInfo()) or 0
+	for index = numCriteria, 1, -1 do
+		local info = C_ScenarioInfo.GetCriteriaInfo(index)
+		if info and info.isWeightedProgress then
+			return info
+		end
+	end
+end
+
+-- 进度总量（数量口径，作所有条的条宽和量程）
+local function GetTotalCount()
+	local info = GetProgressCriteriaInfo()
+	return info and info.totalQuantity or 0
+end
+
+-- 已完成数量：criteriaInfo.quantity 口径不对（暴雪老问题），改从 quantityString 抠首个整数
+local function GetCurrentCount()
+	local info = GetProgressCriteriaInfo()
+	if info and info.quantityString then
+		return tonumber(info.quantityString:match("%d+")) or 0
+	end
+	return 0
+end
+
+-- 已进仇恨（被拉到的）怪：上了仇恨列表，或宠物正在攻击的目标
+local function IsUnitPulled(unit)
+	if not UnitCanAttack("player", unit) then return false end
+	local threat = UnitThreatSituation("player", unit)	-- 不在仇恨列表 → nil
+	if ns.MM(threat) then return false end				-- 秘密值跳过
+	return (threat or -1) >= 0 or UnitPlayerControlled(unit .. "target")
+end
+
+-- 当前所有被拉到的怪（照抄参考实现：直接扫姓名板，不自己维护列表）
+local function GetPulledUnits()
+	local pulledUnits = {}
+	for _, nameplate in pairs(C_NamePlate.GetNamePlates()) do
+		local unitFrame = nameplate.UnitFrame --[[@as any]]
+		if unitFrame and unitFrame.unitExists then
+			local unit = unitFrame.displayedUnit --[[@as UnitToken]]
+			if IsUnitPulled(unit) then
+				pulledUnits[#pulledUnits + 1] = unit
+			end
+		end
+	end
+	return pulledUnits
+end
+
+-- 排布局链，两帧后读链尾坐标（数量），交给 AbbreviateNumbers 换算成百分比
+--- @param pulledUnits table 被拉到的怪（UnitToken 列表）
+--- @param total number 进度总量（明文）→ 条宽和量程
+--- @param currentCount number 已完成数量（明文）
+--- @param onDone fun(pullCount:any, estimatedCount:any) 两个值可能仍是秘密值，只能交给 AbbreviateNumbers
+local function CalculatePull(pulledUnits, total, currentCount, onDone)
+	ReleaseAllBars()
+
+	local mainBar = AcquireBar()
+	mainBar:SetSize(total, 10)
+	mainBar:SetPoint("LEFT")
+	mainBar:SetStatusBarTexture("Interface/TargetingFrame/UI-StatusBar")	-- 必须设，否则 GetStatusBarTexture() 返回 nil
+	mainBar:SetMinMaxValues(0, total)
+	mainBar:SetValue(0)
+	mainBar:Show()
+
+	local prevBar = mainBar:GetStatusBarTexture()
+	for _, unit in ipairs(pulledUnits) do
+		local count = C_ScenarioInfo.GetUnitCriteriaProgressValues(unit)	-- 第 1 个返回值：该怪的数量
+		if count then
+			local bar = AcquireBar()
+			bar:SetSize(total, 10)
+			bar:SetPoint("LEFT", prevBar, "RIGHT", 0, 0)
+			bar:SetStatusBarTexture("Interface/TargetingFrame/UI-StatusBar")
+			bar:SetMinMaxValues(0, total)
+			bar:SetValue(count)
+			bar:Show()
+			prevBar = bar:GetStatusBarTexture()
+		end
+	end
+
+	local currentCountBar = AcquireBar()
+	currentCountBar:SetSize(total, 10)
+	currentCountBar:SetPoint("LEFT", prevBar, "RIGHT", 0, 0)
+	currentCountBar:SetStatusBarTexture("Interface/TargetingFrame/UI-StatusBar")
+	currentCountBar:SetMinMaxValues(0, total)
+	currentCountBar:SetValue(currentCount)
+	currentCountBar:Show()
+
+	RunNextFrame(function()
+		RunNextFrame(function()		-- 等两帧，布局算完几何后才能读坐标
+			onDone(prevBar:GetRight(), currentCountBar:GetStatusBarTexture():GetRight())
+		end)
+	end)
+end
+
+local gen = 0	-- 代际令牌：回调两帧后才跑，用它作废已过期的计算结果
+
+local function Update()
+	if not lefttext then return end					-- 文本还没建好（进度条还没出现）
+	if not C_ChallengeMode.IsChallengeModeActive() then return end
+
+	local pulledUnits = GetPulledUnits()
+	local total = GetTotalCount()
+	if #pulledUnits == 0 or not total or total <= 0 then	-- 没有拉到的怪 / 拿不到总量 → 清空
+		gen = gen + 1
+		lefttext:SetText("")
+		righttext:SetText("")
+		return
+	end
+
+	local currentCount = GetCurrentCount()
+
+	gen = gen + 1	-- 新的一代：之前排队还没回调的计算全部作废
+	local my = gen
+
+	CalculatePull(pulledUnits, total, currentCount, function(pullCount, estimatedCount)
+		if my ~= gen then return end						-- 期间又算过一轮 → 丢弃
+		if #pulledUnits ~= #GetPulledUnits() then return end	-- 拉怪数量变了 → 丢弃（照抄参考实现）
+		local fmt = GetPercentCalculator(total)
+		lefttext:SetText(AbbreviateNumbers(pullCount, fmt))			-- 本波合计
+		righttext:SetText(AbbreviateNumbers(estimatedCount, fmt))	-- 打完这波的总进度
+		-- 本波合计为 0 时左右都不显示：SetAlpha 会自动钳位到 [0,1]（0 → 透明），
+		-- 又能直接接秘密值，所以不用做比较（秘密值不能比较）
+		lefttext:SetAlpha(pullCount)
+		righttext:SetAlpha(pullCount)
+	end)
+end
+
+ns.event("NAME_PLATE_UNIT_ADDED", function() Update() end)
+ns.event("NAME_PLATE_UNIT_REMOVED", function() Update() end)
+ns.event("UNIT_THREAT_LIST_UPDATE", Update)		-- 拉怪 / 上仇恨时重算
+
+--进度条每次刷新后重算（进度变化时 SCENARIO_CRITERIA_UPDATE → MarkDirty → 下一帧才会走到这里，
+--所以这个 Hook 才是唯一能拿到最新进度条百分比的时机）
+ns.hook(ScenarioTrackerProgressBarMixin,"SetValue", Update)
