@@ -138,9 +138,9 @@ ns.event("CHALLENGE_MODE_COMPLETED", function()
 	local completeMsg = mapName .. " +" .. keyLevel .. " " .. CRITERIA_COMPLETED_DATE:format(GetTimeAsString(timeMS, nil, true))
 	local timeLimit = select(3, C_ChallengeMode.GetMapUIInfo(info.mapChallengeModeID))
 	if timeLimit then
-		completeMsg = completeMsg .. " " .. CLOSES_IN .. " " .. GetTimeAsString(timeLimit - timeMS)
+		completeMsg = completeMsg .. " " .. CLOSES_IN .. " " .. GetTimeAsString(timeLimit - timeMS, nil, true)
 	end
-	C_Timer.After(1, function() print(completeMsg) end)
+	C_Timer.After(2, function() print(completeMsg) end)
 end)
 --
 --Hook文本BlizzardInterfaceCode\Interface\AddOns\Blizzard_ObjectiveTracker\Blizzard_ScenarioObjectiveTracker.lua
