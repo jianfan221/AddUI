@@ -1,18 +1,14 @@
 ﻿local _,ns = ...
---12.1：姓名板光环按钮等 Forbidden 对象不能被插件代码访问，取名字前先兜底，失败返回 nil
-local function GetFrameName(frame)
-	if not frame then return nil end
-	local ok, name = pcall(frame.GetName, frame)
-	if ok then return name end
-end
 ns.event("PLAYER_LOGIN", function()
 if AddUIDB.ftip ~=  3  then 
 --鼠标提示位置
 local mode = AddUIDB.ftip
 --跟随鼠标
 ns.hook("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
+	--12.1：姓名板光环按钮等 Forbidden 父对象不能传给 SetOwner，跳过（保留暴雪默认锚点）
+	if parent:IsForbidden() then return end
 	if mode == 1 then
-		local pname = GetFrameName(parent)
+		local pname = parent:GetName()
 		if pname and string.match(pname,"CompactPartyFrameMember") then
 			tooltip:ClearAllPoints()
 			tooltip:SetOwner(CompactPartyFrameMember1 or parent, "ANCHOR_TOPLEFT", 0, 13)
@@ -32,7 +28,7 @@ ns.hook("GameTooltip_SetDefaultAnchor", function(tooltip, parent)
 		if InCombatLockdown() then 
 			tooltip:SetOwner(parent, "ANCHOR_NONE");
 		else
-			local pname = GetFrameName(parent)
+			local pname = parent:GetName()
 			if pname and string.match(pname,"CompactPartyFrameMember") then
 				tooltip:ClearAllPoints()
 				tooltip:SetOwner(CompactPartyFrameMember1 or parent, "ANCHOR_TOPLEFT", 0, 13)
