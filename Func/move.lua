@@ -43,6 +43,7 @@ SetMove("QuestFrame")					--任务
 SetMove("ItemUpgradeFrame")			--物品升级
 SetMove("CooldownViewerSettings")		--冷却管理器设置界面
 
+SetMove("MacroFrame", "Blizzard_MacroUI")		--宏命令
 SetMove("ProfessionsFrame", "Blizzard_Professions")		--制造业
 SetMove("CommunitiesFrame", "Blizzard_Communities")		--公会
 SetMove("ClassTalentFrame", "Blizzard_ClassTalentUI")		--天赋
@@ -119,6 +120,39 @@ EventUtil.ContinueOnAddOnLoaded("Blizzard_AuctionHouseUI", function()
 			ProfessionsCustomerOrdersFrame:SetPoint("LEFT",UIParent,"CENTER",-35,130)
 		end
 	end)
+end)
+
+ns.tips("宏命令窗口尺寸调整")
+EventUtil.ContinueOnAddOnLoaded("Blizzard_MacroUI", function()
+    -- 窗口原 338 x 424 → 440 x 561（宽 +102，高 +137）
+    MacroFrame:SetWidth(338+102);
+    MacroFrame:SetHeight(424+47+90);                            -- 网格 +47（4 行），输入区 +90
+
+    -- 宏按钮网格区：原 319 x 146，宽 +102，高 +47，每行 6→8 个
+    -- 4 行高 = 5 + 4*36 + 3*13 + 5 = 193
+    MacroFrame.MacroSelector:SetWidth(319+102);
+    MacroFrame.MacroSelector:SetHeight(146+47);
+    MacroFrame.MacroSelector:SetCustomStride(8);
+
+    -- 网格区下方元素整体下移 47
+    MacroHorizontalBarLeft:SetWidth(256+102);                   -- 分隔条（右侧尾条自动跟随）
+    MacroHorizontalBarLeft:ClearAllPoints();
+    MacroHorizontalBarLeft:SetPoint("TOPLEFT", 2, -210-47);
+    MacroFrameSelectedMacroBackground:ClearAllPoints();         -- 选中宏图标框
+    MacroFrameSelectedMacroBackground:SetPoint("TOPLEFT", 5, -218-47);
+    MacroFrameSelectedMacroName:SetWidth(256+102);              -- 选中宏名称
+
+    -- 输入区：原 95 / 85，高各 +90，整体下移 47
+    MacroFrameTextBackground:SetWidth(322+102);
+    MacroFrameTextBackground:SetHeight(95+90);
+    MacroFrameTextBackground:ClearAllPoints();
+    MacroFrameTextBackground:SetPoint("TOPLEFT", MacroFrame, "TOPLEFT", 6, -289-47);
+    MacroFrameScrollFrame:SetWidth(286+102);                    -- 宏文本滚动框
+    MacroFrameScrollFrame:SetHeight(85+90);
+    MacroFrameText:SetWidth(286+102);                           -- 宏文本输入框
+    MacroFrameText:SetHeight(85+90);
+    MacroFrameTextButton:SetWidth(286+102);                     -- 宏文本点击层
+    MacroFrameTextButton:SetHeight(85+90);
 end)
 
 end)
