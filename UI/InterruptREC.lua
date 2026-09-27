@@ -79,9 +79,10 @@ ns.event("PLAYER_LOGIN", function()
 		if changed then Layout() end
 	end)
 
-	ns.event("UNIT_SPELLCAST_INTERRUPTED", function(event, unitTarget, castGUID, spellID, interruptedBy, castBarID)
+	-- interruptedBy 是"打断者"的 GUID；打断引导条时 INTERRUPTED 不触发，只触发 CHANNEL_STOP（interruptedBy ~= nil 即断到）
+	local function OnInterrupt(event, unitTarget, castGUID, spellID, interruptedBy)
 		if not IsInGroup() then return end
-		if not string.match(unitTarget, "nameplate") or interruptedBy ==nil then return end
+		if not string.match(unitTarget, "nameplate") or interruptedBy == nil then return end
 
 		local bar
 		for _, b in ipairs(bars) do
@@ -96,7 +97,10 @@ ns.event("PLAYER_LOGIN", function()
 		bar.elapsed = 0
 		bar:Show()
 		Layout()
-	end)
+	end
+
+	ns.event("UNIT_SPELLCAST_INTERRUPTED", OnInterrupt)    -- 普通读条被打断
+	ns.event("UNIT_SPELLCAST_CHANNEL_STOP", OnInterrupt)   -- 引导条被打断
 
 	-- 编辑模式预览：显示几条假数据条，方便调整位置/大小
 	local previewData = {
