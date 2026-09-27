@@ -40,6 +40,7 @@ local needcancel = [[
 
 local button
 
+-- 法术警示动画交给暴雪的 ActionButtonSpellAlertManager：首次 ShowAlert 时自动创建模板框架并播放
 local function HideAura()
 	if not button then return end
 	button.text:Hide()
@@ -47,8 +48,9 @@ local function HideAura()
 	button.T:Hide()
 	button.T:SetTexture(nil)
 	button.Cooldown:SetCooldown(0, 0)
-	button.SAA:Hide()
-	button.SAA.ProcStartAnim:Stop()
+	if ActionButtonSpellAlertManager then
+		ActionButtonSpellAlertManager:HideAlert(button)
+	end
 end
 
 local function ShowAura()
@@ -58,8 +60,9 @@ local function ShowAura()
 	button.T:Show()
 	button.T:SetTexture(985088)
 	button.Cooldown:SetCooldown(GetTime(), 10)
-	button.SAA:Show()
-	button.SAA.ProcStartAnim:Play()
+	if ActionButtonSpellAlertManager then
+		ActionButtonSpellAlertManager:ShowAlert(button)
+	end
 	PlaySoundFile("Interface\\AddOns\\AddUI\\UI\\media\\342247.mp3", "Master")
 end
 
@@ -154,13 +157,6 @@ local function CreateFrames()
 	if regon and regon.GetText then
 		regon:SetFont(STANDARD_TEXT_FONT, 30, "OUTLINE")
 	end
-
-	-- SAA 法术警示动画
-	f.SAA = CreateFrame("Frame", nil, f, "ActionButtonSpellAlertTemplate")
-	local w, h = f:GetSize()
-	f.SAA:SetSize(w * 1.4, h * 1.4)
-	f.SAA:SetPoint("CENTER", f, "CENTER", 0, 0)
-	f.SAA:Hide()
 end
 
 local function OnCancelAuraEvent(event, unit, _, spellId)
