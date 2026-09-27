@@ -197,7 +197,6 @@ function ns.AATEXT(text)
     adcfont:SetAlpha(0)
     UIFrameFadeIn(adcfont, 0.5, 0, 1)
 	UIFrameFadeIn(adcfontbg, 0.5, 0, 1)
-	
 
     adcfont.fadeTimer = C_Timer.NewTicker(6, function()
         UIFrameFadeOut(adcfont, 1.5, 1, 0)
