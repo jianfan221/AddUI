@@ -58,6 +58,7 @@ UI\Damage.lua
 UI\DamageValue.lua
 UI\InfoBar.lua
 UI\InspectLevel.lua
+UI\InterruptAlert.lua
 UI\InterruptREC.lua
 UI\MainMenuBar.lua
 UI\MainMenuBarAnimations.lua

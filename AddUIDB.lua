@@ -40,6 +40,7 @@ ns.Defaults = {
 	lotbnt = true, -- Log快捷开关
 	chatCombatTimer = true, -- 聊天框战斗战复计时器
 	interrupt = true, -- 打断记录
+	interruptAlert = true, -- 被骗断语音提醒
 	movspeed = true, -- 角色面板移动速度
 
 	-- ═══════ 下拉菜单 & 滑条 ═══════
