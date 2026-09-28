@@ -75,20 +75,37 @@ Sell:SetScript("OnClick", function()
 	StaticPopup_Show("MerchantFrame_Sell")
 end)
 
--- 快速拾取
-if AddUIDB.sq ==  true  then
-	ns.event("LOOT_READY", function(event, ...)
-		-- Time delay
-		local tDelay = 0
-		if GetTime() - tDelay >= 0.1 then
-			tDelay = GetTime()
-			if GetCVarBool("autoLootDefault") ~= IsModifiedClick("AUTOLOOTTOGGLE") then
-				for i = GetNumLootItems(), 1, -1 do
-					LootSlot(i)
-				end
-				tDelay = GetTime()
+-- 快速拾取（最快：LOOT_READY 最早时机立即全收）
+-- 思路参考 Plumber（作者 Peterodox）Modules/LootUI/FastLoot.lua
+if AddUIDB.sq == true then
+	local slotProcessed, retryPending
+	local function LootAll()
+		for i = 1, GetNumLootItems() do
+			if LootSlotHasItem(i) and not (slotProcessed and slotProcessed[i]) then
+				slotProcessed = slotProcessed or {}
+				slotProcessed[i] = true
+				LootSlot(i)
 			end
 		end
+	end
+
+	ns.event("LOOT_READY", function()
+		LootAll()
+	end)
+	ns.event("LOOT_CLOSED", function()
+		slotProcessed, retryPending = nil, nil
+	end)
+	ns.event("LOOT_SLOT_CLEARED", function(_, slot)
+		if slotProcessed then slotProcessed[slot] = true end
+	end)
+	ns.event("LOOT_SLOT_CHANGED", function(_, slot)
+		if not slotProcessed or retryPending then return end
+		slotProcessed[slot] = false
+		retryPending = true
+		C_Timer.After(0.4, function()
+			retryPending = nil
+			LootAll()
+		end)
 	end)
 end
 
