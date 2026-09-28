@@ -120,6 +120,7 @@ local CustomDefenseSpellIDs = {
 	[5277] = true, --闪避
 	[1966] = true, --佯攻
 	[185311] = true, --猩红之瓶
+	[114018] = true, --潜伏帷幕
 
 	--术士
 	[104773] = true, --不灭决心
