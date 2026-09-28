@@ -35,14 +35,14 @@ end
 ns.event("UNIT_SPELLCAST_INTERRUPTED", markInterrupted)   -- 普通读条被打断
 ns.event("UNIT_SPELLCAST_CHANNEL_STOP", markInterrupted)  -- 引导施法被打断（不会触发 INTERRUPTED）
 
--- 按下打断：记录按下时间，0.01 秒后没断到就响一声
+-- 按下打断：记录按下时间，下一帧没断到就响一声
 ns.event("UNIT_SPELLCAST_SUCCEEDED", function(event, unitTarget, castGUID, spellID)
 	if not (AddUIDB and AddUIDB.interruptAlert) then return end
 	if unitTarget ~= "player" or not INTERRUPT_SPELLS[spellID] then return end
 
 	pressTime = GetTime()
 
-	C_Timer.NewTimer(0.01, function()
+	C_Timer.NewTimer(0, function()
 		if not interruptTime then
 			PlaySoundFile(MISS_SOUND, "Master")
 		end
