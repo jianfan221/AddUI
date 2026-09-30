@@ -38,8 +38,8 @@ function WD:UpdateMacroTarget()
 	if WD.NewName and GetMacroInfo("嫁祸") and  playerclass == "ROGUE" then
 		EditMacro("嫁祸", nil , nil, "#showtooltip\n/cast [@target,help,exists][@"..WD.NewName..",exists][]嫁祸诀窍")
 		UIErrorsFrame:AddExternalWarningMessage("设置嫁祸目标:  "..WD.NewName)
-		ns.AATEXT("已将嫁祸宏的目标改为:  |T236383:30|t|c"..ClassColor..WD.NewName.."|r")
-		print("|cffFF0000已将嫁祸宏的目标改为:  |r|T236383:30|t|c"..ClassColor..WD.NewName.."|r")
+		ns.AATEXT("已将嫁祸宏的目标改为:  |T236283:30|t|c"..ClassColor..WD.NewName.."|r")
+		print("|cffFF0000已将嫁祸宏的目标改为:  |r|T236283:30|t|c"..ClassColor..WD.NewName.."|r")
 		WD.OldName = WD.NewName
 	end
 end
