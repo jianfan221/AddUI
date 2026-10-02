@@ -34,23 +34,6 @@ ns.event("PLAYER_ENTERING_WORLD", function()
 					pushTex:SetVertexColor(0.5, 0.5, 0.5, 1)
 				end
 			end
-			--自动贴附对齐
-			if not AddUIDB.poidama or count < 2 then return end
-			local prior = _G["DamageMeterSessionWindow"..count-1] or _G["DamageMeterSessionWindow"..count-2]
-			self:ClearAllPoints()
-			self:SetPoint("BOTTOMLEFT", prior,"TOPLEFT",0,-3)
-			self:SetPoint("BOTTOMRIGHT", prior,"TOPRIGHT",0,-3)
-			self:SetUserPlaced(true)
-			self:GetResizeButton():HookScript("OnMouseUp", function(button, mouseButtonName, _down)
-				if not self:CanMoveOrResize() then
-					return;
-				end
-				if mouseButtonName == "LeftButton" then
-					self:ClearAllPoints()
-					self:SetPoint("BOTTOMLEFT", prior,"TOPLEFT",0,-3)
-					self:SetPoint("BOTTOMRIGHT", prior,"TOPRIGHT",0,-3)
-				end
-			end);
 		end
 		--新建窗口
 		ns.hook(DamageMeter,'SetupSessionWindow',function(self,data,count) 

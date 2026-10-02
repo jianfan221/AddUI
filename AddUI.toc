@@ -55,6 +55,7 @@ UI\CombatTimers.lua
 UI\Cooldown.lua
 UI\CooldownCopy.lua
 UI\Damage.lua
+UI\DamageSnap.lua
 UI\DamageValue.lua
 UI\InfoBar.lua
 UI\InspectLevel.lua
