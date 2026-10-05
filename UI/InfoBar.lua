@@ -27,28 +27,108 @@ fps:SetPoint("BOTTOMRIGHT",UIParent,-240,0)
 
 -----------金币----------
 local GoldIcon = "\124TInterface\\MoneyFrame\\UI-GoldIcon:0:0:1:0\124t"
-local SilverIcon = "\124TInterface\\MoneyFrame\\UI-SilverIcon:0:0:1:0\124t"
-local CopperIcon = "\124TInterface\\MoneyFrame\\UI-CopperIcon:0:0:1:0\124t"
 local Profit	= 0
 local Spent		= 0
 local OldMoney	= 0
 
 local function formatMoney(money)
-	local g = floor(math.abs(money) / 10000)
-	local s = mod(floor(math.abs(money) / 100), 100)
-	local c = mod(floor(math.abs(money)), 100)
-	if g ~= 0 then
-		return g..GoldIcon.." "..s..SilverIcon.." "..c..CopperIcon
-	elseif s ~= 0 then
-		return s..SilverIcon.." "..c..CopperIcon
-	else
-		return c..CopperIcon
-	end
+	-- 只保留金币，银铜直接舍掉（不四舍五入）
+	return BreakUpLargeNumbers(floor(math.abs(money) / 10000))..GoldIcon
 end
 
 local function formatTextMoney(money)
-	return format("%.0f", money * 0.0001).."|cffffd700"..GOLD_AMOUNT_SYMBOL
+	-- 只保留金币，银铜直接舍掉（不四舍五入）
+	return floor(money / 10000).."|cffffd700"..GOLD_AMOUNT_SYMBOL
 end
+
+-----------金币记录（每个战网一个组，逐角色记录）----------
+-- 保存结构：AddUIDB.GoldTracker = {
+--   ["战网ID"] = {
+--     ["角色名-服务器"] = { n = 角色名, g = 铜币, c = 职业 },
+--     warband = 战团银行铜币,
+--   },
+-- }
+local GOLD_MIN = 100 * 10000 -- 显示时过滤低于 100金 的角色
+
+-- 角色名按职业配色
+local function ClassNameText(name, class)
+	local color = class and C_ClassColor.GetClassColor(class)
+	if color then return color:WrapTextInColorCode(name) end
+	return name
+end
+
+local function GetGoldTrack()
+	local db = AddUIDB.GoldTracker
+	if type(db) ~= "table" then db = {} AddUIDB.GoldTracker = db end
+	return db
+end
+
+-- 当前战网 ID（如 Name#1234），未连接时用 unknown 兜底
+local function GetAccountTag()
+	return select(2, BNGetInfo()) or "unknown"
+end
+
+-- 当前战网对应的角色组
+local function GetAccountGroup()
+	local db = GetGoldTrack()
+	local tag = GetAccountTag()
+	if type(db[tag]) ~= "table" then db[tag] = {} end
+	return db[tag]
+end
+
+local function GetCharKey()
+	return format("%s-%s", UnitFullName("player"), GetNormalizedRealmName() or GetRealmName())
+end
+
+-- 记录当前角色的金币
+local function SaveCharMoney()
+	local name, class = UnitName("player"), select(2, UnitClass("player"))
+	if not name then return end
+	GetAccountGroup()[GetCharKey()] = { n = name, g = GetMoney(), c = class }
+end
+
+-- 战团银行金币：实时读取，读不到时用 DB 缓存值（存在当前战网组内）
+local function GetWarbandMoney()
+	local group = GetAccountGroup()
+	local ok, money = pcall(C_Bank.FetchDepositedMoney, Enum.BankType.Account)
+	if ok and type(money) == "number" and not ns.MM(money) then
+		local canRead = money > 0
+		if not canRead then
+			local ok2, canView = pcall(C_Bank.CanViewBank, Enum.BankType.Account)
+			canRead = ok2 and canView
+		end
+		if canRead then
+			group.warband = money
+			return money
+		end
+	end
+	local cached = group.warband
+	if type(cached) == "number" then return cached end
+	return 0
+end
+
+-- 当前战网下各角色的金币（当前角色固定排第一；其余过滤 < 100金，按金币从多到少）
+-- 组内的 warband 是数字不是表，会被下面的 type 判断自然跳过
+local function GetChars()
+	local list = {}
+	local curKey = GetCharKey()
+	for key, entry in pairs(GetAccountGroup()) do
+		local g = type(entry) == "table" and entry.g
+		if type(g) == "number" and (key == curKey or g >= GOLD_MIN) then
+			list[#list + 1] = { n = entry.n or key, g = g, c = entry.c, cur = key == curKey }
+		end
+	end
+	table.sort(list, function(a, b)
+		if a.cur ~= b.cur then return a.cur == true end
+		return a.g > b.g
+	end)
+	return list
+end
+
+SaveCharMoney()
+ns.event("PLAYER_MONEY", SaveCharMoney)
+ns.event("PLAYER_ENTERING_WORLD", SaveCharMoney)
+ns.event("ACCOUNT_MONEY", function() GetWarbandMoney() end)
 
 local function OnMoneyEvent(event)
 	if event == "PLAYER_ENTERING_WORLD" then
@@ -84,6 +164,16 @@ local function OnMoneyEvent(event)
 		elseif (Profit-Spent)>0 then
 			GameTooltip:AddDoubleLine("盈利:", formatMoney(Profit-Spent), 0, 1, 0, 1, 1, 1)
 		end				
+		local chars = GetChars()
+		local warband = GetWarbandMoney()
+		local total = warband
+		GameTooltip:AddLine(" ")
+		for _, c in ipairs(chars) do
+			GameTooltip:AddDoubleLine(ClassNameText(c.n, c.c), formatMoney(c.g), 1, 1, 1, 1, 1, 1)
+			total = total + c.g
+		end
+		GameTooltip:AddDoubleLine("战团银行:", formatMoney(warband), 1, 1, 1, 1, 1, 1)
+		GameTooltip:AddDoubleLine("总计:", formatMoney(total), 0, .8, 0, 0, 1, 0)
 		GameTooltip:Show()
 	end)
 	gold:SetScript("OnLeave", function() GameTooltip:Hide() end)
