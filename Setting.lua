@@ -108,6 +108,10 @@ ns.AddTab("其他", function()
 		ns.OpenSelfBuffAuraList()
 	end)
 
+	ns.AddSection("右键菜单")
+	ns.AddCheck("Warcraft Logs", "玩家右键菜单里显示 WCL 链接,关闭后不显示", "wcl")
+	ns.AddCheck("Raider.IO", "玩家右键菜单里显示 Raider.IO 链接,关闭后不显示", "rio")
+
 end)
 
 -- ═══════ 施法条 ═══════

@@ -44,6 +44,7 @@ Func\SCmacro.lua
 Func\MerchantSearch.lua
 Func\Merchant.lua
 Func\zu.lua
+Func\WCL.lua
 
 SetAddon\CVar.lua
 SetAddon\Details.lua

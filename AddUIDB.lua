@@ -42,6 +42,8 @@ ns.Defaults = {
 	interrupt = true, -- 打断记录
 	interruptAlert = true, -- 被骗断语音提醒
 	movspeed = true, -- 角色面板移动速度
+	wcl = true, -- 右键菜单显示 WCL 链接
+	rio = true, -- 右键菜单显示 Raider.IO 链接
 
 	-- ═══════ 下拉菜单 & 滑条 ═══════
 	CastTexture = "Rainbow", -- 施法条材质（下拉菜单选择）
