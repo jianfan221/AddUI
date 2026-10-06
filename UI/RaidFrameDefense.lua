@@ -2,7 +2,7 @@ local _, ns = ...
 
 -- 团队框架监控玩家减伤BUFF（手动维护法术ID表）
 -- 使用 AuraContainer 单一分组，锚定在成员框架上层（同 RaidFrameAbsorb 思路）：
---   过滤 HELPFUL + includeSpellIDs = 下方手动表（仅显示表里的减伤增益）
+--   过滤 HELPFUL + includeSpellIDs = CustomDefenseSpellIDs（不限施放者）
 -- 说明：只显示手动表里配置的减伤BUFF；吸收盾(RaidFrameAbsorb)层级高于本层。
 
 -- ═══════════ 手动维护的减伤法术ID表 ═══════════
@@ -10,6 +10,8 @@ local _, ns = ...
 local CustomDefenseSpellIDs = {
 	--通用
 	[58984] = true, --影遁
+	[371124] = true, --隐形(沉静西风药水)
+	[1305846] = true, --超自然抗毒剂(饰品270171:目标受伤50%转为治疗)
 
 	--牧师
 	[10060] = true, --能量灌注
