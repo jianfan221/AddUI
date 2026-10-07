@@ -11,9 +11,14 @@ if cls == "SHAMAN" then
 		-- 尺寸跟随小队框体高度（GetRaidFrameHeight 读的是滑动条 setting 值，不含渲染偏移）
 		local size = EditModeManagerFrame:GetRaidFrameHeight(Enum.EditModeUnitFrameSystemIndices.Party, 36)/1.8
 
+		-- holder 只做锚定容器（本身无外观），图标挂在它下面：未学会天赋时只隐藏图标，不影响雷霆之爪
 		-- 父级初始 UIParent，AnchorToSelf 时会随锚定目标切换（团队→anchor，小队→小队框体）
-		local frame = CreateFrame("Frame", "AddUIClassShamanCountdown", UIParent, "CooldownViewerBuffIconItemTemplate")
-		frame:SetSize(size, size)
+		local holder = CreateFrame("Frame", "AddUIClassShamanCountdown", UIParent)
+		holder:SetSize(size, size)
+
+		-- 自然守护者图标（需学会天赋 30884 才显示）
+		local frame = CreateFrame("Frame", "AddUIClassShamanGuardianIcon", holder, "CooldownViewerBuffIconItemTemplate")
+		frame:SetAllPoints(holder)
 
 		-- 可拖动的锚定框架（UIParent），团队时自然守护者锚到这里，尺寸 40*40
 		local anchor = CreateFrame("Frame", "AddUIClassShamanAnchor", UIParent)
@@ -45,17 +50,17 @@ if cls == "SHAMAN" then
 					target, tsize = anchor, 40 -- 不在小队时回退到可拖动框架
 				end
 			end
-			frame:SetParent(target) -- 父框体跟随锚定目标
-			frame:ClearAllPoints()
+			holder:SetParent(target) -- 父框体跟随锚定目标
+			holder:ClearAllPoints()
 			if IsInRaid() then
 				-- 团队：居中显示在可拖动框架上
-				frame:SetPoint("CENTER", target, "CENTER", 0, 0)
+				holder:SetPoint("CENTER", target, "CENTER", 0, 0)
 				ns.AddEdit(anchor, "自然守护者")
 			else
 				-- 小队/野外：显示在目标左侧
-				frame:SetPoint("TOPRIGHT", target, "TOPLEFT", -1, 0)
+				holder:SetPoint("TOPRIGHT", target, "TOPLEFT", -1, 0)
 			end
-			frame:SetSize(tsize, tsize)
+			holder:SetSize(tsize, tsize)
 			frame.Cooldown:GetCountdownFontString():SetFont(STANDARD_TEXT_FONT, tsize*0.5, "OUTLINE")
 			if frame.SAA then frame.SAA:SetSize(tsize * 1.4, tsize * 1.4) end
 		end
@@ -64,7 +69,6 @@ if cls == "SHAMAN" then
 		ns.event("PLAYER_ENTERING_WORLD", AnchorToSelf)
 
 		frame.DebuffBorder = nil -- 去掉减益边框
-		frame:Show() -- 常驻显示
 		frame.Icon:SetTexture(136060)--C_Spell.GetSpellTexture(SpellID)
 		frame.Cooldown:SetReverse(false)
 		frame.Cooldown:SetCountdownAbbrevThreshold(600)
@@ -79,6 +83,22 @@ if cls == "SHAMAN" then
 		if frame.SAA.ProcLoopFlipbook then frame.SAA.ProcLoopFlipbook:SetVertexColor(0, 0.8, 1) end
 		if frame.SAA.ProcAltGlow then frame.SAA.ProcAltGlow:SetVertexColor(0, 0.8, 1) end
 		frame.SAA:Hide()
+
+		-- 需要学会自然守护者天赋(30884)才显示图标（雷霆之爪图标挂在 holder 上，不受影响）
+		local GUARDIAN_ID = 30884
+		local function UpdateGuardianVisible()
+			local known = C_SpellBook.IsSpellKnown(GUARDIAN_ID)
+			frame:SetShown(known)
+			if not known then frame.SAA:Hide() end
+		end
+		-- 切天赋/换专精是同步事件，当帧法术表还没刷新（IsSpellKnown 读到的还是旧值），延迟 0.1 秒再确认
+		local function GuardianTalentChanged()
+			UpdateGuardianVisible()
+			C_Timer.After(0.1, UpdateGuardianVisible)
+		end
+		ns.event("PLAYER_SPECIALIZATION_CHANGED", GuardianTalentChanged)
+		ns.event("TRAIT_CONFIG_UPDATED", GuardianTalentChanged)
+		UpdateGuardianVisible()
 
 		ns.event("SPELL_UPDATE_COOLDOWN", function(event, spellID)
 			if spellID ~= SpellID then return end
@@ -100,16 +120,23 @@ if cls == "SHAMAN" then
 		end)
 
 		-- 雷霆之爪：自然守护者左侧监控 378076 图标（判断学会用 378075，冷却20秒）
+		-- 父级用 holder，独立于自然守护者图标的显隐（图标没学会时雷霆之爪照样显示）
 		local MONITOR_ID = 378076
 		local KNOWN_ID = 378075
 		local MONITOR_DURATION = 20
 		local monitor
 		local function UpdateMonitor()
 			local known = (AddUIDB and AddUIDB.shamanThunderClaw) and C_SpellBook.IsSpellKnown(KNOWN_ID)
-			if known and not monitor then
-				monitor = CreateFrame("Frame", "AddUIClassShamanMonitorIcon", frame, "CooldownViewerBuffIconItemTemplate")
+			if not known then
+				if monitor then
+					monitor:Hide()
+				end
+				return
+			end
+			if not monitor then
+				monitor = CreateFrame("Frame", "AddUIClassShamanMonitorIcon", holder, "CooldownViewerBuffIconItemTemplate")
 				monitor:SetSize(size , size)
-				monitor:SetPoint("RIGHT", frame, "LEFT", 0, 0)
+				monitor:SetPoint("RIGHT", holder, "LEFT", 0, 0)
 				monitor.DebuffBorder = nil -- 去掉减益边框
 				monitor.Icon:SetTexture(C_Spell.GetSpellTexture(MONITOR_ID))
 				monitor.Cooldown:SetReverse(false)
@@ -124,12 +151,16 @@ if cls == "SHAMAN" then
 					monitor.Cooldown:SetCooldown(GetTime(), MONITOR_DURATION)
 					monitor.Icon:SetDesaturated(true) -- 冷却时褪色
 				end)
-				monitor:Show()
-			elseif not known and monitor then
-				monitor:Hide()
 			end
+			monitor:Show() -- 已创建过也要显示：取消天赋后再学会要能恢复
 		end
-		ns.event("SPELLS_CHANGED", UpdateMonitor)
+		-- 切天赋/换专精是同步事件，当帧法术表还没刷新（IsSpellKnown 读到的还是旧值），延迟 0.1 秒再确认
+		local function MonitorTalentChanged()
+			UpdateMonitor()
+			C_Timer.After(0.1, UpdateMonitor)
+		end
+		ns.event("PLAYER_SPECIALIZATION_CHANGED", MonitorTalentChanged)
+		ns.event("TRAIT_CONFIG_UPDATED", MonitorTalentChanged)
 		UpdateMonitor()
 	end)
 end
