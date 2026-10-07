@@ -49,6 +49,7 @@ end
 --   },
 -- }
 local GOLD_MIN = 100 * 10000 -- 显示时过滤低于 100金 的角色
+local charsCache -- 悬停角色列表缓存，角色金币变化时失效
 
 -- 角色名按职业配色
 local function ClassNameText(name, class)
@@ -85,6 +86,7 @@ local function SaveCharMoney()
 	local name, class = UnitName("player"), select(2, UnitClass("player"))
 	if not name then return end
 	GetAccountGroup()[GetCharKey()] = { n = name, g = GetMoney(), c = class }
+	charsCache = nil
 end
 
 -- 战团银行金币：实时读取，读不到时用 DB 缓存值（存在当前战网组内）
@@ -109,7 +111,9 @@ end
 
 -- 当前战网下各角色的金币（当前角色固定排第一；其余过滤 < 100金，按金币从多到少）
 -- 组内的 warband 是数字不是表，会被下面的 type 判断自然跳过
+-- 结果缓存到 charsCache，仅角色金币变化后重建，避免每次悬停都遍历 + 排序
 local function GetChars()
+	if charsCache then return charsCache end
 	local list = {}
 	local curKey = GetCharKey()
 	for key, entry in pairs(GetAccountGroup()) do
@@ -122,6 +126,7 @@ local function GetChars()
 		if a.cur ~= b.cur then return a.cur == true end
 		return a.g > b.g
 	end)
+	charsCache = list
 	return list
 end
 
@@ -130,6 +135,7 @@ ns.event("PLAYER_MONEY", SaveCharMoney)
 ns.event("PLAYER_ENTERING_WORLD", SaveCharMoney)
 ns.event("ACCOUNT_MONEY", function() GetWarbandMoney() end)
 
+local lastMoneyText -- 上次显示的金币文本，文本未变时跳过重排
 local function OnMoneyEvent(event)
 	if event == "PLAYER_ENTERING_WORLD" then
 		OldMoney = GetMoney()
@@ -142,43 +148,50 @@ local function OnMoneyEvent(event)
 	else							-- Gained Moeny
 		Profit = Profit + Change
 	end
-	goldText:SetText(formatTextMoney(NewMoney))
-	local w = goldText:GetStringWidth()
-	if w and w > 0 then
-		gold:SetWidth(w + 4)
-		gold:SetHeight(goldText:GetStringHeight() + 2)
-	end
-	-- 脚本绑在Frame上（避免了FontString鼠标事件不可靠的问题）
-	gold:SetScript("OnEnter", function()
-		GameTooltip:SetOwner(gold, "ANCHOR_TOP", 0, 6);
-		GameTooltip:ClearAllPoints()
-		GameTooltip:SetPoint("BOTTOM", gold, "TOP", 0, 1)
-		GameTooltip:ClearLines()
-		GameTooltip:AddLine(CURRENCY,0,.6,1)
-		GameTooltip:AddLine(" ")
-		GameTooltip:AddLine("本次登陆: ",.6,.8,1)
-		GameTooltip:AddDoubleLine("获得:", formatMoney(Profit), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine("花费:", formatMoney(Spent), 1, 1, 1, 1, 1, 1)
-		if Profit < Spent then
-			GameTooltip:AddDoubleLine("亏损:", formatMoney(Profit-Spent), 1, 0, 0, 1, 1, 1)
-		elseif (Profit-Spent)>0 then
-			GameTooltip:AddDoubleLine("盈利:", formatMoney(Profit-Spent), 0, 1, 0, 1, 1, 1)
-		end				
-		local chars = GetChars()
-		local warband = GetWarbandMoney()
-		local total = warband
-		GameTooltip:AddLine(" ")
-		for _, c in ipairs(chars) do
-			GameTooltip:AddDoubleLine(ClassNameText(c.n, c.c), formatMoney(c.g), 1, 1, 1, 1, 1, 1)
-			total = total + c.g
+	-- 金币文本没变就不重复测量宽度
+	local txt = formatTextMoney(NewMoney)
+	if txt ~= lastMoneyText then
+		lastMoneyText = txt
+		goldText:SetText(txt)
+		local w = goldText:GetStringWidth()
+		if w and w > 0 then
+			gold:SetWidth(w + 4)
+			gold:SetHeight(goldText:GetStringHeight() + 2)
 		end
-		GameTooltip:AddDoubleLine("战团银行:", formatMoney(warband), 1, 1, 1, 1, 1, 1)
-		GameTooltip:AddDoubleLine("总计:", formatMoney(total), 0, .8, 0, 0, 1, 0)
-		GameTooltip:Show()
-	end)
-	gold:SetScript("OnLeave", function() GameTooltip:Hide() end)
-	OldMoney = GetMoney()
+	end
+	OldMoney = NewMoney
 end
+
+-- 鼠标提示脚本绑在 Frame 上（避免 FontString 鼠标事件不可靠），只需设置一次；
+-- 提示内容实时读取 Profit / Spent 等上值，无需每次金币变化都重设脚本
+gold:SetScript("OnEnter", function()
+	GameTooltip:SetOwner(gold, "ANCHOR_TOP", 0, 6);
+	GameTooltip:ClearAllPoints()
+	GameTooltip:SetPoint("BOTTOM", gold, "TOP", 0, 1)
+	GameTooltip:ClearLines()
+	GameTooltip:AddLine(CURRENCY,0,.6,1)
+	GameTooltip:AddLine(" ")
+	GameTooltip:AddLine("本次登陆: ",.6,.8,1)
+	GameTooltip:AddDoubleLine("获得:", formatMoney(Profit), 1, 1, 1, 1, 1, 1)
+	GameTooltip:AddDoubleLine("花费:", formatMoney(Spent), 1, 1, 1, 1, 1, 1)
+	if Profit < Spent then
+		GameTooltip:AddDoubleLine("亏损:", formatMoney(Profit-Spent), 1, 0, 0, 1, 1, 1)
+	elseif (Profit-Spent)>0 then
+		GameTooltip:AddDoubleLine("盈利:", formatMoney(Profit-Spent), 0, 1, 0, 1, 1, 1)
+	end
+	local chars = GetChars()
+	local warband = GetWarbandMoney()
+	local total = warband
+	GameTooltip:AddLine(" ")
+	for _, c in ipairs(chars) do
+		GameTooltip:AddDoubleLine(ClassNameText(c.n, c.c), formatMoney(c.g), 1, 1, 1, 1, 1, 1)
+		total = total + c.g
+	end
+	GameTooltip:AddDoubleLine("战团银行:", formatMoney(warband), .6, .8, 1, 1, 1, 1)
+	GameTooltip:AddDoubleLine("总计:", formatMoney(total), 0, .8, 0, 0, 1, 0)
+	GameTooltip:Show()
+end)
+gold:SetScript("OnLeave", function() GameTooltip:Hide() end)
 
 ns.event("PLAYER_MONEY", OnMoneyEvent)
 ns.event("SEND_MAIL_MONEY_CHANGED", OnMoneyEvent)
