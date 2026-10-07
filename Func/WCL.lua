@@ -18,8 +18,9 @@ local ZH_SITE = REGION == "cn" or REGION == "tw"
 local WCL_HOST = ZH_SITE and "cn.warcraftlogs.com" or "www.warcraftlogs.com"
 
 local WCL_URL = "https://"..WCL_HOST.."/character/"..REGION.."/%s/%s"
---地城（5人本/大秘境）额外带 zone（换赛季要改 55：数字在 WCL 大秘境排行榜地址 /zone/rankings/<id> 里）
-local WCL_URL_MPLUS = WCL_URL.."?zone=55"
+--地城（5人本/大秘境）额外带 zone + metric（换赛季要改 55：数字在 WCL 大秘境排行榜地址 /zone/rankings/<id> 里）
+--metric=points_and_damage：按「大秘境评分 + 伤害」出榜，不是 WCL 默认视图
+local WCL_URL_MPLUS = WCL_URL.."?zone=55&metric=points_and_damage"
 --Raider.IO 角色页（不需要 zone）
 --开头那段是它自己的站点语言（简体中文 cn/，英文默认就省略）：中文用户都带上
 local RIO_LANG = ZH_SITE and "cn/" or ""
