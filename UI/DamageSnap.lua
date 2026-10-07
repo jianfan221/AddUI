@@ -2,6 +2,7 @@ local _,ns = ...
 --伤害统计窗口自动吸附：拖动副窗口时，靠近前一个窗口就自动贴附
 --上下吸=宽度取一致，左右吸=高度取一致
 --（窗口拖动与缩放手柄都由本文件接管，Damage.lua 不再处理位置）
+--吸附方向存进 AddUIDB.damasnap，登录/进本后重放（layout-local.txt 只存矩形，不存锚点关系）
 --思路参考：暴雪编辑模式磁吸 EditModeMagnetismManager（Blizzard_EditMode/Shared/EditModeUtil.lua）
 
 local GAP_X = -3		--左右贴附后的间距
@@ -72,6 +73,25 @@ local function GetTarget(index)
 		local frame = _G["DamageMeterSessionWindow"..i]
 		if frame and frame:IsShown() then return frame end
 	end
+end
+
+--吸附方向存档：layout-local.txt 只存最终矩形，锚点关系靠这里记的方向在登录后重放
+local function StoreSnap(index, dir)
+	AddUIDB.damasnap = AddUIDB.damasnap or {}
+	AddUIDB.damasnap[index] = dir
+end
+
+--重放存档的吸附：把副窗口重新贴回它的目标窗口
+local function ReplaySnap(index)
+	if not AddUIDB or not AddUIDB.poidama then return end
+	local dir = AddUIDB.damasnap and AddUIDB.damasnap[index]
+	if not dir then return end
+	local src = _G["DamageMeterSessionWindow"..index]
+	if not src or not src:IsShown() then return end
+	local tgt = GetTarget(index)
+	if not tgt then return end
+	ApplySnap(src, tgt, dir)
+	snapped[src] = dir
 end
 
 --参考线：拖动中提示松手后会贴到目标框的哪条边
@@ -148,8 +168,10 @@ local function SetupSnap(index)
 		if dir then
 			ApplySnap(self, dragTgt, dir)
 			snapped[self] = dir		--记住吸附关系
+			StoreSnap(index, dir)
 		else
 			snapped[self] = nil		--没吸上，解除记录
+			StoreSnap(index, nil)
 		end
 		dragSrc, dragTgt, dragDir = nil, nil, nil
 		HidePreview()
@@ -168,6 +190,7 @@ local function SetupSnap(index)
 			if dir then
 				ApplySnap(src, tgt, dir)
 				snapped[src] = dir
+				StoreSnap(index, dir)
 			end
 		end)
 	end
@@ -182,6 +205,8 @@ local function SetupAll()
 	ns.hook(DamageMeter, "SetupSessionWindow", function(self, windowDataIndex)
 		if windowDataIndex and windowDataIndex > 1 then
 			SetupSnap(windowDataIndex)
+			--窗口位置随后可能被 layout-local.txt 缓存覆盖，延后一帧重放吸附
+			C_Timer.After(0, function() ReplaySnap(windowDataIndex) end)
 		end
 	end)
 
@@ -193,4 +218,12 @@ end
 
 --Blizzard_DamageMeter 比本插件加载得早，ADDON_LOADED 已经错过，用 ContinueOnAddOnLoaded 补上
 EventUtil.ContinueOnAddOnLoaded("Blizzard_DamageMeter", SetupAll)
-ns.event("PLAYER_ENTERING_WORLD", SetupAll)--兜底
+ns.event("PLAYER_ENTERING_WORLD", function()--兜底：登录/进本后重放存档的吸附
+	SetupAll()
+	if not DamageMeter then return end
+	C_Timer.After(0, function()
+		for i = 2, DamageMeter:GetMaxSessionWindowCount() do
+			ReplaySnap(i)
+		end
+	end)
+end)
