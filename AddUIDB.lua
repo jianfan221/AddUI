@@ -97,7 +97,7 @@ ns.Defaults = {
 	rogueDotGrid = true, -- 奇袭DOT网格(盗贼)
 	rogueDotGridThreatOnly = true, -- 奇袭DOT网格只监控仇恨列表内的姓名板
 	rogueDotGridTimer = true, -- 奇袭DOT网格显示最小剩余时间倒数
-	rogueDotGridCell = 15, -- 奇袭DOT网格格子大小
+	rogueDotGridCell = 20, -- 奇袭DOT网格格子大小
 }
 
 ns.CastBarTextrue = {
