@@ -3,8 +3,8 @@ local _, ns = ...
 -- ══════════════════════════════════════════════════════════════
 -- 奇袭盗贼（奇袭天赋）专用：附近敌方姓名板的 双 DOT 监控网格
 -- 进游戏时把 8 列 x 5 行 共 40 个格子全部建好放进池里，用到就拿一个
--- 总开关进游戏读一次；「只监控仇恨列表」「格子大小」「最小剩余时间倒数」设置里改可实时生效
--- 只有奇袭天赋才启用（切天赋即时生效）；默认只认「已上仇恨列表」的姓名板
+-- 总开关进游戏读一次；「只监控战斗中的怪」「格子大小」「最小剩余时间倒数」设置里改可实时生效
+-- 只有奇袭天赋才启用（切天赋即时生效）；默认只认「仇恨列表内 或 正在战斗」的怪
 -- 姓名板按出现顺序从左往右填，满 8 个换行（紧凑排列，不留空洞）
 -- 格子：白底；锁喉(703) + 割裂(1943) 同时存在 → 变红（容器嵌套实现 AND）
 -- 每个格子正中再挂一个容器，显示两个 DOT 里最早到期那个的剩余时间（只留冷却倒数，无转圈；可开关）
@@ -46,7 +46,7 @@ ns.event("PLAYER_LOGIN", function()
 	local ENABLED = not (db and db.rogueDotGrid == false)
 	local THREAT_ONLY = not (db and db.rogueDotGridThreatOnly == false)
 	local TIMER_ON = not (db and db.rogueDotGridTimer == false)
-	local CELL = Clamp(tonumber(db and db.rogueDotGridCell) or 15, 8, 30)
+	local CELL = Clamp(tonumber(db and db.rogueDotGridCell) or 20, 8, 30)
 
 	-- 格子里的倒数文本：字号随格子缩放
 	local function TextH() return math.max(9, math.floor(CELL * 0.9)) end
@@ -199,12 +199,13 @@ ns.event("PLAYER_LOGIN", function()
 		end
 	end
 
-	-- 这个单位该不该显示：默认只认已上仇恨列表（被拉到的）的姓名板
+	-- 这个单位该不该显示：默认只认「相关」的怪 —— 已上仇恨列表，或它自己正在战斗
+	-- （有些怪在战斗却不在你的仇恨列表里：消失/隐匿后仇恨清空、队友刚拉过来等，此时你的 DOT 还在它身上）
 	local function ShouldShow(unit)
 		if not THREAT_ONLY then return true end
 		local threat = UnitThreatSituation("player", unit) -- 不在仇恨列表 → nil
-		if ns.MM(threat) then return false end              -- 秘密值跳过
-		return (threat or -1) >= 0
+		if not ns.MM(threat) and (threat or -1) >= 0 then return true end
+		return UnitAffectingCombat(unit) -- 在战斗但你没仇恨的怪也认
 	end
 
 	-- 重新对齐显示列表：保持已有顺序，掉出条件的移走、新出现的追加在后面
@@ -270,7 +271,7 @@ ns.event("PLAYER_LOGIN", function()
 		Refresh()
 	end
 
-	-- 设置界面实时生效：只监控仇恨列表 / 最小剩余时间倒数 / 格子大小
+	-- 设置界面实时生效：只监控战斗中的怪 / 最小剩余时间倒数 / 格子大小
 	ns.RogueDotGridRefresh = function()
 		local cfg = ns.DB or AddUIDB
 		THREAT_ONLY = not (cfg and cfg.rogueDotGridThreatOnly == false)
@@ -283,7 +284,7 @@ ns.event("PLAYER_LOGIN", function()
 			end
 		end
 
-		local size = Clamp(tonumber(cfg and cfg.rogueDotGridCell) or 15, 8, 30)
+		local size = Clamp(tonumber(cfg and cfg.rogueDotGridCell) or 20, 8, 30)
 		if size ~= CELL then
 			CELL = size
 			grid:SetSize(COLS * CELL + (COLS - 1) * GAP, ROWS * CELL + (ROWS - 1) * GAP)
