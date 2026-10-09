@@ -85,7 +85,7 @@ ns.AddTab("职业", function()
 		if ns.RogueDotGridRefresh then ns.RogueDotGridRefresh() end
 	end
 	ns.AddCheck("奇袭DOT网格", "监控附近敌方姓名板,锁喉+割裂双DOT齐全变红,编辑模式拖动位置\n仅奇袭天赋生效,总开关改动需/reload", "rogueDotGrid")
-	ns.AddCheck("只监控仇恨列表", "只显示已上仇恨列表(被拉到的)的姓名板", "rogueDotGridThreatOnly", rogueLive)
+	ns.AddCheck("只监控战斗中的怪", "只显示已上仇恨列表 或 正在战斗的怪(含消失后DOT还在的)", "rogueDotGridThreatOnly", rogueLive)
 	ns.AddCheck("最小剩余时间倒数", "格子里显示两个DOT中最早到期那个的剩余时间", "rogueDotGridTimer", rogueLive)
 	ns.AddSlider("格子大小", "网格方块边长", 8, 30, 1, "%d", "rogueDotGridCell", rogueLive)
 	ns.AddDep("rogueDotGrid", {"rogueDotGridThreatOnly", "rogueDotGridTimer", "rogueDotGridCell"})
