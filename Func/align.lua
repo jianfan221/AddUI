@@ -22,10 +22,12 @@ end)
 
 ns.tips("区域文字鼠标穿透(大秘境开门快速选怪会碍事)")
 -- toast 内容框架是动态创建(池化)的,需对主框架及每次动态生成的 toast 递归禁用鼠标
--- 但按钮是 toast 里唯一的交互件(积分板的 CLOSE,下方的大 CLOSE,点击展开的场景 toast),必须保留鼠标,否则不自动消失的弹窗关不掉
+-- 但有两类必须保留鼠标,否则不自动消失的弹窗关不掉:
+-- 1.按钮:下方的大 CLOSE(主框架的固定子件,不带 hideAutomatically,只能靠它是按钮认出来),积分板 CLOSE,点击展开的场景 toast
+-- 2.不自动消失的 toast 整棵(hideAutomatically = false):池化实例被禁用后 Show 出来不会自己恢复,连里面的可交互控件一起保住
 local function SetToastMousePassthrough(frame)
 	if not frame then return end
-	if frame:IsObjectType("Button") then return end
+	if frame:IsObjectType("Button") or frame.hideAutomatically == false then return end
 	frame:EnableMouse(false)
 	for i = 1, frame:GetNumChildren() do
 		SetToastMousePassthrough(select(i, frame:GetChildren()))
