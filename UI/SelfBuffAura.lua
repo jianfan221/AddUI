@@ -109,9 +109,10 @@ ns.event("PLAYER_LOGIN", function()
 			cooldown:SetReverse(true) -- 反转冷却动画方向
 			auraButton:SetDurationCooldown(cooldown)
 			-- 冷却倒数文本字号为光环尺寸的比例（同 RaidFrameDefense）
-			local cdRegion = cooldown:GetRegions()
-			if cdRegion and type(cdRegion.SetFont) == "function" then
-				cdRegion:SetFont(STANDARD_TEXT_FONT, size/1.8, "OUTLINE")
+			-- 用 GetCountdownFontString() 取倒计时 FontString，别用 GetRegions()[1]（第一项可能是 cooldown 自带贴图，会静默跳过）
+			local cdText = cooldown:GetCountdownFontString()
+			if cdText then
+				cdText:SetFont(STANDARD_TEXT_FONT, size/1.8, "OUTLINE")
 			end
 
 			-- 叠层数：独立 overlay 容器（层级在冷却之上，不随冷却隐藏）

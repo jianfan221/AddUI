@@ -153,9 +153,10 @@ local function CreateFrames()
 	f.Cooldown:SetScript("OnCooldownDone", function()
 		HideAura()
 	end)
-	local regon = f.Cooldown:GetRegions()
-	if regon and regon.GetText then
-		regon:SetFont(STANDARD_TEXT_FONT, 30, "OUTLINE")
+	-- 用 GetCountdownFontString() 取倒计时 FontString，别用 GetRegions()[1]（第一项可能是 cooldown 自带贴图，会静默跳过）
+	local cdText = f.Cooldown:GetCountdownFontString()
+	if cdText then
+		cdText:SetFont(STANDARD_TEXT_FONT, 30, "OUTLINE")
 	end
 end
 

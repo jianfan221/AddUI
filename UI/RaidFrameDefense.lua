@@ -154,9 +154,10 @@ local function InitDefenseButton(btn)
 	cooldown:SetAllPoints(btn)
 	cooldown:SetReverse(true)
 	-- 冷却倒数文本字号为光环尺寸的比例（同 PlateAuras，用 SetFontHeight 保留模板字体）
-	local cdRegion = cooldown:GetRegions()
-	if cdRegion and type(cdRegion.SetFontHeight) == "function" then
-		cdRegion:SetFontHeight(size/1.8)
+	-- 用 GetCountdownFontString() 取倒计时 FontString，别用 GetRegions()[1]（第一项可能是 cooldown 自带贴图，会静默跳过）
+	local cdText = cooldown:GetCountdownFontString()
+	if cdText then
+		cdText:SetFontHeight(size/1.8)
 	end
 	btn:SetDurationCooldown(cooldown)
 
