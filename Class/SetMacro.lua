@@ -18,7 +18,7 @@ function WD:UpdateMacroTarget()
 		for i = 1,4 do
 			if UnitGroupRolesAssigned("party"..i) == "TANK" then
 				WD.NewName = UnitName("party"..i)
-				WD.Lclass,WD.NewClass = UnitClass("raid"..i)
+				WD.Lclass,WD.NewClass = UnitClass("party"..i)
 				break;
 			end
 		end
