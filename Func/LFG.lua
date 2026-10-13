@@ -172,6 +172,13 @@ end)
 LFGListFrame.ApplicationViewer.BrowseGroupsButton:SetScript("OnClick", function()
 	LFGListFrame_SetActivePanel(LFGListFrame,LFGListFrame.CategorySelection)
 end)
+--非队长/助理时，暴雪用 UnempoweredCover（enableMouse、frameLevel 15）盖住申请列表，右键全被它吃掉
+--empowered = 队长 或 助理（LFGListUtil_IsEntryEmpowered，LFGList.lua:4216；SetShown 见 :1837）
+--只关它的鼠标（可视化不变，仍显示「你的队伍正在组建中。」）→ 右键穿透到申请者条目
+--（密语 + 复制角色名/WCL/Raider.IO，菜单见 Func/WCL.lua）
+ns.hook("LFGListApplicationViewer_UpdateAvailability", function(self)
+	if self.UnempoweredCover then self.UnempoweredCover:EnableMouse(false) end
+end)
 
 local f = CreateFrame("Frame")
 f:RegisterEvent("LFG_LIST_APPLICATION_STATUS_UPDATED")
