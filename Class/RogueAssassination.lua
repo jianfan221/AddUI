@@ -70,32 +70,35 @@ ns.event("PLAYER_LOGIN", function()
 	-- 给一个格子建容器
 	local function BuildContainers(cell)
 		-- 外层容器：锁喉（自身不画东西，只当"有没有锁喉"的开关）
+		-- ⚠️ 必须用 AddAuraGroup：按钮由容器在安全上下文延迟创建，受限环境（战斗/副本/M+）也能建
+		--    AddAuraSlot 会当场创建 AuraButton，tainted 代码在受限环境撞 forbidden
 		local outer = CreateFrame("AuraContainer", nil, cell, "CustomAuraContainerTemplate")
 		outer:SetAllPoints(cell)
-		outer:AddAuraSlot("garrote", "HARMFUL|PLAYER", {
+		outer:AddAuraGroup("garrote", "HARMFUL|PLAYER", {
+			maxFrameCount = 1,
 			candidateFilters = { includeSpellIDs = {[703] = true} },
 			initializeFrame = function(btn)
-				btn:SetSize(CELL, CELL)
+				btn:SetSize(1, 1) -- 按钮尺寸无所谓，位置由内层纹理锚到格子决定
 				btn:EnableMouse(false)
-				-- slot 的锚点必须在这里设：initializeFrame 是非污染上下文，
-				-- 在外面（tainted）对 AuraButton 调 SetPoint 会被拦
-				btn:SetPoint("TOPLEFT", cell, "TOPLEFT", 0, 0)
 
 				-- 内层容器：割裂。父级 = 外层按钮，外层按钮隐藏时它不渲染 → 两个都在才红
 				local inner = CreateFrame("AuraContainer", nil, btn, "CustomAuraContainerTemplate")
 				inner:SetAllPoints(cell)
-				inner:SetEnabled(false) -- 默认就是 true，先禁用再启用才能触发一次事件注册
-				local innerSlot = inner:AddAuraSlot("rupture", "HARMFUL|PLAYER", {
+				inner:EnableMouse(false)
+				inner:AddAuraGroup("rupture", "HARMFUL|PLAYER", {
+					maxFrameCount = 1,
 					candidateFilters = { includeSpellIDs = {[1943] = true} },
 					initializeFrame = function(btn2)
+						btn2:SetSize(1, 1)
 						btn2:EnableMouse(false)
 						local tex = btn2:CreateTexture(nil, "OVERLAY")
 						tex:SetAllPoints(cell) -- 锚到格子：显隐由按钮决定，位置不依赖按钮尺寸
 						tex:SetColorTexture(1, 0, 0, 1) -- 红
 					end,
 				})
-				innerSlot:SetPoint("TOPLEFT", cell, "TOPLEFT", 0, 0)
-				inner:SetEnabled(true)
+				-- initializeFrame 延迟跑，此时外层可能已设单位（也可能还没）→ 有才设
+				local unit = outer:GetUnit()
+				if unit then inner:SetUnit(unit) end
 				cell.inner = inner
 			end,
 		})
