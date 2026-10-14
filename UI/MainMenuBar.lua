@@ -7,35 +7,42 @@ if C_AddOns.IsAddOnLoaded("BigFoot") then return end
 if C_AddOns.IsAddOnLoaded("NDui") then return end
 
 if AddUIDB.mmb ==  false  then return end
-ns.StyleButton()
-C_Timer.After(5,function()
-	if InCombatLockdown() then return end
-	ns.StyleButton()
-end)
-ns.hook(EditModeSystemMixin, "OnEditModeExit", function()
-	ns.StyleButton()
-end)
 
---动作条@简繁NGA:zhangzhanxian3
+--动作条按键范围着色
+local function UpdateRangeIcon(self, checksRange, inRange)
+	local icon = self.icon or self.Icon or _G[self:GetName().."Icon"]
+	if not icon then return end
 
-if InCombatLockdown() then return end		--战斗中不执行
-
--- 动作条按键范围着色
-ns.hook("ActionButton_UpdateRangeIndicator", function(self, checksRange, inRange)
-if self.action == nil then return end
-local isUsable, notEnoughMana = IsUsableAction(self.action)
-	if ( checksRange and not inRange ) then
-		_G[self:GetName().."Icon"]:SetVertexColor(0.5, 0.1, 0.1)
-	elseif isUsable ~= true or notEnoughMana == true then
-		_G[self:GetName().."Icon"]:SetVertexColor(0.4, 0.4, 0.4)
+	local isOutOfRange = checksRange and not inRange
+	if isOutOfRange then
+		icon:SetVertexColor(0.5, 0.1, 0.1)
+	elseif self.action then
+		local isUsable, notEnoughMana = C_ActionBar.IsUsableAction(self.action)
+		if isUsable ~= true or notEnoughMana == true then
+			icon:SetVertexColor(0.4, 0.4, 0.4)
+		else
+			icon:SetVertexColor(1, 1, 1)
+		end
 	else
-		_G[self:GetName().."Icon"]:SetVertexColor(1, 1, 1)
+		icon:SetVertexColor(1, 1, 1)
 	end
+end
+ns.hook("ActionButton_UpdateRangeIndicator", UpdateRangeIcon)
+ActionBarButtonEventsFrame:ForEachFrame(function(button)
+	if not button.UpdateUsable then return end
+	ns.hook(button, "UpdateUsable", function(self)
+		if not self.action then return end
+		local inRange = C_ActionBar.IsActionInRange(self.action)
+		if inRange ~= nil then UpdateRangeIcon(self, true, inRange) end
+	end)
 end)
+
 
 --宏颜色--
-local r={"MultiBarBottomLeft", "MultiBarBottomRight", "Action", "MultiBarLeft", "MultiBarRight","MultiBar5","MultiBar6","MultiBar7"} 
-for b=1,#r do for i=1,12 do _G[r[b].."Button"..i.."Name"]:SetVertexColor(0, 255, 255) end end
+ActionBarButtonEventsFrame:ForEachFrame(function(button)
+	local nameText = _G[button:GetName().."Name"]
+	if nameText then nameText:SetVertexColor(0, 255, 255) end
+end)
 
 --经验条
 StatusTrackingBarManager:SetScale(.73)
