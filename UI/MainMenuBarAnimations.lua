@@ -25,12 +25,6 @@ local function StyleButton(Button)
 		v:Show()
 	end
 end
-local bar={"MultiBarBottomLeft", "MultiBarBottomRight", "Action", "MultiBarLeft", "MultiBarRight","MultiBar5","MultiBar6","MultiBar7"} 
-for buttons=1,#bar do for i=1,12 do 
-	StyleButton(_G[bar[buttons].."Button"..i])
-end end
-for i = 1, 6 do
-	StyleButton(_G["OverrideActionBarButton"..i])
-end
+ActionBarButtonEventsFrame:ForEachFrame(StyleButton)
 
 end)
