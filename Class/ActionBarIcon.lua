@@ -10,20 +10,10 @@ if cls == "SHAMAN" then
 		local BAR_SPELL_ID = 51505   -- 被替换图标的按钮法术-熔岩爆裂
 		local TRIGGER_ID = 470057    -- 施放它时触发图标切换-流电炽焰
 		local ICON_FILE = C_Spell.GetSpellTexture(BUFF_ID)
-		local ACTIONBARS = {"Action","MultiBarBottomLeft","MultiBarBottomRight","MultiBarLeft","MultiBarRight","MultiBar5","MultiBar6","MultiBar7"}
-
-		-- 遍历动作条找绑定指定法术的按钮
+		-- 使用暴雪工具查找绑定指定法术的按钮
 		local function FindActionButton(spellID)
-			for _, bar in ipairs(ACTIONBARS) do
-				for i = 1, 12 do
-					local btn = _G[bar.."Button"..i]
-					local action = btn and btn.action
-					if action then
-						local _, id = GetActionInfo(action)
-						if id == spellID then return btn end
-					end
-				end
-			end
+			local actionButtonUtil = _G.ActionButtonUtil
+			return actionButtonUtil and actionButtonUtil.GetActionButtonBySpellID(spellID)
 		end
 
 		local targetBtn
@@ -47,17 +37,37 @@ if cls == "SHAMAN" then
 			end
 		end
 
-		-- 进游戏：找到按钮并 hook，刷新时按状态保持图标
-		ns.event("PLAYER_ENTERING_WORLD", function()
-			targetBtn = FindActionButton(BAR_SPELL_ID)
-			if not targetBtn then
-				print("未在动作条找到法术 "..BAR_SPELL_ID.." "..(C_Spell.GetSpellName(BAR_SPELL_ID) or ""))
-				return
+		local hookedButtons = {}
+		local refreshPending = false
+
+		local function RefreshTargetButton()
+			local button = FindActionButton(BAR_SPELL_ID)
+			if targetBtn and targetBtn ~= button and swapped then RestoreIcon(targetBtn) end
+			targetBtn = button
+			if not button then return end
+
+			if not hookedButtons[button] then
+				local success = pcall(hooksecurefunc, button, "Update", function(self)
+					local _, id = GetActionInfo(self.action)
+					if swapped and id == BAR_SPELL_ID then SetIcon(self, ICON_FILE) end
+				end)
+				hookedButtons[button] = success
 			end
-			pcall(hooksecurefunc, targetBtn, "Update", function(self)
-				if swapped then SetIcon(self, ICON_FILE) end
+			if swapped then SetIcon(button, ICON_FILE) end
+		end
+
+		local function ScheduleRefresh()
+			if refreshPending then return end
+			refreshPending = true
+			C_Timer.After(0.1, function()
+				refreshPending = false
+				RefreshTargetButton()
 			end)
-		end)
+		end
+
+		-- 动作条会在进入世界时继续初始化，下一帧再定位；动作槽变化时也重新定位
+		ns.event("PLAYER_ENTERING_WORLD", ScheduleRefresh)
+		ns.event("ACTIONBAR_SLOT_CHANGED", ScheduleRefresh)
 
 		-- 施放 470057 换图标，施放 51505 恢复
 		ns.event("UNIT_SPELLCAST_SUCCEEDED", function(event, unit, _, spellID)
@@ -65,6 +75,7 @@ if cls == "SHAMAN" then
 			if spellID == TRIGGER_ID then
 				swapped = true
 				if targetBtn then SetIcon(targetBtn, ICON_FILE) end
+				ScheduleRefresh()
 			elseif spellID == BAR_SPELL_ID and swapped then
 				swapped = false
 				if targetBtn then RestoreIcon(targetBtn) end
