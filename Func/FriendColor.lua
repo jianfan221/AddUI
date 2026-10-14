@@ -1,5 +1,6 @@
 ﻿local _,_,_,mygame = GetBuildInfo()
 local _,ns = ...
+
 if SocialUIFrame then
 	ns.tips("好友列表卡片重新布局")
 	ns.hook(FriendsListSocialCardMixin, "Initialize", function(self, node)
@@ -116,7 +117,11 @@ FriendsFrameBattlenetFrame.Tag:HookScript("OnShow", function(self)
 		self:Hide()
 	end
 end)
-
+ns.event("PLAYER_LOGIN", function()
+	if FriendsFrameStatusDropdown then
+		FriendsFrameStatusDropdown:SetWidth(56)
+	end
+end)
 -- 12.1 正式上线后可删除（已被 SocialUI 取代）
 ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	if not FriendsListFrame or not FriendsListFrame:IsShown() then return end
