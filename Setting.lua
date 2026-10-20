@@ -50,6 +50,9 @@ end)
 ns.AddTab("战斗", function()
 	ns.AddSection("战斗模块")
 	ns.AddCheck("进入战斗提示", "屏幕中间进入脱离战斗提示", "comb")
+	ns.AddCheck("死亡伤害提示", "死亡时显示致死事件的伤害与生命值信息", "deathRecapAlert", function(enabled)
+		if not enabled and ns.HideDeathRecapAlert then ns.HideDeathRecapAlert() end
+	end)
 	
 	ns.AddCheck("LFG增强", "预创建双击申请,自动邀请,自动进组 如果你用集合石,此项自动失效", "lfgkg")
 	

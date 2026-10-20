@@ -19,6 +19,7 @@ ns.Defaults = {
 
 	-- ═══════ 第二列 ═══════
 	comb = true, -- 进入战斗提示
+	deathRecapAlert = true, -- 死亡伤害提示
 	zu = true, -- 密语自动邀请
 	lfgkg = true, -- LFG增强
 	raidRoleIcon = true, -- 团队框架职责图标
