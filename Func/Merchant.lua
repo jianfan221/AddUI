@@ -35,6 +35,16 @@ local nosell = {
 	[103678]= true,--传送永恒岛
 }
 
+-- 带使用效果的装备一律不卖（传送装备、收藏道具等都有“使用：”效果，比维护 ID 可靠）
+local function HasUseEffect(link)
+	local spellName = C_Item.GetItemSpell(link)
+	if spellName == nil then
+		-- 物品信息未缓存时无法判断，保守按“不卖”处理，避免误售传送装备
+		return C_Item.GetItemInfo(link) == nil
+	end
+	return spellName ~= ""
+end
+
 StaticPopupDialogs.MerchantFrame_Sell = {
     text = "即将自动售卖\n售卖低于多少装等的装备?",  -- 提示文本
     button1 = "确认",          -- 确认按钮
@@ -43,27 +53,43 @@ StaticPopupDialogs.MerchantFrame_Sell = {
     whileDead = true,          -- 死亡时可用
     hideOnEscape = true,       -- 按ESC关闭
     hasEditBox = true,         -- 包含输入框
-	OnShow = function(self)
-		self.EditBox:SetScript("OnEscapePressed", function(EditBox)
-            self:Hide()  -- 直接关闭窗口
-        end)
-    end,
+    -- ESC 关闭走暴雪原生回调（12.1 起 EditBox 不再由插件 SetScript，避免污染共享弹窗对象）
+    EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
     OnAccept = function(self)  -- 点击确认后的回调
-        local BoxLevel = tonumber(self.EditBox:GetText())
-		local N,c,n
-		for b=0,4 do
-			for s = 1,C_Container.GetContainerNumSlots(b) do
-				n = C_Container.GetContainerItemLink(b,s) 
-				if n then
-					local level =  C_Item.GetDetailedItemLevelInfo(n)
-					N={C_Item.GetItemInfo(n)}
-					local itemID = tonumber(string.match(n, "item:(%d+)")) or 1
-					if BoxLevel and level and BoxLevel > level and level > 1 and (N[6] == ARMOR or N[6] == WEAPON) and not nosell[itemID] and not string.find(n,"|cnIQ5") then
-						C_Container.UseContainerItem(b,s)
+		local BoxLevel = tonumber(self.EditBox:GetText())
+		if not BoxLevel then return end
+
+		local total, money, rounds = 0, 0, 0
+
+		local function SellOnce()
+			local sold = 0
+			for b = 0, 4 do
+				for s = 1, C_Container.GetContainerNumSlots(b) do
+					local link = C_Container.GetContainerItemLink(b, s)
+					if link then
+						local level = C_Item.GetDetailedItemLevelInfo(link)
+						local N = {C_Item.GetItemInfo(link)}
+						local itemID = tonumber(string.match(link, "item:(%d+)")) or 1
+						if level and BoxLevel > level and level > 1 and (N[6] == ARMOR or N[6] == WEAPON) and not nosell[itemID] and not string.find(link, "|cnIQ5") and not HasUseEffect(link) then
+							local info = C_Container.GetContainerItemInfo(b, s)
+							total = total + 1
+							money = money + (N[11] or 0) * (info and info.stackCount or 1)
+							C_Container.UseContainerItem(b, s)
+							sold = sold + 1
+						end
 					end
 				end
 			end
+			rounds = rounds + 1
+			-- 一轮没卖完就隔 0.3 秒继续，直到没有符合条件的装备（规避单次批量出售节流）
+			if sold > 0 and rounds < 30 then
+				C_Timer.After(0.3, SellOnce)
+			elseif total > 0 then
+				print("|cff44CCFF一键售卖: |r" .. total .. " 件，共 " .. C_CurrencyInfo.GetCoinText(money))
+			end
 		end
+
+		SellOnce()
     end,
 }
 local Sell = CreateFrame("Button", "AddUISell", MerchantFrame.NineSlice, "UIPanelButtonTemplate")
