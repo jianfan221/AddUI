@@ -35,14 +35,68 @@ local nosell = {
 	[103678]= true,--传送永恒岛
 }
 
--- 带使用效果的装备一律不卖（传送装备、收藏道具等都有“使用：”效果，比维护 ID 可靠）
-local function HasUseEffect(link)
-	local spellName = C_Item.GetItemSpell(link)
-	if spellName == nil then
-		-- 物品信息未缓存时无法判断，保守按“不卖”处理，避免误售传送装备
-		return C_Item.GetItemInfo(link) == nil
+-- 客户端限制：一次连续调用最多只能卖掉约 10 件，所以拆到多帧里逐件卖（每 0.05 秒一件）
+local sellTicker
+
+local function FreeSlots()
+	local n = 0
+	for b = 0, 4 do
+		n = n + C_Container.GetContainerNumFreeSlots(b)
 	end
-	return spellName ~= ""
+	return n
+end
+
+local function IsSellable(link, BoxLevel)
+	local level = C_Item.GetDetailedItemLevelInfo(link)
+	local N = {C_Item.GetItemInfo(link)}
+	local itemID = tonumber(string.match(link, "item:(%d+)")) or 1
+	return level and BoxLevel and BoxLevel > level and level > 1 and (N[6] == ARMOR or N[6] == WEAPON) and not nosell[itemID] and not string.find(link, "|cnIQ5") and (N[11] or 0) > 0 and not C_Item.GetItemSpell(link)
+end
+
+local function StartSell(BoxLevel)
+	if sellTicker then return end
+	local freeAtStart = FreeSlots()
+	local lastBag, lastSlot, lastLink, lastFree, stall = nil, nil, nil, nil, 0
+	sellTicker = C_Timer.NewTicker(0.05, function(ticker)
+		local free = FreeSlots()
+		-- 上一件还没真正卖出去（被节流）就先等，避免对同一个格子重复操作
+		if lastBag then
+			if free > lastFree or C_Container.GetContainerItemLink(lastBag, lastSlot) ~= lastLink then
+				lastBag, stall = nil, 0
+			else
+				stall = stall + 1
+				if stall >= 60 then
+					ticker:Cancel()
+					sellTicker = nil
+					print("|cff44CCFF一键售卖: |r" .. (free - freeAtStart) .. " 件（剩余物品无法出售，已停止）")
+				end
+				return
+			end
+		end
+
+		if not MerchantFrame:IsShown() then
+			ticker:Cancel()
+			sellTicker = nil
+			return
+		end
+
+		for b = 0, 4 do
+			for s = 1, C_Container.GetContainerNumSlots(b) do
+				local link = C_Container.GetContainerItemLink(b, s)
+				if link and IsSellable(link, BoxLevel) then
+					C_Container.UseContainerItem(b, s)
+					lastBag, lastSlot, lastLink, lastFree = b, s, link, free
+					return
+				end
+			end
+		end
+
+		ticker:Cancel()
+		sellTicker = nil
+		if free > freeAtStart then
+			print("|cff44CCFF一键售卖: |r" .. (free - freeAtStart) .. " 件")
+		end
+	end)
 end
 
 StaticPopupDialogs.MerchantFrame_Sell = {
@@ -58,38 +112,7 @@ StaticPopupDialogs.MerchantFrame_Sell = {
     OnAccept = function(self)  -- 点击确认后的回调
 		local BoxLevel = tonumber(self.EditBox:GetText())
 		if not BoxLevel then return end
-
-		local total, money, rounds = 0, 0, 0
-
-		local function SellOnce()
-			local sold = 0
-			for b = 0, 4 do
-				for s = 1, C_Container.GetContainerNumSlots(b) do
-					local link = C_Container.GetContainerItemLink(b, s)
-					if link then
-						local level = C_Item.GetDetailedItemLevelInfo(link)
-						local N = {C_Item.GetItemInfo(link)}
-						local itemID = tonumber(string.match(link, "item:(%d+)")) or 1
-						if level and BoxLevel > level and level > 1 and (N[6] == ARMOR or N[6] == WEAPON) and not nosell[itemID] and not string.find(link, "|cnIQ5") and not HasUseEffect(link) then
-							local info = C_Container.GetContainerItemInfo(b, s)
-							total = total + 1
-							money = money + (N[11] or 0) * (info and info.stackCount or 1)
-							C_Container.UseContainerItem(b, s)
-							sold = sold + 1
-						end
-					end
-				end
-			end
-			rounds = rounds + 1
-			-- 一轮没卖完就隔 0.3 秒继续，直到没有符合条件的装备（规避单次批量出售节流）
-			if sold > 0 and rounds < 30 then
-				C_Timer.After(0.3, SellOnce)
-			elseif total > 0 then
-				print("|cff44CCFF一键售卖: |r" .. total .. " 件，共 " .. C_CurrencyInfo.GetCoinText(money))
-			end
-		end
-
-		SellOnce()
+		StartSell(BoxLevel)
     end,
 }
 local Sell = CreateFrame("Button", "AddUISell", MerchantFrame.NineSlice, "UIPanelButtonTemplate")
