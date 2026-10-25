@@ -36,6 +36,7 @@ ns.Defaults = {
 
 	-- ═══════ 第三列 ═══════
 	cvar = true, -- CVAR自动设置
+	repair = true, -- 自动修理
 	dimi = true, -- 右下角信息栏
 	autoloot = true, -- 装备一键选择器
 	lotbnt = true, -- Log快捷开关

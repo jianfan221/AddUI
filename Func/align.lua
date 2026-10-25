@@ -233,6 +233,7 @@ ns.event("PLAYER_ENTERING_WORLD", function(isInitialLogin, isReloading)
 	end
 end)
 ns.event("MERCHANT_SHOW", function()
+	if not ns.DB or not ns.DB.repair then return end
 	if CanMerchantRepair() then
 		local cost = GetRepairAllCost()                      -- 修理总费用
 		local gbwm = GetGuildBankWithdrawMoney()             -- 公会银行每日可取上限（固定值，不会减少）
