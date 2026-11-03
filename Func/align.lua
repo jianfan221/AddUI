@@ -218,7 +218,6 @@ if TalkingHeadFrame then
 end
 
 
-ns.tips("自动修理部分(优先使用公会修理)")
 local sessionGuildRepair = 0                                  -- 本次登录已使用的公修总额
 ns.event("PLAYER_ENTERING_WORLD", function(isInitialLogin, isReloading)
 	if isInitialLogin or isReloading then

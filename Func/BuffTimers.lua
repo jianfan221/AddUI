@@ -70,8 +70,6 @@ ns.hook('PaperDollFrame_SetItemLevel', function(self, unit)
 end)
 
 
-ns.tips("角色面板显示移动速度")
-
 -- 12.0.5 起移动速度变为秘密值，不能做数学运算。
 -- 采用独立显示（不插入暴雪统计行，避免污染其刷新循环）：
 --   在角色面板背景右下创建独立文本，用 AbbreviateNumbers 兼容秘密值显示百分比。

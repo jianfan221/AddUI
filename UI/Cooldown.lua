@@ -2,7 +2,6 @@
 --hooksecurefunc(DamageMeterEntryMixin, "Init", function(self)
 ns.event("PLAYER_LOGIN", function()
 	if AddUIDB.cdset then
-		ns.tips("快速打开冷却管理器/cc")
 		SlashCmdList["OPENCOOL"] = function() 
 			ns.COMBAT(ShowUIPanel,CooldownViewerSettings)
 		end 
