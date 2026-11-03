@@ -27,6 +27,7 @@ Class\ActionBarIcon.lua
 Class\RogueAssassination.lua
 
 Func\AH.lua
+Func\AHBuyStack.lua
 Func\AHCorruptionInfo.lua
 Func\AHMS.lua
 Func\align.lua
