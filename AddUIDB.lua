@@ -85,7 +85,6 @@ ns.Defaults = {
 	QuestCheck = true, -- 任务进度通报
 	AutoLog = false, -- 大秘境自动开启战斗记录
 	AHFavoritesDB = {}, -- 拍卖行收藏夹
-	AHFilterRestoreDB = {}, -- 拍卖行筛选恢复
 	CooldownDate = {}, -- 冷却管理器布局存储
 	OpenTalentScale = false, -- 天赋界面小窗缩放
 
