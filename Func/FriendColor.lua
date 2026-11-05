@@ -90,7 +90,7 @@ if SocialUIFrame then
 end
 
 
--- 12.1 正式上线后可删除（已被 SocialUI 取代）
+-- SocialUI 取代了原生的好友列表卡片，下面的代码仅在 SocialUI 不存在时生效
 --隐藏好友列表战网ID,点击时显示
 local HideBattleIDclick = true
 local HideBattleID = CreateFrame("Button", "HideBattleID", FriendsFrameBattlenetFrame);
@@ -115,13 +115,13 @@ ns.event("PLAYER_LOGIN", function()
 		FriendsFrameStatusDropdown:SetWidth(56)
 	end
 end)
--- 12.1 正式上线后可删除（已被 SocialUI 取代）
+
 ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	if not FriendsListFrame or not FriendsListFrame:IsShown() then return end
 	if not friendbutton.id then return end
 	if friendbutton.buttonType == 3 then return end
 	local info = C_BattleNet.GetFriendAccountInfo(friendbutton.id)
-	if not info then return end
+	if not info or not info.gameAccountInfo then return end
 	local accountInfo = info.gameAccountInfo
 	local areaName = accountInfo.areaName or ""	--区域名
 	local realmDisplayName = accountInfo.realmDisplayName	--服务器
@@ -141,8 +141,14 @@ ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 		friendbutton.name:SetText(format("%s|c%s (%s)|r    ", bnname, class.colorStr, characterName))
 	end
 	local realmName = realmDisplayName or ""	--nil 兜底，否则下面 .. 会报 attempt to concatenate a nil value
-	local rich2 = (rich ~= nil and rich ~= "") and rich or (areaName ~= "" and realmName ~= "" and (areaName.."-"..realmName) or areaName)
-	local infoText = (level and level > 0) and (rich2 ~= "" and (rich2.." - "..level) or tostring(level)) or rich2
+	local infoText
+	if accountInfo.isOnline then
+		local rich2 = (rich ~= nil and rich ~= "") and rich or (areaName ~= "" and realmName ~= "" and (areaName.."-"..realmName) or areaName)
+		infoText = (level and level > 0) and (rich2 ~= "" and (rich2.." - "..level) or tostring(level)) or rich2
+	else
+		--离线：显示"上次在线 xxx"（暴雪默认就是这个，别被上面的拼接逻辑清空）
+		infoText = FriendsFrame_GetLastOnlineText and FriendsFrame_GetLastOnlineText(info) or FRIENDS_LIST_OFFLINE
+	end
 	friendbutton.info:SetText(infoText)
 	--对比游戏版本：和自己同一个游戏项目 → 不透明，其它版本 → 0.5
 	--⚠️ 不能用 gamename == 1 判断（那只代表正式服），要用 WOW_PROJECT_ID，否则在无限服/怀旧服会把同服好友全变暗
