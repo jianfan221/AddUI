@@ -1,43 +1,6 @@
 local _,ns = ...
-
--- SocialUIFrame 搜索框即时搜索（12.1 PTR 新好友列表）
--- 暴雪默认只在按回车时触发搜索，改为文字改变时即时触发
-do
-	local view = SocialUIFrame and SocialUIFrame.FriendsList
-	local sb = view and view.FilterBar and view.FilterBar.SearchBar
-
-	local function DoSearch()
-		if not view or not view.OnSearchEnterPressed then return end
-		local text = sb:GetText():lower()
-		if text == "" then
-			view:OnSearchEnterPressed("")
-			return
-		end
-		local filtered = {}
-		for i = 1, BNGetNumFriends() do
-			local info = C_BattleNet.GetFriendAccountInfo(i)
-			if info then
-				local match = (info.battleTag or ""):lower():find(text, 1, true)
-					or (info.gameAccountInfo.characterName or ""):lower():find(text, 1, true)
-					or (info.gameAccountInfo.className or ""):lower():find(text, 1, true)
-					or (info.gameAccountInfo.areaName or ""):lower():find(text, 1, true)
-					or (info.gameAccountInfo.realmDisplayName or ""):lower():find(text, 1, true)
-				if match then tinsert(filtered, i) end
-			end
-		end
-		C_Timer.After(0, function()
-			view.ScrollBox:SetDataProvider(view:GenerateDataProvider(filtered), ScrollBoxConstants.DiscardScrollPosition)
-		end)
-	end
-
-	if sb then
-		sb:HookScript("OnTextChanged", DoSearch)--搜索框文字改变时触发搜索
-		sb:HookScript("OnShow", DoSearch)-- 显示时也触发搜索，避免搜索框隐藏后再显示时列表不刷新
-		ns.hook(view, "Refresh", DoSearch)-- 好友列表刷新（上线/下线等）后重新搜索
-		sb:SetScript("OnEnterPressed", function() sb:ClearFocus() end)--回车取消焦点
-	end
-
-end
+-- 搜索最终要经 C_BattleNet.SearchFriends(SecretArguments=AllowedWhenUntainted) 或改写好友列表框体数据,
+-- 在当前客户端都会触发 ADDON_ACTION_FORBIDDEN, 搜索交回暴雪原生处理.
 
 --判断好友信息是否匹配搜索文本（空文本表示不过滤）
 local function Matches(searchText, ...)
