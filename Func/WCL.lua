@@ -1,5 +1,8 @@
 local _, ns = ...
 
+--无限服(1.60.x)不搞 WCL/Raider.IO, 复制角色名也不带服务器
+local _, _, _, mygame = GetBuildInfo()
+local isRetail = mygame >= 120000
 --菜单里加我们那组：复制角色名 + WCL + Raider.IO，点开是可复制文本框（Ctrl+C / Ctrl+X 后自动关）
 --位置：目标框架、好友/聊天框/公会/社区，以及预创建队伍（申请者、搜索结果=查队长）
 --加项走官方 Menu.ModifyMenu（tag 见 UnitPopupShared.lua:106、LFGList.lua:2170、:3463）；暴雪那项「复制角色名」见文件末尾
@@ -70,6 +73,10 @@ end
 
 --复制角色名弹窗：和 URL 用同一份数据（名字-服务器；标题用暴雪的全局字符串，自动本地化）
 local function ShowCopyName(name, server)
+	if not isRetail then
+		ShowCopyPopup(COPY_CHARACTER_NAME, name)	--无限服只复制角色名
+		return
+	end
 	ShowCopyPopup(COPY_CHARACTER_NAME, name.."-"..server)
 end
 
@@ -81,14 +88,14 @@ local function AddOurButtons(root, name, server, isDungeon)
 		ShowCopyName(name, server)
 	end)
 
-	if AddUIDB.wcl then
+	if isRetail and AddUIDB.wcl then
 		local wclURL = (isDungeon and WCL_URL_MPLUS or WCL_URL):format(server, name)
 		root:CreateButton("WCL", function()
 			ShowCopyPopup("Warcraft Logs", wclURL)
 		end)
 	end
 
-	if AddUIDB.rio then
+	if isRetail and AddUIDB.rio then
 		root:CreateButton("Raider.IO", function()
 			ShowCopyPopup("Raider.IO", RIO_URL:format(server, name))
 		end)
