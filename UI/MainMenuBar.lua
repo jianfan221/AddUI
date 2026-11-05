@@ -50,11 +50,13 @@ StatusTrackingBarManager:SetScale(.73)
 --队伍查找器
 QueueStatusButton:ClearAllPoints()
 QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", -5, 10)
--- 暴雪的 UpdatePosition 在微菜单布局变化/编辑模式退出时触发，hook 它来保持位置
-ns.hook(QueueStatusButton, "UpdatePosition", function()
-	QueueStatusButton:ClearAllPoints()
-	QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", -5, 10)
-end)
+-- 暴雪的 UpdatePosition 在微菜单布局变化/编辑模式退出时触发，hook 它来保持位置(无限服没有这个函数)
+if QueueStatusButton.UpdatePosition then
+	ns.hook(QueueStatusButton, "UpdatePosition", function()
+		QueueStatusButton:ClearAllPoints()
+		QueueStatusButton:SetPoint("TOPRIGHT", Minimap,"BOTTOMLEFT", -5, 10)
+	end)
+end
 
 
 
