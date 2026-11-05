@@ -152,7 +152,7 @@ ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	friendbutton.info:SetText(infoText)
 	--对比游戏版本：和自己同一个游戏项目 → 不透明，其它版本 → 0.5
 	--⚠️ 不能用 gamename == 1 判断（那只代表正式服），要用 WOW_PROJECT_ID，否则在无限服/怀旧服会把同服好友全变暗
-	local alpha = (not gamename or gamename == WOW_PROJECT_ID) and 1 or 0.5
+	local alpha = (not gamename or gamename == WOW_PROJECT_ID) and 1 or 0.33
 	friendbutton.name:SetAlpha(alpha)
 	friendbutton.info:SetAlpha(alpha)
 end)
