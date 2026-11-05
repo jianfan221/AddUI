@@ -8,6 +8,30 @@ if C_AddOns.IsAddOnLoaded("NDui") then return end
 
 if AddUIDB.mmb ==  false  then return end
 
+-- 无限服微菜单和背包栏装饰跟随主动作条编辑模式的“隐藏动作条装饰”设置
+local microMenu = _G.MicroMenu
+local bagsBar = _G.BagsBar
+if microMenu or bagsBar then
+	local actionBarSystem = Enum and Enum.EditModeSystem and Enum.EditModeSystem.ActionBar
+	local mainBarIndex = Enum and Enum.EditModeActionBarSystemIndices and Enum.EditModeActionBarSystemIndices.MainBar
+	local hideBarArtSetting = Enum and Enum.EditModeActionBarSetting and Enum.EditModeActionBarSetting.HideBarArt
+	if EditModeManagerFrame and EditModeManagerFrame.GetSettingValueBool and actionBarSystem and mainBarIndex and hideBarArtSetting then
+		local function UpdateMicroMenuArt()
+			local hideBarArt = EditModeManagerFrame:GetSettingValueBool(actionBarSystem, mainBarIndex, hideBarArtSetting)
+			if microMenu and microMenu.BackgroundArt then microMenu.BackgroundArt:SetShown(not hideBarArt) end
+			if microMenu and microMenu.BorderArt then microMenu.BorderArt:SetShown(not hideBarArt) end
+			if bagsBar and bagsBar.BorderArt then bagsBar.BorderArt:SetShown(not hideBarArt) end
+		end
+
+		if MainActionBar and MainActionBar.UpdateSystemSettingHideBarArt then
+			-- 主动作条设置变化后立即同步微菜单装饰显隐
+			ns.hook(MainActionBar, "UpdateSystemSettingHideBarArt", UpdateMicroMenuArt)
+		end
+		-- 按当前布局初始化微菜单装饰显隐
+		UpdateMicroMenuArt()
+	end
+end
+
 --动作条按键范围着色
 local function UpdateRangeIcon(self, checksRange, inRange)
 	local icon = self.icon or self.Icon or _G[self:GetName().."Icon"]
