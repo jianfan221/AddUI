@@ -50,11 +50,19 @@ end
 ns.event("ADDON_LOADED", fuckyou)
 
 --9.1反和谐好友不能组队https://bbs.nga.cn/read.php?&tid=27432996
-local pre = C_BattleNet.GetFriendGameAccountInfo
-C_BattleNet.GetFriendGameAccountInfo = function(...)
-	local gameAccountInfo = pre(...)
-	gameAccountInfo.isInCurrentRegion = true
-	return gameAccountInfo;
+--⚠️ 新版好友列表（SocialUI）客户端禁用：往 C_BattleNet 命名空间写字段会把整张 API 表染脏（taint），
+--   暴雪自己的 FriendsListSocialViewMixin:Refresh → C_BattleNet.SearchFriends
+--   （HasRestrictions 保护函数）就会在污染执行下被拦，报 ADDON_ACTION_FORBIDDEN 并栽赃 AddUI。
+--   要恢复跨区域好友组队只能改 UI 层（hook 卡片按钮），不能改 API 表。
+--⚠️ 判定用 SocialUIFrame 是否存在，不要用构建号：无限服 1.60.x（70338）和正式服 12.1.5（120105）
+--   都是新好友列表，构建号一个小于 120000、一个大于，按版本判断会漏掉无限服。
+if not SocialUIFrame then
+	local pre = C_BattleNet.GetFriendGameAccountInfo
+	C_BattleNet.GetFriendGameAccountInfo = function(...)
+		local gameAccountInfo = pre(...)
+		gameAccountInfo.isInCurrentRegion = true
+		return gameAccountInfo;
+	end
 end
 
 ns.tips("重置喊话")
@@ -88,19 +96,20 @@ end
 SLASH_COUNTDOWNSTOP1 = "/cdd"
 
 ns.tips("地下城页面添加按钮查看低保按钮")
-local clear = CreateFrame("Button", "AddUISaveButton", PVEFrame.NineSlice, "UIPanelButtonTemplate")
-clear:SetText("宏伟宝库奖励")
-clear:SetWidth(110)
-clear:SetHeight(22)
-clear:SetPoint("TOPLEFT", 57, 0)
-clear:SetScript("OnClick", function()
-	if (WeeklyRewardsFrame and WeeklyRewardsFrame:IsShown()) then
-	HideUIPanel(WeeklyRewardsFrame);
-	else
-	C_AddOns.LoadAddOn("Blizzard_WeeklyRewards"); WeeklyRewardsFrame:Show()
-	end
-end)
-
+if PVEFrame then
+	local clear = CreateFrame("Button", "AddUISaveButton", PVEFrame.NineSlice, "UIPanelButtonTemplate")
+	clear:SetText("宏伟宝库奖励")
+	clear:SetWidth(110)
+	clear:SetHeight(22)
+	clear:SetPoint("TOPLEFT", 57, 0)
+	clear:SetScript("OnClick", function()
+		if (WeeklyRewardsFrame and WeeklyRewardsFrame:IsShown()) then
+			HideUIPanel(WeeklyRewardsFrame);
+		else
+		C_AddOns.LoadAddOn("Blizzard_WeeklyRewards"); WeeklyRewardsFrame:Show()
+		end
+	end)
+end
 ns.tips("角色界面创建离开队伍按钮")
 local CHLP = CreateFrame("Button", "离开队伍", PaperDollItemsFrame, "UIPanelButtonTemplate")
 CHLP:SetText("退队")
@@ -115,17 +124,19 @@ CHLP:SetScript("OnClick", function()
 end)
 
 ns.tips("地下城页面创建离开队伍按钮")
-local LFGLP = CreateFrame("Button", "离开队伍", PVEFrame, "UIPanelButtonTemplate")
-LFGLP:SetText("退队")
-LFGLP:SetWidth(50)
-LFGLP:SetHeight(22)
-LFGLP:SetPoint("BOTTOMLEFT", 10, 10)
-LFGLP:SetScript("OnClick", function()
-	if IsInGroup() then
-		UIErrorsFrame:AddExternalWarningMessage(ERR_LEFT_GROUP_YOU)--https://wowpedia.fandom.com/wiki/UI_ERROR_MESSAGE
-	end
-	C_PartyInfo.LeaveParty()
-end)
+if PVEFrame then
+	local LFGLP = CreateFrame("Button", "离开队伍", PVEFrame, "UIPanelButtonTemplate")
+	LFGLP:SetText("退队")
+	LFGLP:SetWidth(50)
+	LFGLP:SetHeight(22)
+	LFGLP:SetPoint("BOTTOMLEFT", 10, 10)
+	LFGLP:SetScript("OnClick", function()
+		if IsInGroup() then
+			UIErrorsFrame:AddExternalWarningMessage(ERR_LEFT_GROUP_YOU)--https://wowpedia.fandom.com/wiki/UI_ERROR_MESSAGE
+		end
+		C_PartyInfo.LeaveParty()
+	end)
+end
 
 ns.tips("删除自动输入DELETE")--exwind
 local DELETE_STR = DELETE_ITEM_CONFIRM_STRING or "DELETE"
