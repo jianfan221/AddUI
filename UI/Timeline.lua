@@ -1,5 +1,6 @@
 ﻿local _,ns = ...
 
+if not EncounterTimelineEventFrameMixin then return end--无限服没有副本时间轴
 ns.hook(EncounterTimelineEventFrameMixin,"OnLoad",function(self)
 	--EncounterTimelineTextWithIconEventFrameMixin
 	if self.NameText then
