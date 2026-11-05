@@ -3,35 +3,71 @@ local _,ns = ...
 
 if SocialUIFrame then
 	ns.tips("好友列表卡片重新布局")
+	-- ⚠️ 卡片是暴雪框体：自建文本别写成 self.AddUIxxx 字段（会染脏暴雪对象），用弱键表存
+	local raceTexts, realmTexts = setmetatable({}, {__mode = "k"}), setmetatable({}, {__mode = "k"})
 	ns.hook(FriendsListSocialCardMixin, "Initialize", function(self, node)
-		self:SetHeight(35)
+		-- 重排：一行 战网名 + 角色名，二行 等级 种族 职业，三行 位置-服务器(暴雪默认文本)
+		local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
 
-		-- 重排文字：一行 FriendName Name，二行 Level Class Location
 		self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 8)
-		self.Name:ClearAllPoints()
-		self.Name:SetPoint("BOTTOMLEFT", self.FriendName, "BOTTOMRIGHT", 4, 0)
-		self.Name:SetPoint("BOTTOM", self.FriendName)
-		self.Name:SetWidth(0)
-		self.Name:SetFontObject(self.FriendName:GetFontObject())
-		self.StateDisplay:ClearAllPoints()
-		self.StateDisplay:SetPoint("BOTTOMLEFT", self.Name, "BOTTOMRIGHT", -2, -1)
 
-		self.Level:Hide()
-		self.Class:Hide()
+		self.Name:ClearAllPoints()
+		self.Name:SetPoint("LEFT", self.FriendName, "RIGHT", 4, 0)
+		self.Name:SetFontObject(self.FriendName:GetFontObject())
+		self.Name:SetWidth(0)
+
+		self.StateDisplay:ClearAllPoints()
+		self.StateDisplay:SetPoint("LEFT", self.Name, "RIGHT", 2, 0)
+
+		self.Level:Show()
+		self.Level:ClearAllPoints()
+		self.Level:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
+
+		-- 种族：自建 FontString，跟在职业后面（暴雪没有种族文本）
+		local raceText = raceTexts[self]
+		if not raceText then
+			raceText = self:CreateFontString(nil, "ARTWORK")
+			local fontObject = self.Level:GetFontObject()
+			if fontObject then
+				raceText:SetFontObject(fontObject)
+			else
+				raceText:SetFont(self.Level:GetFont())
+			end
+			raceTexts[self] = raceText
+		end
+
+		self.Class:Show()
+		self.Class:ClearAllPoints()
+		self.Class:SetPoint("LEFT", self.Level, "RIGHT", 6, 0)
+
+		local raceName = gameAccountInfo and gameAccountInfo.raceName
+		local hasRace = raceName ~= nil and raceName ~= ""
+		raceText:ClearAllPoints()
+		raceText:SetPoint("LEFT", self.Class, "RIGHT", 6, 0)
+		raceText:SetText(hasRace and raceName or "")
+		raceText:SetShown(hasRace)
 
 		self.Location:ClearAllPoints()
-		self.Location:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
+		self.Location:SetPoint("TOPLEFT", self.Level, "BOTTOMLEFT", 0, -2)
 
-		-- Level、Class、realm 都用 Location 的颜色（FRIENDS_GRAY_COLOR）
-		local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
-		if gameAccountInfo then
-			local parts = {}
-			if gameAccountInfo.areaName then tinsert(parts, gameAccountInfo.areaName) end
-			if gameAccountInfo.realmDisplayName then tinsert(parts, gameAccountInfo.realmDisplayName) end
-			if gameAccountInfo.characterLevel then tinsert(parts, gameAccountInfo.characterLevel) end
-			if #parts > 0 then
-				self.Location:SetText(FRIENDS_GRAY_COLOR:WrapTextInColorCode(table.concat(parts, " ")))
+		--第四行：服务器名(仅无限服; 同服时暴雪默认不带服务器名)
+		if mygame < 120000 then
+			local realmText = realmTexts[self]
+			if not realmText then
+				realmText = self:CreateFontString(nil, "ARTWORK")
+				local fontObject = self.Location:GetFontObject()
+				if fontObject then
+					realmText:SetFontObject(fontObject)
+				else
+					realmText:SetFont(self.Location:GetFont())
+				end
+				realmTexts[self] = realmText
 			end
+			local realmName = gameAccountInfo and (gameAccountInfo.realmDisplayName or gameAccountInfo.realmName)
+			realmText:ClearAllPoints()
+			realmText:SetPoint("TOPLEFT", self.Location, "BOTTOMLEFT", 0, -1)
+			realmText:SetText(realmName and FRIENDS_GRAY_COLOR:WrapTextInColorCode(realmName) or "")
+			realmText:SetShown(realmName ~= nil and realmName ~= "")
 		end
 
 		-- Name 改为职业颜色
@@ -51,51 +87,8 @@ if SocialUIFrame then
 			btn.ActionIcon:SetVertexColor(1,1,1)
 		end
 	end)
-
-	-- 卡片间距减半，配合 SetHeight(35) 实现紧凑布局
-	local view = SocialUIFrame and SocialUIFrame.FriendsList
-	if view and view.GetTemplateExtent then
-		local orig = view.GetTemplateExtent
-		view.GetTemplateExtent = function(self, template)
-			local extent = orig(self, template)
-			if template == "FriendsListSocialCardTemplate" then
-				return extent / 2
-			end
-			return extent
-		end
-	end
-
-	ns.tips("隐藏好友列表战网ID,点击时显示")
-	local tagFrame = SocialUIFrame.BattleNetBar and SocialUIFrame.BattleNetBar.ControlsContainer and SocialUIFrame.BattleNetBar.ControlsContainer.PersonalBattleTagDisplay
-	if tagFrame and tagFrame.ShowBestDisplayTextAndButton then
-		local hidden = true
-
-		local cover = CreateFrame("Button", nil, tagFrame)
-		cover:SetAllPoints()
-		cover:RegisterForClicks("AnyUp")
-		cover:SetScript("OnClick", function()
-			hidden = not hidden
-			tagFrame.DisplayText:SetShown(not hidden)
-			tagFrame.CopyBattleTagToClipboardButton:SetShown(not hidden)
-		end)
-
-		-- 初始隐藏
-		tagFrame.DisplayText:Hide()
-		tagFrame.CopyBattleTagToClipboardButton:Hide()
-
-		-- Hook 暴雪的显示方法，根据 hidden 状态决定是否重新隐藏
-		-- 暴雪在 BN_CONNECTED/PLAYER_ENTERING_WORLD/FRAMES_LOADED 等事件中
-		-- 通过 RefreshElementVisibility → ShowBestDisplayTextAndButton 重新显示
-		local origShow = tagFrame.ShowBestDisplayTextAndButton
-		tagFrame.ShowBestDisplayTextAndButton = function(self)
-			origShow(self)
-			if hidden then
-				self.DisplayText:Hide()
-				self.CopyBattleTagToClipboardButton:Hide()
-			end
-		end
-	end
 end
+
 
 -- 12.1 正式上线后可删除（已被 SocialUI 取代）
 --隐藏好友列表战网ID,点击时显示
@@ -130,15 +123,16 @@ ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	local info = C_BattleNet.GetFriendAccountInfo(friendbutton.id)
 	if not info then return end
 	local accountInfo = info.gameAccountInfo
-	local areaName = accountInfo.areaName	--区域名
+	local areaName = accountInfo.areaName or ""	--区域名
 	local realmDisplayName = accountInfo.realmDisplayName	--服务器
 	local characterName = accountInfo.characterName --角色名
 	local bnname = Ambiguate(info.battleTag,"short")	--战网名
 	local level = accountInfo.characterLevel	--等级
+	
 	--local factionName = accountInfo.factionName--阵营
 	local gamename = accountInfo.wowProjectID	--游戏id,1是正式服,11是wlk
 	local rich = accountInfo.richPresence	--丰富返回游戏版本-区域-服务器
-	local timerunningSeasonID = accountInfo.timerunningSeasonID --赛季ID用于幻彩服务器
+	--local timerunningSeasonID = accountInfo.timerunningSeasonID --赛季ID用于幻彩服务器
 
 	--标题栏（直接用职业文件名索引 RAID_CLASS_COLORS，无需遍历）
 	local classFilename = accountInfo.classFilename
@@ -146,41 +140,15 @@ ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	if class then
 		friendbutton.name:SetText(format("%s|c%s (%s)|r    ", bnname, class.colorStr, characterName))
 	end
-
-	--信息栏（每次更新都重新设置，避免被暴雪默认文本覆盖）
-	local infoText
-	if realmDisplayName and areaName and gamename == 1 then
-		if timerunningSeasonID then--如果在赛季服
-			infoText = format("|A:timerunning-glues-icon:12:12:0:0|a%s-%s-%s", areaName, realmDisplayName, level)
-		else
-			infoText = format("%s-%s-%s", areaName, realmDisplayName, level)
-		end
-	elseif areaName and gamename == 14 then
-		local _,fwq = strsplit("-",rich)	--怀旧服只要服务器名字
-		infoText = realmDisplayName and format("CTM-%s-%s-%s", areaName, realmDisplayName, level)
-			or (fwq and format("CTM-%s-%s-%s", areaName, fwq, level) or nil)
-	elseif areaName and gamename == 11 then
-		local _,fwq = strsplit("-",rich)	--怀旧服只要服务器名字
-		infoText = realmDisplayName and format("WLK-%s-%s-%s", areaName, realmDisplayName, level)
-			or (fwq and format("WLK-%s-%s-%s", areaName, fwq, level) or nil)
-	elseif areaName and gamename == 2 then
-		local _,fwq = strsplit("-",rich)	--怀旧服只要服务器名字
-		infoText = realmDisplayName and format("(怀旧60)-%s-%s-%s", areaName, realmDisplayName, level)
-			or (fwq and format("(怀旧60)-%s-%s-%s", areaName, fwq, level) or nil)
-	end
-	if infoText then
-		friendbutton.info:SetText(infoText)
-	end
-	--对比游戏版本
-	if mygame > 90000 then
-		if not gamename or gamename == 1 then
-			friendbutton.name:SetAlpha(1)
-			friendbutton.info:SetAlpha(1)
-		else
-			friendbutton.name:SetAlpha(.4)
-			friendbutton.info:SetAlpha(.4)
-		end
-	end
+	local realmName = realmDisplayName or ""	--nil 兜底，否则下面 .. 会报 attempt to concatenate a nil value
+	local rich2 = (rich ~= nil and rich ~= "") and rich or (areaName ~= "" and realmName ~= "" and (areaName.."-"..realmName) or areaName)
+	local infoText = (level and level > 0) and (rich2 ~= "" and (rich2.." - "..level) or tostring(level)) or rich2
+	friendbutton.info:SetText(infoText)
+	--对比游戏版本：和自己同一个游戏项目 → 不透明，其它版本 → 0.5
+	--⚠️ 不能用 gamename == 1 判断（那只代表正式服），要用 WOW_PROJECT_ID，否则在无限服/怀旧服会把同服好友全变暗
+	local alpha = (not gamename or gamename == WOW_PROJECT_ID) and 1 or 0.5
+	friendbutton.name:SetAlpha(alpha)
+	friendbutton.info:SetAlpha(alpha)
 end)
 
 
