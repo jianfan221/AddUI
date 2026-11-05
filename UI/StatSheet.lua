@@ -1,4 +1,6 @@
 ﻿local _,ns = ...
+-- 仅正式服：怀旧服（含无限服）没有专精/精通/全能等接口，整个属性框体不加载
+if select(4, GetBuildInfo()) < 120000 then return end
 local statTimer
 ns.event("PLAYER_LOGIN", function()
 	if not AddUIDB.stat then return end
