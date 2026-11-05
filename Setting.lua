@@ -41,7 +41,9 @@ ns.AddTab("界面", function()
 	ns.AddCheck("Log快捷开关", "聊天按钮后面的log按钮", "lotbnt")
 	ns.AddDep("chatb", {"lotbnt" })
 	ns.AddCheck("好友列表搜索", "此功能会导致不能传送家宅好友", "Friend")
-	ns.AddCheck("自身属性框体", "编辑模式拖动位置", "stat")
+	if select(4, GetBuildInfo()) >= 120000 then
+		ns.AddCheck("自身属性框体", "编辑模式拖动位置", "stat")
+	end
 	ns.AddCheck("右下角信息栏", "右下角显示延迟耐久", "dimi")
 
 end)
@@ -115,6 +117,11 @@ ns.AddTab("其他", function()
 	ns.AddSection("右键菜单")
 	ns.AddCheck("Warcraft Logs", "玩家右键菜单里显示 WCL 链接,关闭后不显示", "wcl")
 	ns.AddCheck("Raider.IO", "玩家右键菜单里显示 Raider.IO 链接,关闭后不显示", "rio")
+
+	ns.AddSection("钓鱼")
+	ns.AddCheck("钓鱼音效增强", "钓鱼时将音效音量临时提升至100%，结束后恢复", "fishingSound", function()
+		if ns.UpdateFishingSounds then ns.UpdateFishingSounds() end
+	end)
 
 end)
 
