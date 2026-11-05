@@ -139,21 +139,6 @@ ns.event("PLAYER_LOGIN", function()
 
 	SetCVar("noBuffDebuffFilterOnTarget", 0)--目标头像显示所有debuff
 
-	local _, _, _, tocversion = GetBuildInfo()
-	if tocversion < 120100 then
-		ns.hook("TargetFrame_UpdateBuffAnchor", function(self, buff, index)
-			local aura = C_UnitAuras.GetBuffDataByIndex(self.unit, index)
-			if not aura then return end
-			if not buff.Stealable then return end
-			local color = C_UnitAuras.GetAuraDispelTypeColor(self.unit, aura.auraInstanceID, ns.dispelColor)
-			if color then
-				buff.Stealable:SetVertexColor(color:GetRGBA())
-				buff.Stealable:Show()
-			else
-				buff.Stealable:Hide()
-			end
-		end)
-	end
 
 	local hptexture1 = "Interface\\AddOns\\AddUI\\UI\\media\\AD-TargetingFrame"
 	local hptexture2 = "Interface\\AddOns\\AddUI\\UI\\media\\Raid-Bar-Hp-Fill"
@@ -165,6 +150,7 @@ ns.event("PLAYER_LOGIN", function()
 			--bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetVertexColor(1, 1, 0)
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetFont("Fonts\\ARHei.ttf", 12, "")
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetPoint("TOPLEFT",77,-32)
+			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.Name:SetJustifyH("LEFT")
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar.HealthBarTexture:SetTexture(hptexture1)
 			local color = ClassRGB(bossTargetFrame.unit)
 			bossTargetFrame.TargetFrameContent.TargetFrameContentMain.HealthBarsContainer.HealthBar:SetStatusBarColor(color.r, color.g, color.b)
@@ -215,6 +201,7 @@ ns.event("PLAYER_LOGIN", function()
 			local targetName = TargetFrame.TargetFrameContent.TargetFrameContentMain.Name
 			targetName:SetWidth(150)
 			targetName:SetPoint("TOPLEFT", 40, -25)
+			targetName:SetJustifyH("LEFT")
 
 			TargetFrameToT.HealthBar:SetStatusBarTexture(hptexture2)
 			TargetFrameToT:SetFrameStrata("BACKGROUND")
@@ -253,6 +240,8 @@ ns.event("PLAYER_LOGIN", function()
 	TargetFrameToT:SetPoint("RIGHT",TargetFrame,"RIGHT",15,-45)
 	TargetFrameToT.Name:ClearAllPoints()
 	TargetFrameToT.Name:SetPoint("TOPLEFT",TargetFrameToT,"BOTTOMLEFT",40,10)
+	TargetFrameToT.Name:SetWidth(150)
+	TargetFrameToT.Name:SetJustifyH("LEFT")
 	TargetFrameSpellBar.TextBorder:SetTexture(nil)
 	TargetFrameSpellBar.TextBorder = ns.ADDUISET
 	TargetFrameSpellBar:SetHeight(15)
@@ -269,6 +258,8 @@ ns.event("PLAYER_LOGIN", function()
 	FocusFrameToT:SetPoint("RIGHT",FocusFrame,"RIGHT",15,-45)
 	FocusFrameToT.Name:ClearAllPoints()
 	FocusFrameToT.Name:SetPoint("TOPLEFT",FocusFrameToT,"BOTTOMLEFT",40,10)
+	FocusFrameToT.Name:SetWidth(150)
+	FocusFrameToT.Name:SetJustifyH("LEFT")
 	FocusFrameSpellBar.TextBorder:SetTexture(nil)
 	FocusFrameSpellBar.TextBorder = ns.ADDUISET
 	FocusFrameSpellBar:SetHeight(15)
