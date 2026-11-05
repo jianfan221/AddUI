@@ -1,4 +1,23 @@
 ﻿local _,ns = ...
+
+--隐藏小地图昼夜指示器(无限服 Camelot 独有: 白天太阳/夜晚月亮 + 外圈)
+--它是 MinimapContainer 下的匿名帧, 只隐藏不 hook, 不会污染
+local function HideMinimapDayCycle()
+	if not MinimapCluster then return end
+	for _, f in ipairs({MinimapCluster.MinimapContainer:GetChildren()}) do
+		if not f:GetName() then
+			for _, r in ipairs({f:GetRegions()}) do
+				if r.GetAtlas and r:GetAtlas() == "UI-HUD-Minimap-DayCycle" then
+					f:Hide()
+					break
+				end
+			end
+		end
+	end
+end
+HideMinimapDayCycle()
+ns.event("PLAYER_LOGIN", HideMinimapDayCycle)
+
 ns.event("PLAYER_ENTERING_WORLD", function()
 if AddUIDB.smap ==  false  then return end
 
@@ -47,9 +66,11 @@ AddonCompartmentFrame:SetFrameStrata("MEDIUM")
 
 --副本挑战模式难度框
 local mc = MinimapCluster.InstanceDifficulty
-mc:ClearAllPoints()
-mc:SetPoint("TOPLEFT", MinimapCluster, 0, -25)
-mc:SetScale(1)
+if mc then
+    mc:ClearAllPoints()
+    mc:SetPoint("TOPLEFT", MinimapCluster, 0, -25)
+    mc:SetScale(1)
+end
 
 --小地图要塞按钮位置和大小
 local function MinimapButtonE(self)
