@@ -27,7 +27,7 @@ end
 
 SetMove("CharacterFrame")				--角色
 SetMove("FriendsFrame")				--好友
-SetMove("SocialUIFrame")				--社交(12.1新好友)
+--SetMove("SocialUIFrame")				--社交(12.1新好友)
 SetMove("PVEFrame")					--地下城与PVP
 SetMove("ContainerFrameCombinedBags")	--背包
 SetMove("WorldMapFrame")				--大地图
@@ -66,6 +66,7 @@ end)
 -- K键专业页面添加打开订单按钮
 EventUtil.ContinueOnAddOnLoaded("Blizzard_ProfessionsBook", function()
 	if bookOpenPro then return end
+	if not ProfessionsBookFrame then return end
 	local bookOpenPro = CreateFrame("Button", "bookOpenPro", ProfessionsBookFrame.TitleContainer, "UIPanelButtonTemplate")
 	bookOpenPro:SetSize(120, 22)
 	bookOpenPro:SetText("打开制造订单")
