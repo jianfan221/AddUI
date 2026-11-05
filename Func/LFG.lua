@@ -1,6 +1,7 @@
 ﻿local _,ns = ...
 ns.event("PLAYER_ENTERING_WORLD", function()
     if not AddUIDB.lfgkg then return end
+    if not LFGListFrame then return end--无限服没有预创建组队界面
     if C_AddOns.IsAddOnLoaded("MeetingStone") then return end
     --配置PGF
     if C_AddOns.IsAddOnLoaded("PremadeGroupsFilter") then
