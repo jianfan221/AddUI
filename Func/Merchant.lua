@@ -37,6 +37,7 @@ local nosell = {
 
 -- 客户端限制：一次连续调用最多只能卖掉约 10 件，所以拆到多帧里逐件卖（每 0.05 秒一件）
 local sellTicker
+local SellItemLevel
 
 local function FreeSlots()
 	local n = 0
@@ -109,9 +110,13 @@ StaticPopupDialogs.MerchantFrame_Sell = {
     hasEditBox = true,         -- 包含输入框
     -- ESC 关闭走暴雪原生回调（12.1 起 EditBox 不再由插件 SetScript，避免污染共享弹窗对象）
     EditBoxOnEscapePressed = StaticPopup_StandardEditBoxOnEscapePressed,
+	OnShow = function(self)
+		self.EditBox:SetText(tostring(SellItemLevel or ""))
+	end,
     OnAccept = function(self)  -- 点击确认后的回调
 		local BoxLevel = tonumber(self.EditBox:GetText())
 		if not BoxLevel then return end
+		SellItemLevel = BoxLevel
 		StartSell(BoxLevel)
     end,
 }
