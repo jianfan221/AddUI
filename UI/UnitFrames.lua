@@ -242,10 +242,29 @@ ns.event("PLAYER_LOGIN", function()
 	TargetFrameToT.Name:SetPoint("TOPLEFT",TargetFrameToT,"BOTTOMLEFT",40,10)
 	TargetFrameToT.Name:SetWidth(150)
 	TargetFrameToT.Name:SetJustifyH("LEFT")
+	--按施法条实例缓存图标边框
+	local castIconBorders = setmetatable({}, {__mode = "k"})
+	--裁切图标边缘并添加细黑边，边框随图标显隐
+	local function ModernizeCastIcon(castBar)
+		local icon = castBar.Icon
+		icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+		local border = castIconBorders[castBar]
+		if not border then
+			border = castBar:CreateTexture(nil, "ARTWORK", nil, 0)
+			border:SetColorTexture(0, 0, 0, 1)
+			border:SetPoint("TOPLEFT", icon, -1, 1)
+			border:SetPoint("BOTTOMRIGHT", icon, 1, -1)
+			castIconBorders[castBar] = border
+			icon:HookScript("OnShow", function() border:Show() end)
+			icon:HookScript("OnHide", function() border:Hide() end)
+		end
+		border:SetShown(icon:IsShown())
+	end
 	TargetFrameSpellBar.TextBorder:SetTexture(nil)
 	TargetFrameSpellBar.TextBorder = ns.ADDUISET
 	TargetFrameSpellBar:SetHeight(15)
 	TargetFrameSpellBar.Icon:SetPoint("RIGHT",TargetFrameSpellBar,"LEFT",-3,0)
+	ModernizeCastIcon(TargetFrameSpellBar)
 	TargetFrameSpellBar.Text:ClearAllPoints()
 	TargetFrameSpellBar.Text:SetPoint("CENTER",TargetFrameSpellBar,"CENTER",0,0)
 	TargetFrameSpellBar.Text.SetPoint = ns.ADDUISET
@@ -264,6 +283,7 @@ ns.event("PLAYER_LOGIN", function()
 	FocusFrameSpellBar.TextBorder = ns.ADDUISET
 	FocusFrameSpellBar:SetHeight(15)
 	FocusFrameSpellBar.Icon:SetPoint("RIGHT",FocusFrameSpellBar,"LEFT",-3,0)
+	ModernizeCastIcon(FocusFrameSpellBar)
 	FocusFrameSpellBar.Text:ClearAllPoints()
 	FocusFrameSpellBar.Text:SetPoint("CENTER",FocusFrameSpellBar,"CENTER",0,0)
 	FocusFrameSpellBar.Text.SetPoint = ns.ADDUISET
@@ -311,6 +331,7 @@ ns.event("PLAYER_LOGIN", function()
 		bossTargetFrameSpellBar:SetHeight(12)
 		bossTargetFrameSpellBar.Icon:SetSize(15,15)
 		bossTargetFrameSpellBar.Icon:SetPoint("RIGHT",bossTargetFrameSpellBar,"LEFT",-3,0)
+		ModernizeCastIcon(bossTargetFrameSpellBar)
 		bossTargetFrameSpellBar.Text:ClearAllPoints()
 		bossTargetFrameSpellBar.Text:SetPoint("CENTER",bossTargetFrameSpellBar,"CENTER",0,0)
 		bossTargetFrameSpellBar.Text.SetPoint = ns.ADDUISET
