@@ -46,7 +46,7 @@ ns.Defaults = {
 	movspeed = true, -- 角色面板移动速度
 	wcl = true, -- 右键菜单显示 WCL 链接
 	rio = true, -- 右键菜单显示 Raider.IO 链接
-	fishingSound = false, -- 钓鱼音效增强
+	fishingSound = true, -- 钓鱼音效增强
 
 	-- ═══════ 下拉菜单 & 滑条 ═══════
 	CastTexture = "Rainbow", -- 施法条材质（下拉菜单选择）
