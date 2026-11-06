@@ -7,7 +7,7 @@ local function HideMinimapDayCycle()
 	for _, f in ipairs({MinimapCluster.MinimapContainer:GetChildren()}) do
 		if not f:GetName() then
 			for _, r in ipairs({f:GetRegions()}) do
-				if r.GetAtlas and r:GetAtlas() == "UI-HUD-Minimap-DayCycle" then
+                if r.GetAtlas and (r:GetAtlas() == "UI-HUD-Minimap-DayCycle" or r:GetAtlas() == "UI-HUD-Minimap-NightCycle") then
 					f:Hide()
 					break
 				end
@@ -100,8 +100,9 @@ idframe:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 idframe:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 idframe:SetFrameStrata("BACKGROUND")
 local weimian = idframe:CreateFontString(nil, "ARTWORK")
-weimian:SetFont("fonts\\ARHei.ttf", 11, "OUTLINE") 
-weimian:SetPoint("RIGHT",MinimapCluster.BorderTop,"RIGHT",0,1)
+weimian:SetFont("fonts\\ARHei.ttf", 11, "OUTLINE")
+local maptop = MinimapCluster.BorderTop or MinimapZoneText
+weimian:SetPoint("RIGHT",maptop,"RIGHT",0,0)
 idframe:SetScript("OnEvent", function(self,event,aaaa)
 if event == "UPDATE_MOUSEOVER_UNIT" then
 	if issecretvalue(UnitGUID("mouseover")) then return end
