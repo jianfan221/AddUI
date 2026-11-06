@@ -23,6 +23,14 @@ local function OnCastingEvent(event, castunit)
 	PlayerCastingBarFrame.Icon:Show()--施法条图标显示
 	PlayerCastingBarFrame.Icon:SetSize(AddUIDB.castHeight,AddUIDB.castHeight)--施法条图标大小
 	PlayerCastingBarFrame.Icon:SetPoint("RIGHT",PlayerCastingBarFrame,"LEFT",-1,0)--图标位置
+	--裁切图标边缘并添加细黑边
+	PlayerCastingBarFrame.Icon:SetTexCoord(0.07,0.93,0.07,0.93)
+	if not PlayerCastingBarFrame.IconBorder then
+		PlayerCastingBarFrame.IconBorder = PlayerCastingBarFrame:CreateTexture(nil, "ARTWORK", nil, 3)
+		PlayerCastingBarFrame.IconBorder:SetColorTexture(0,0,0,1)
+		PlayerCastingBarFrame.IconBorder:SetPoint("TOPLEFT",PlayerCastingBarFrame.Icon,-1,1)
+		PlayerCastingBarFrame.IconBorder:SetPoint("BOTTOMRIGHT",PlayerCastingBarFrame.Icon,1,-1)
+	end
 	PlayerCastingBarFrame.TextBorder:SetTexture(nil)	--文字框大背景
 	PlayerCastingBarFrame.Border:SetTexture(nil)	--施法条边框
 	PlayerCastingBarFrame.Border:Hide()
