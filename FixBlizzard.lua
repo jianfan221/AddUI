@@ -44,3 +44,9 @@ end)
 ChatFrameUtil.AddMessageEventFilter("CHAT_MSG_SYSTEM", function(self, event, msg, ...)
     return msg == ""
 end)
+
+--无限服任务物品发光
+if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+    SetCVar("outlineModeShowLootEffectWhenDisabled", 1)
+    SetCVar("graphicsOutlineMode", 0)
+end
