@@ -152,6 +152,12 @@ local function InitDefenseButton(btn)
 	btn:EnableMouse(false)--完全鼠标穿透，不阻挡点击
 	local icon = btn:CreateTexture(nil, "OVERLAY")
 	icon:SetAllPoints(btn)
+	icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+	local border = btn:CreateTexture(nil, "BACKGROUND")
+	border:SetColorTexture(0, 0, 0, 1)
+	border:SetPoint("TOPLEFT", icon, "TOPLEFT", -1, 1)
+	border:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 1, -1)
+
 	btn:SetIcon(icon)
 	local cooldown = CreateFrame("Cooldown", nil, btn, "CooldownFrameTemplate")
 	cooldown:SetAllPoints(btn)
