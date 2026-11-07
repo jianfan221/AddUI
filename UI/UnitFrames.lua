@@ -242,19 +242,17 @@ ns.event("PLAYER_LOGIN", function()
 	TargetFrameToT.Name:SetPoint("TOPLEFT",TargetFrameToT,"BOTTOMLEFT",40,10)
 	TargetFrameToT.Name:SetWidth(150)
 	TargetFrameToT.Name:SetJustifyH("LEFT")
-	--按施法条实例缓存图标边框
-	local castIconBorders = setmetatable({}, {__mode = "k"})
-	--裁切图标边缘并添加细黑边，边框随图标显隐
+	--裁切图标边缘并添加细黑边，边框随图标显隐（边框缓存在 castBar.IconBorder）
 	local function ModernizeCastIcon(castBar)
 		local icon = castBar.Icon
 		icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-		local border = castIconBorders[castBar]
+		local border = castBar.IconBorder
 		if not border then
 			border = castBar:CreateTexture(nil, "ARTWORK", nil, 0)
 			border:SetColorTexture(0, 0, 0, 1)
 			border:SetPoint("TOPLEFT", icon, -1, 1)
 			border:SetPoint("BOTTOMRIGHT", icon, 1, -1)
-			castIconBorders[castBar] = border
+			castBar.IconBorder = border
 			icon:HookScript("OnShow", function() border:Show() end)
 			icon:HookScript("OnHide", function() border:Hide() end)
 		end
