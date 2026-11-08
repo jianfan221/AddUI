@@ -11,23 +11,6 @@ local stageColors = {
 	{r=0.5, g=1.0, b=0.1}, --青绿变黄
 }
 
---施法条显示时同步图标（从施法事件中挪出）
-PlayerCastingBarFrame:HookScript("OnShow", function(self)
-	if not AddUIDB.cast then return end
-	self.Icon:ClearAllPoints()
-	self.Icon:Show()--施法条图标显示
-	self.Icon:SetSize(AddUIDB.castHeight, AddUIDB.castHeight)--施法条图标大小
-	self.Icon:SetPoint("RIGHT", self, "LEFT", -1, 0)--图标位置
-	--裁切图标边缘并添加细黑边
-	self.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
-	if not self.IconBorder then
-		self.IconBorder = self:CreateTexture(nil, "ARTWORK", nil, 3)
-		self.IconBorder:SetColorTexture(0, 0, 0, 1)
-		self.IconBorder:SetPoint("TOPLEFT", self.Icon, -1, 1)
-		self.IconBorder:SetPoint("BOTTOMRIGHT", self.Icon, 1, -1)
-	end
-end)
-
 local function OnCastingEvent(event, castunit)
 	if not AddUIDB.cast then return end
 	if castunit ~= "player"  then return end	--判断是不是自己的施法条
@@ -41,7 +24,19 @@ local function OnCastingEvent(event, castunit)
 	PlayerCastingBarFrame.Border:SetTexture(nil)	--施法条边框
 	PlayerCastingBarFrame.Border:Hide()
 	PlayerCastingBarFrame.BorderMask:SetTexture(nil)--闪光尾巴
-
+	PlayerCastingBarFrame.Icon:Show()
+	PlayerCastingBarFrame.Icon:ClearAllPoints()
+	PlayerCastingBarFrame.Icon:Show()--施法条图标显示
+	PlayerCastingBarFrame.Icon:SetSize(AddUIDB.castHeight, AddUIDB.castHeight)--施法条图标大小
+	PlayerCastingBarFrame.Icon:SetPoint("RIGHT", PlayerCastingBarFrame, "LEFT", -2, 0)--图标位置
+	--裁切图标边缘并添加细黑边
+	PlayerCastingBarFrame.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+	if not PlayerCastingBarFrame.IconBorder then
+		PlayerCastingBarFrame.IconBorder = PlayerCastingBarFrame:CreateTexture(nil, "ARTWORK", nil, 3)
+		PlayerCastingBarFrame.IconBorder:SetColorTexture(0, 0, 0, 1)
+		PlayerCastingBarFrame.IconBorder:SetPoint("TOPLEFT", PlayerCastingBarFrame.Icon, -1, 1)
+		PlayerCastingBarFrame.IconBorder:SetPoint("BOTTOMRIGHT", PlayerCastingBarFrame.Icon, 1, -1)
+	end
 	PlayerCastingBarFrame:SetFrameStrata("TOOLTIP")	--施法条框架优先级
 	PlayerCastingBarFrame.Text:ClearAllPoints()--文本位置
 	PlayerCastingBarFrame.Text:SetPoint("CENTER",PlayerCastingBarFrame,"CENTER",0,0)--文本位置
@@ -85,6 +80,9 @@ end
 ns.event('UNIT_SPELLCAST_EMPOWER_START', OnCastingEvent)	--蓄力
 ns.event('UNIT_SPELLCAST_CHANNEL_START', OnCastingEvent)	--引导
 ns.event('UNIT_SPELLCAST_START', OnCastingEvent)	--读条
+PlayerCastingBarFrame:HookScript("OnShow", function(self)
+	OnCastingEvent(nil, 'player')
+end)
 
 local function HideAnims(self)
 	if not AddUIDB.cast then return end
