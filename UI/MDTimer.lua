@@ -1,4 +1,7 @@
-﻿local _,ns = ...
+﻿--仅正式服使用：大秘境计时与钥石界面功能
+if not WOW_PROJECT_ID or WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then return end
+
+local _,ns = ...
 ns.tips("大秘境BOSS击杀时间记录(重置ADDUI配置不会重置历史记录)")
 ns.event("ADDON_LOADED", function(event, addon)
 	if addon == "Blizzard_ChallengesUI" then
