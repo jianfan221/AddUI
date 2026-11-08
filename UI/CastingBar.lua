@@ -11,6 +11,23 @@ local stageColors = {
 	{r=0.5, g=1.0, b=0.1}, --青绿变黄
 }
 
+--施法条显示时同步图标（从施法事件中挪出）
+PlayerCastingBarFrame:HookScript("OnShow", function(self)
+	if not AddUIDB.cast then return end
+	self.Icon:ClearAllPoints()
+	self.Icon:Show()--施法条图标显示
+	self.Icon:SetSize(AddUIDB.castHeight, AddUIDB.castHeight)--施法条图标大小
+	self.Icon:SetPoint("RIGHT", self, "LEFT", -1, 0)--图标位置
+	--裁切图标边缘并添加细黑边
+	self.Icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+	if not self.IconBorder then
+		self.IconBorder = self:CreateTexture(nil, "ARTWORK", nil, 3)
+		self.IconBorder:SetColorTexture(0, 0, 0, 1)
+		self.IconBorder:SetPoint("TOPLEFT", self.Icon, -1, 1)
+		self.IconBorder:SetPoint("BOTTOMRIGHT", self.Icon, 1, -1)
+	end
+end)
+
 local function OnCastingEvent(event, castunit)
 	if not AddUIDB.cast then return end
 	if castunit ~= "player"  then return end	--判断是不是自己的施法条
@@ -20,17 +37,6 @@ local function OnCastingEvent(event, castunit)
 	PlayerCastingBarFrame:SetHeight(AddUIDB.castHeight)--施法条高度
 	PlayerCastingBarFrame:SetWidth(AddUIDB.castWidth)--施法条宽度
 	PlayerCastingBarFrame.Spark:SetSize(2,AddUIDB.castHeight*1.5)--施法条闪光大小
-	PlayerCastingBarFrame.Icon:Show()--施法条图标显示
-	PlayerCastingBarFrame.Icon:SetSize(AddUIDB.castHeight,AddUIDB.castHeight)--施法条图标大小
-	PlayerCastingBarFrame.Icon:SetPoint("RIGHT",PlayerCastingBarFrame,"LEFT",-1,0)--图标位置
-	--裁切图标边缘并添加细黑边
-	PlayerCastingBarFrame.Icon:SetTexCoord(0.07,0.93,0.07,0.93)
-	if not PlayerCastingBarFrame.IconBorder then
-		PlayerCastingBarFrame.IconBorder = PlayerCastingBarFrame:CreateTexture(nil, "ARTWORK", nil, 3)
-		PlayerCastingBarFrame.IconBorder:SetColorTexture(0,0,0,1)
-		PlayerCastingBarFrame.IconBorder:SetPoint("TOPLEFT",PlayerCastingBarFrame.Icon,-1,1)
-		PlayerCastingBarFrame.IconBorder:SetPoint("BOTTOMRIGHT",PlayerCastingBarFrame.Icon,1,-1)
-	end
 	PlayerCastingBarFrame.TextBorder:SetTexture(nil)	--文字框大背景
 	PlayerCastingBarFrame.Border:SetTexture(nil)	--施法条边框
 	PlayerCastingBarFrame.Border:Hide()
