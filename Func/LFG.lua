@@ -1,4 +1,48 @@
 ﻿local _,ns = ...
+
+-- 无限服（Camelot）寻求组队：在游戏风格后面显示队伍备注（正式服同类做法见下方 LFGList 部分）
+if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+	local function ShowComment(entry)
+		local label = entry.PlaystyleLabel
+		if not label then return end
+		local info = entry.resultID and C_LFGList.GetSearchResultInfo(entry.resultID)
+		local comment = info and info.comment
+		if not entry.AddUIComment then
+			entry.AddUIComment = entry:CreateFontString(nil, "ARTWORK")
+			entry.AddUIComment:SetFont(STANDARD_TEXT_FONT, 15, "OUTLINE")
+			entry.AddUIComment:SetWordWrap(false)
+		end
+		local text = entry.AddUIComment
+		text:ClearAllPoints()
+		-- 有游戏风格时贴在其右边；没有时直接占用游戏风格原来的位置
+		local playstyle = label:GetText()
+		if playstyle and playstyle ~= "" then
+			text:SetPoint("LEFT", label, "RIGHT", 4, 0)
+		else
+			text:SetPoint("TOPLEFT", label, "TOPLEFT")
+		end
+		text:SetText(comment or "")
+		if info and info.isDelisted then
+			text:SetTextColor(0.3, 0.3, 0.3)
+		else
+			text:SetTextColor(0.9, 0.9, 0.9)
+		end
+	end
+
+	local function HookVanillaLFG()
+		if ns.vanillaLFGHooked or not LFGBrowseSearchEntry_Update then return end
+		ns.vanillaLFGHooked = true
+		ns.hook("LFGBrowseSearchEntry_Update", ShowComment)
+	end
+
+	ns.event("ADDON_LOADED", function(event, addon)
+		if addon == "Blizzard_GroupFinder_VanillaStyle" then
+			HookVanillaLFG()
+		end
+	end)
+	HookVanillaLFG()
+end
+
 ns.event("PLAYER_ENTERING_WORLD", function()
     if not AddUIDB.lfgkg then return end
     if not LFGListFrame then return end--无限服没有预创建组队界面
