@@ -3,6 +3,9 @@
 --隐藏小地图昼夜指示器(无限服 Camelot 独有: 白天太阳/夜晚月亮 + 外圈)
 --它是 MinimapContainer 下的匿名帧, 只隐藏不 hook, 不会污染
 local function HideMinimapDayCycle()
+    if MinimapZoneText then
+       MinimapZoneText:SetWidth(140)
+    end
 	if not MinimapCluster then return end
 	for _, f in ipairs({MinimapCluster.MinimapContainer:GetChildren()}) do
 		if not f:GetName() then
@@ -27,6 +30,20 @@ MinimapCluster:SetScale(.8)	--大小
 Minimap:SetQuestBlobRingScalar(0)	--任务追踪环形网格
 --微调小地图位置
 Minimap:SetPoint("CENTER",MinimapCluster,"TOP", 15,-125)
+
+--非正式服（无限服/怀旧服）：邮件等提示图标挪到正式服的位置（小地图右上、Tracking 下方）
+if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then
+	local function MoveIndicatorFrame()
+		if not MinimapCluster.IndicatorFrame or not MinimapCluster.Tracking then return end
+		MinimapCluster.IndicatorFrame:ClearAllPoints()
+		MinimapCluster.IndicatorFrame:SetPoint("TOPRIGHT", Minimap, "TOPRIGHT", 0, 0)
+	end
+	MoveIndicatorFrame()
+	--暴雪在 SetHeaderUnderneath 等布局里会重设，跟着再钉一次
+	if MinimapCluster.SetHeaderUnderneath then
+		ns.hook(MinimapCluster, "SetHeaderUnderneath", MoveIndicatorFrame)
+	end
+end
 
 --边框材质
 Minimap:SetMaskTexture([=[Interface\ChatFrame\ChatFrameBackground]=])
