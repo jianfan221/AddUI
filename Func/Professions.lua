@@ -1,4 +1,6 @@
 local _, ns = ...
+-- 材料星级是正式服专属功能，无限服/怀旧服不需要
+if WOW_PROJECT_ID ~= WOW_PROJECT_MAINLINE then return end
 local BP,BPT = false, false
 local oldfunction = ItemUtil.GetCraftingReagentCount
 ns.event("ADDON_LOADED", function(event, addon)
