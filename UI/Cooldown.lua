@@ -146,14 +146,28 @@ ns.event("PLAYER_LOGIN", function()
 				end
 			end
 		end
-		ns.hook(BuffIconCooldownViewer, "OnUnitAura", function(self)
-			ns.SetBuffIconPoint(self)
-		end)
-		ns.hook(BuffIconCooldownViewer, "RefreshLayout", function(self)
-			ns.SetBuffIconPoint(self)
-		end)
-		ns.hook(BuffIconCooldownViewer, "RefreshData", function(self,event)
-			ns.SetBuffIconPoint(self)
+		--暴雪重新网格排版后重排：数量变化（RefreshLayout 末尾必调 Layout）、编辑模式、改图标尺寸/间距都会走到这里
+		local buffIconContainer = BuffIconCooldownViewer:GetItemContainerFrame()
+		if buffIconContainer and buffIconContainer.Layout then
+			ns.hook(buffIconContainer, "Layout", function()
+				ns.SetBuffIconPoint(BuffIconCooldownViewer)
+			end)
+		end
+		--buff 消失/出现只改图标显隐（CooldownViewerItemMixin:UpdateShownState），不会触发上面的数据回调，所以直接监听每个图标的显隐
+		local function HookIconShown(itemFrame)
+			if itemFrame.adduiShownHooked then return end
+			itemFrame.adduiShownHooked = true
+			local function Reflow()
+				ns.SetBuffIconPoint(BuffIconCooldownViewer)
+			end
+			itemFrame:HookScript("OnShow", Reflow)
+			itemFrame:HookScript("OnHide", Reflow)
+		end
+		for itemFrame in BuffIconCooldownViewer.itemFramePool:EnumerateActive() do
+			HookIconShown(itemFrame)
+		end
+		ns.hook(BuffIconCooldownViewer, "OnAcquireItemFrame", function(self, itemFrame)
+			HookIconShown(itemFrame)
 		end)
 		--冷却管理器设置界面打开时也重新排列
 		if CooldownViewerSettings then
