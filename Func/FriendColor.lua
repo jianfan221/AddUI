@@ -1,10 +1,9 @@
-﻿local _,_,_,mygame = GetBuildInfo()
-local _,ns = ...
+﻿local _,ns = ...
 
 if SocialUIFrame then
 	ns.tips("好友列表卡片重新布局")
 	-- ⚠️ 卡片是暴雪框体：自建文本别写成 self.AddUIxxx 字段（会染脏暴雪对象），用弱键表存
-	local raceTexts, realmTexts = setmetatable({}, {__mode = "k"}), setmetatable({}, {__mode = "k"})
+	local raceTexts = setmetatable({}, {__mode = "k"})
 	ns.hook(FriendsListSocialCardMixin, "Initialize", function(self, node)
 		-- 重排：一行 战网名 + 角色名，二行 等级 种族 职业，三行 位置-服务器(暴雪默认文本)
 		local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
@@ -50,24 +49,13 @@ if SocialUIFrame then
 		self.Location:ClearAllPoints()
 		self.Location:SetPoint("TOPLEFT", self.Level, "BOTTOMLEFT", 0, -2)
 
-		--第四行：服务器名(仅无限服; 同服时暴雪默认不带服务器名)
-		if mygame < 120000 then
-			local realmText = realmTexts[self]
-			if not realmText then
-				realmText = self:CreateFontString(nil, "ARTWORK")
-				local fontObject = self.Location:GetFontObject()
-				if fontObject then
-					realmText:SetFontObject(fontObject)
-				else
-					realmText:SetFont(self.Location:GetFont())
-				end
-				realmTexts[self] = realmText
-			end
-			local realmName = gameAccountInfo and (gameAccountInfo.realmDisplayName or gameAccountInfo.realmName)
-			realmText:ClearAllPoints()
-			realmText:SetPoint("TOPLEFT", self.Location, "BOTTOMLEFT", 0, -1)
-			realmText:SetText(realmName and FRIENDS_GRAY_COLOR:WrapTextInColorCode(realmName) or "")
-			realmText:SetShown(realmName ~= nil and realmName ~= "")
+		-- 位置栏按旧版信息栏样式：优先 richPresence，否则 区域-服务器（离线保留暴雪的“上次在线”）
+		if gameAccountInfo and gameAccountInfo.isOnline then
+			local rich = gameAccountInfo.richPresence
+			local areaName = gameAccountInfo.areaName or ""
+			local realmName = gameAccountInfo.realmDisplayName or gameAccountInfo.realmName
+			local text = (rich ~= nil and rich ~= "") and rich or (areaName ~= "" and realmName and (areaName .. "-" .. realmName) or areaName)
+			self.Location:SetText(FRIENDS_GRAY_COLOR:WrapTextInColorCode(text))
 		end
 
 		-- Name 改为职业颜色
@@ -76,6 +64,22 @@ if SocialUIFrame then
 			if color then
 				self.Name:SetText(color:WrapTextInColorCode(gameAccountInfo.characterName))
 			end
+		end
+
+		-- 等级按与自己等级差上色（暴雪等级文本自带内联颜色码，这里重设成带难度色的文本）
+		local level = gameAccountInfo and gameAccountInfo.characterLevel
+		if level and level > 0 then
+			local fmt = SOCIAL_UI_RECENT_ALLIES_CARD_LEVEL_DISPLAY_FORMAT
+			local color = GetQuestDifficultyColor(level) or {r = 1, g = 1, b = 1}
+			local text = fmt and string.format(fmt, level) or tostring(level)
+			self.Level:SetText(CreateColor(color.r, color.g, color.b):WrapTextInColorCode(text))
+		end
+		-- 不同游戏版本：整卡变暗（暴雪给图标的 0.6 会相乘，复位避免过淡）
+		local projectID = gameAccountInfo and gameAccountInfo.wowProjectID
+		local dim = projectID and projectID ~= WOW_PROJECT_ID
+		self:SetAlpha(dim and 0.33 or 1)
+		if dim then
+			self.GameIconHolder.Icon:SetAlpha(1)
 		end
 	end)
 
