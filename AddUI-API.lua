@@ -91,11 +91,12 @@ function ns.AddEdit(frame,name,center)
         Center = { atlas = "%s-NineSlice-Center", x = -8, y = 8, x1 = 8, y1 = -8 },
     }
 
-    frame.text = frame.highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
-    frame.text:SetPoint("CENTER", 0, 0)
-    frame.text:SetFont("fonts\\ARHei.ttf", 30, "OUTLINE")
-    frame.text:SetText(name or "AddUI")
-    frame.text:SetVertexColor(1,1,1,0.7)
+    -- 编辑模式标签用独立字段名，避免覆盖业务框体自己的 .text 文字
+    frame.editText = frame.highlight:CreateFontString(nil, "OVERLAY", "GameFontNormalLarge")
+    frame.editText:SetPoint("CENTER", 0, 0)
+    frame.editText:SetFont(STANDARD_TEXT_FONT, 30, "OUTLINE")
+    frame.editText:SetText(name or "AddUI")
+    frame.editText:SetVertexColor(1,1,1,0.7)
 
     -- 高亮材质切换（"selected" 选中 / "highlight" 未选中）
     local function ApplyHighlight(kit)
@@ -135,7 +136,7 @@ function ns.AddEdit(frame,name,center)
         end
         frame.highlight:Show()
         ApplyHighlight("highlight") -- 进入编辑模式默认显示未选中高亮框
-        frame.text:Hide() -- 文字默认隐藏，鼠标指向时才显示
+        frame.editText:Hide() -- 文字默认隐藏，鼠标指向时才显示
         frame:SetMovable(true) -- frame 负责移动，frame.highlight 负责接收鼠标（层级最高，避免被内部元素遮挡拖不动）
         frame.highlight:EnableMouse(true)
         frame.highlight:RegisterForDrag("LeftButton")
@@ -146,11 +147,11 @@ function ns.AddEdit(frame,name,center)
         end)
         frame.highlight:SetScript("OnEnter", function()
             ApplyHighlight("selected")
-            frame.text:Show()
+            frame.editText:Show()
         end)
         frame.highlight:SetScript("OnLeave", function()
             ApplyHighlight("highlight")
-            frame.text:Hide()
+            frame.editText:Hide()
         end)
     end
 
@@ -158,7 +159,7 @@ function ns.AddEdit(frame,name,center)
         frame:SetShown(isshow)
         frame:SetAlpha(isalpha)
         frame.highlight:Hide()
-        frame.text:Hide()
+        frame.editText:Hide()
         frame:SetMovable(false)
         frame.highlight:EnableMouse(false)
         frame.highlight:SetScript("OnDragStart", nil)
@@ -178,7 +179,7 @@ end
 --提醒文本
 local adcfont = UIParent:CreateFontString("adcfont", "ARTWORK", "GameFontNormalLarge")
 adcfont:SetPoint("LEFT", QuickJoinToastButton, "RIGHT", 0, -1)
-adcfont:SetFont("fonts\\ARHei.ttf", 16, "OUTLINE")
+adcfont:SetFont(STANDARD_TEXT_FONT, 16, "OUTLINE")
 adcfont:SetVertexColor(0,1,1)
 local adcfontbg = UIParent:CreateTexture(nil, "BACKGROUND")
 adcfontbg:SetPoint("CENTER", adcfont, "CENTER", 0, 0)
