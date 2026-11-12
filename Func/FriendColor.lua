@@ -148,7 +148,13 @@ ns.hook("FriendsFrame_UpdateFriendButton", function(friendbutton)
 	local infoText
 	if accountInfo.isOnline then
 		local rich2 = (rich ~= nil and rich ~= "") and rich or (areaName ~= "" and realmName ~= "" and (areaName.."-"..realmName) or areaName)
-		infoText = (level and level > 0) and (rich2 ~= "" and (rich2.." - "..level) or tostring(level)) or rich2
+		--等级按与自己等级差上色
+		local levelText
+		if level and level > 0 then
+			local color = GetQuestDifficultyColor(level) or {r = 1, g = 1, b = 1}
+			levelText = CreateColor(color.r, color.g, color.b):WrapTextInColorCode(tostring(level))
+		end
+		infoText = levelText and (rich2 ~= "" and (rich2.." - "..levelText) or levelText) or rich2
 	else
 		--离线：显示"上次在线 xxx"（暴雪默认就是这个，别被上面的拼接逻辑清空）
 		infoText = FriendsFrame_GetLastOnlineText and FriendsFrame_GetLastOnlineText(info) or FRIENDS_LIST_OFFLINE
