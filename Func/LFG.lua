@@ -22,7 +22,7 @@ if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 			text:SetPoint("TOPLEFT", label, "TOPLEFT")
 		end
 		text:SetText(comment or "")
-		if info and info.isDelisted then
+		if info and info.isDelisted ~= nil then
 			text:SetTextColor(0.3, 0.3, 0.3)
 		else
 			text:SetTextColor(0.9, 0.9, 0.9)
