@@ -52,6 +52,7 @@ end)
 ns.AddTab("战斗", function()
 	ns.AddSection("战斗模块")
 	ns.AddCheck("进入战斗提示", "屏幕中间进入脱离战斗提示", "comb")
+	ns.AddCheck("承受伤害提示", "自己承受伤害/治疗时在右侧滚动显示数字,编辑模式拖动位置,改动需/reload", "lightCT")
 	ns.AddCheck("死亡伤害提示", "死亡时显示致死事件的伤害与生命值信息", "deathRecapAlert", function(enabled)
 		if not enabled and ns.HideDeathRecapAlert then ns.HideDeathRecapAlert() end
 	end)
@@ -84,7 +85,9 @@ ns.AddTab("职业", function()
 	ns.AddCheck("雷霆之爪冷却", "自然守护者左侧显示雷霆之爪图标与冷却", "shamanThunderClaw")
 	ns.AddDep("shamanGuardianCountdown", {"shamanThunderClaw"})
 	ns.AddCheck("动作条图标切换", "施放流电炽焰把熔岩爆裂的图标替换成净化烈焰", "shamanIconSwap")
-
+	if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+		ns.AddCheck("强化风暴打击提醒", "无限服专用:躲闪或招架重置风暴打击冷却时高亮按钮+音效", "shamanStormstrikeAlert")
+	end
 	ns.AddSection("盗贼")
 	local function rogueLive()
 		if ns.RogueDotGridRefresh then ns.RogueDotGridRefresh() end
