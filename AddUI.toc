@@ -23,6 +23,7 @@ Chat\ChatTab.lua
 Class\cancelAura.lua
 Class\SetMacro.lua
 Class\Shaman.lua
+Class\ShamanForever.lua
 Class\ActionBarIcon.lua
 Class\RogueAssassination.lua
 
@@ -66,6 +67,7 @@ UI\InfoBar.lua
 UI\InspectLevel.lua
 UI\InterruptAlert.lua
 UI\InterruptREC.lua
+UI\LightCT.lua
 UI\MainMenuBar.lua
 UI\MainMenuBarAnimations.lua
 UI\MainMenuBarIcon.lua
