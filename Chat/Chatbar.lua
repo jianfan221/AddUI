@@ -78,12 +78,39 @@ local Trade = CreateChatButton("Channel_02", "交", {255/255, 130/255, 130/255},
 
 
 -- 大脚世界频道
+-- 加入频道后还得挂到聊天窗口上，暴雪聊天设置「频道」页的勾选读的就是窗口频道列表，
+-- 只调 JoinPermanentChannel 不会自动勾上
+local function EnableWorldChannel()
+	local name = "大脚世界频道"
+	if GetChannelName(name) == 0 then return end
+	local frame = DEFAULT_CHAT_FRAME
+	local shown
+	if frame.ContainsChannel then
+		shown = frame:ContainsChannel(name)
+	elseif ChatFrame_ContainsChannel then
+		shown = ChatFrame_ContainsChannel(frame, name)
+	end
+	if shown then return end
+	if frame.AddChannel then
+		frame:AddChannel(name)
+	elseif ChatFrame_AddChannel then
+		ChatFrame_AddChannel(frame, name)
+	else
+		AddChatWindowChannel(frame:GetID(), name)
+	end
+	-- 设置窗口开着时立即刷新勾选状态
+	if ChatConfigChannelSettings and ChatConfigChannelSettings:IsVisible() then
+		ChatConfigChannelSettings_UpdateCheckboxes()
+	end
+end
+
 local World = CreateChatButton("Channel_05", "世", {200/255, 255/255, 150/255},
 	function(self, button)
 	if button == "RightButton" then
 		local _, channelName = GetChannelName("大脚世界频道")
 		if not channelName then
 			JoinPermanentChannel("大脚世界频道", nil, 1, 1)
+			C_Timer.After(0.3, EnableWorldChannel)
 			print("|cff00d200已加入大脚世界频道|r,右键点击>|cffC8FF96世|r<加入/离开")
 		else
 			LeaveChannelByName("大脚世界频道")
@@ -94,10 +121,12 @@ local World = CreateChatButton("Channel_05", "世", {200/255, 255/255, 150/255},
 		if not channelName then
 			JoinPermanentChannel("大脚世界频道", nil, 1, 1)
 			C_Timer.After(0.3, function()
+				EnableWorldChannel()
 				local ch = GetChannelName("大脚世界频道")
 				ChatFrame_OpenChat("/"..ch.." ", chatFrame)
 			end)
 		else
+			EnableWorldChannel()
 			ChatFrame_OpenChat("/"..channel.." ", chatFrame)
 		end
 	end
