@@ -95,11 +95,13 @@ local SPEED_FORMAT_OPTIONS = {
 --       PaperDollFrame_UpdateStats 刷新循环导致报错，故用独立 Frame 显示。
 ns.event("PLAYER_LOGIN", function()
     if not (AddUIDB and AddUIDB.movspeed) then return end
-    if not PaperDollFrame or not CharacterFrame or not CharacterFrame.Background then return end
+    -- 锚点：优先角色面板背景，没有就用模型场景背景（CharacterFrame 可能为 nil，先判它）
+    local anchor = CharacterFrame and (CharacterFrame.Background or (CharacterModelScene and CharacterModelScene.BackgroundOverlay))
+    if not (PaperDollFrame and anchor) then return end
     local frame = CreateFrame("Frame", nil, PaperDollFrame)
     frame:SetFrameStrata("HIGH")
     frame:SetSize(1, 1)
-    frame:SetPoint("BOTTOMLEFT", CharacterFrame.Background, "BOTTOMRIGHT", -108, 8)
+    frame:SetPoint("BOTTOMLEFT", anchor, "BOTTOMRIGHT", -108, 8)
 
     local speedtext = frame:CreateFontString(nil, "OVERLAY", "GameFontNormal")
     speedtext:SetPoint("BOTTOMLEFT", frame, "BOTTOMLEFT", 0, 0)
