@@ -187,4 +187,86 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, ShowID)
 TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, ShowID)
 
 end
+
+--无限服：鼠标提示显示目标玩家天赋（观察后读取）
+if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
+	local INSPECT_CONFIG = (Constants and Constants.TraitConsts and Constants.TraitConsts.INSPECT_TRAIT_CONFIG_ID) or -1
+	local talentCache = {}	-- guid -> "增强(0/30/11)"
+	local lastInspectAt = {}	-- guid -> 上次请求观察的时间
+	local function GetTipUnit()
+		local foci = GetMouseFoci()
+		local f = foci and foci[1]
+		if f then
+			local u = f.unit
+			if u then
+				local e = UnitExists(u)
+				if e and not ns.MM(e) then return u end
+			end
+		end
+		if UnitExists("mouseover") then return "mouseover" end
+	end
+	--按天赋树分组读取三系名称与已用点数
+	local function BuildTalentLine(configID, treeID)
+		if not configID or not treeID or ns.MM(configID) or ns.MM(treeID) then return end
+		local infos = C_Traits.GetGroupDisplayInfoByTreeID(treeID)
+		if not infos then return end
+		local gids = {}
+		for i, info in ipairs(infos) do gids[i] = info.groupID end
+		local gcis = C_Traits.GetGroupCurrencyInfo(configID, gids)
+		local spent = {}
+		if gcis then
+			for _, gci in ipairs(gcis) do
+				local ci = gci.currencyInfos and gci.currencyInfos[1]
+				if ci and ci.spent and not ns.MM(ci.spent) then
+					spent[gci.traitNodeGroupID] = ci.spent
+				end
+			end
+		end
+		local names, points = {}, {}
+		for i, info in ipairs(infos) do
+			--秘密值不参与比较与拼接
+			if ns.MM(info.groupID) or ns.MM(info.displayName) then return end
+			names[i] = info.displayName
+			points[i] = spent[info.groupID] or 0
+		end
+		if #names == 0 then return end
+		local best = 1
+		for i = 2, #points do
+			if points[i] > points[best] then best = i end
+		end
+		return names[best].." ("..table.concat(points, "/")..")"
+	end
+	ns.event("INSPECT_READY", function(event, guid)
+		if not guid or ns.MM(guid) then return end
+		local unit = GetTipUnit()
+		if not unit then return end
+		local uguid = UnitGUID(unit)
+		if not uguid or ns.MM(uguid) or uguid ~= guid then return end
+		local specID = C_SpecializationInfo.GetInspectSpecialization(unit)
+		if not specID or ns.MM(specID) then return end
+		local line = BuildTalentLine(INSPECT_CONFIG, C_ClassTalents.GetTraitTreeForSpec(specID))
+		if line then talentCache[guid] = line end
+		--提示仍停留在该单位，重绘刷新此行
+		if GameTooltip:IsShown() then GameTooltip:SetUnit(unit) end
+	end)
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(self)
+		local unit = GetTipUnit()
+		if not unit then return end
+		local isPlayer = UnitIsPlayer(unit)
+		if ns.MM(isPlayer) or not isPlayer then return end
+		local guid = UnitGUID(unit)
+		if not guid or ns.MM(guid) then return end
+		local pguid = UnitGUID("player")
+		if pguid and not ns.MM(pguid) and pguid == guid then return end
+		local cached = talentCache[guid]
+		if cached then
+			self:AddLine("|cff00FF00天赋:|r |cffFFFFFF"..cached.."|r")
+		end
+		local canInspect = CanInspect(unit)
+		if not ns.MM(canInspect) and canInspect and GetTime() - (lastInspectAt[guid] or 0) > 10 then
+			lastInspectAt[guid] = GetTime()
+			NotifyInspect(unit)
+		end
+	end)
+end
 end)
