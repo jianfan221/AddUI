@@ -159,3 +159,108 @@ ns.event('UNIT_SPELLCAST_CHANNEL_STOP', function(event, unit, castGUID, spellID)
 	if unit ~= "player" then return end
 	for _, line in ipairs(ArcaneMissileLines) do line:Hide() end
 end)
+
+-- ═══════════════════════════════════════════════════════════════
+-- 平砍闪光条（仅无限服 Camelot：客户端提供 PLAYER_SWING / C_SwingTimer）
+-- 施法条正下方一条等宽细线，每个正在挥砍的武器一个光点，自左向右跑表示进度
+-- 主手/副手/远程不预先判断，收到对应 swingType 的事件就显示，有几把就几个光点
+-- ═══════════════════════════════════════════════════════════════
+if C_SwingTimer and Enum.PlayerSwingType then
+	local SPARK_TEXTURE = "Interface\\CastingBar\\UI-CastingBar-Spark"
+	local SPARK_WIDTH = 8
+	local SPARK_HEIGHT = 12
+	-- 主手白、副手淡蓝、远程淡黄，双持时同起点也能分清
+	local SPARK_COLORS = {
+		[Enum.PlayerSwingType.MainHand] = {1.0, 1.0, 1.0},
+		[Enum.PlayerSwingType.OffHand] = {0.6, 0.85, 1.0},
+		[Enum.PlayerSwingType.Ranged] = {1.0, 0.85, 0.45},
+	}
+	-- 垂直错开，避免同速双持时两个光点完全重叠
+	local SPARK_OFFSET_Y = {
+		[Enum.PlayerSwingType.MainHand] = 0,
+		[Enum.PlayerSwingType.OffHand] = -5,
+		[Enum.PlayerSwingType.Ranged] = 5,
+	}
+
+	local swingLine = CreateFrame("Frame", nil, UIParent)
+	swingLine:SetPoint("TOPLEFT", PlayerCastingBarFrame, "BOTTOMLEFT", 0, -2)
+	swingLine:SetPoint("TOPRIGHT", PlayerCastingBarFrame, "BOTTOMRIGHT", 0, -2)
+	swingLine:SetHeight(1)
+
+	local lineTexture = swingLine:CreateTexture(nil, "BACKGROUND")
+	lineTexture:SetAllPoints(swingLine)
+	lineTexture:SetColorTexture(1, 1, 1, 0.25)
+
+	local sparks = {} -- swingType → {texture = 光点, endTime = 出手时间, duration = 本次间隔}
+
+	local function LaySpark(data, progress)
+		local offset = progress * (swingLine:GetWidth() - SPARK_WIDTH)
+		data.texture:ClearAllPoints()
+		data.texture:SetPoint("LEFT", swingLine, "LEFT", offset, data.yOffset)
+	end
+
+	local function OnSwingUpdate()
+		local now = GetTime()
+		local anyActive = false
+		for _, data in pairs(sparks) do
+			if data.endTime then
+				local remain = data.endTime - now
+				if remain <= 0 then
+					-- 已出手：光点消失，等下一次 PLAYER_SWING
+					data.endTime = nil
+					data.texture:Hide()
+				else
+					anyActive = true
+					LaySpark(data, (data.duration - remain) / data.duration)
+				end
+			end
+		end
+		if not anyActive then
+			-- 没有光点在跑（停手/没目标/超出距离）：线也一起隐藏，真正做到“自动停”
+			swingLine:SetScript("OnUpdate", nil)
+			swingLine:Hide()
+		end
+	end
+
+	local function GetSpark(swingType)
+		local data = sparks[swingType]
+		if not data then
+			local texture = swingLine:CreateTexture(nil, "OVERLAY")
+			texture:SetTexture(SPARK_TEXTURE)
+			texture:SetSize(SPARK_WIDTH, SPARK_HEIGHT)
+			texture:SetBlendMode("ADD")
+			local color = SPARK_COLORS[swingType]
+			if color then
+				texture:SetVertexColor(color[1], color[2], color[3])
+			end
+			texture:Hide()
+			data = {texture = texture, yOffset = SPARK_OFFSET_Y[swingType] or 0}
+			sparks[swingType] = data
+		end
+		return data
+	end
+
+	-- 卸下副手/远程武器后：光点跑完自动消失，之后不再收到对应 PLAYER_SWING，无需额外清理
+
+	swingLine:RegisterEvent("PLAYER_SWING")
+	swingLine:SetScript("OnEvent", function(self, event, arg1, arg2)
+		if event == "PLAYER_SWING" then
+			if not AddUIDB or not AddUIDB.cast then
+				self:Hide()
+				return
+			end
+			local swingDuration, swingType = arg1, arg2
+			-- 先校验再显示：duration 无效的事件不能把线亮起来，否则没有 OnUpdate 收尾会一直留着
+			if not swingDuration or swingDuration <= 0 then return end
+			self:SetFrameStrata(PlayerCastingBarFrame:GetFrameStrata())
+			self:Show()
+			local data = GetSpark(swingType)
+			data.duration = swingDuration
+			data.endTime = GetTime() + swingDuration
+			LaySpark(data, 0)
+			data.texture:Show()
+			self:SetScript("OnUpdate", OnSwingUpdate)
+		end
+	end)
+	swingLine:Hide() -- 文件加载时 AddUIDB 可能还未创建，等事件里再判断
+end
