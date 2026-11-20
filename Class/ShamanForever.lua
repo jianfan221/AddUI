@@ -91,12 +91,12 @@ cdFrame:SetScript("OnEvent", function(_, _, spellID)
 end)
 
 ---------------------------------------------------------------------------------------------------
---元素之盾缺失高亮：闪电之盾(8134) / 水之护盾(408510)
+--元素之盾缺失高亮：闪电之盾(10431) / 水之护盾(408510)
 --办法：借冷却管理器里这两个 buff 图标的显示状态（它能在战斗中拿到真实状态），
 --      buff 没了就同步点亮动作条上对应的按钮
 ---------------------------------------------------------------------------------------------------
 
-local ELEMENT_SHIELD_IDS = {8134, 408510}	--闪电之盾 / 水之护盾（互斥，同一时间只能激活一种）
+local ELEMENT_SHIELD_IDS = {10431, 408510}	--闪电之盾 / 水之护盾（互斥，同一时间只能激活一种）
 local ALERT_TINT_R, ALERT_TINT_G, ALERT_TINT_B = 0.2, 1, 0.2	--原贴图是金色，乘算后偏绿
 
 --冷却管理器里这个法术的 buff 图标；没配条目 / 还没加载时返回 nil
@@ -115,38 +115,34 @@ local function FindBuffItem(spellID)
 	end
 end
 
---动作条上绑定该法术的按钮
-local function FindButton(spellID)
-	return ActionButtonUtil and ActionButtonUtil.GetActionButtonBySpellID(spellID)
+--动作条上所有绑定了该法术的按钮（同一个技能可能被拖到多个格子里）
+local function FindButtons(spellID)
+	local buttons = {}
+	local barNames = ActionButtonUtil and ActionButtonUtil.ActionBarButtonNames
+	if not barNames then return buttons end
+
+	for _, barName in ipairs(barNames) do
+		for i = 1, NUM_ACTIONBAR_BUTTONS do
+			local button = _G[barName .. i]
+			if button then
+				local _, actionSpellID = GetActionInfo(button.action)
+				if actionSpellID == spellID then
+					buttons[#buttons + 1] = button
+				end
+			end
+		end
+	end
+	return buttons
 end
 
 --高亮框自己建、挂在 UIParent 下（不挂到受保护按钮下面），
 --这样战斗中也能随便建/删，不会污染动作条
-local glows = {}	--[spellID] = frame
+local glows = {}	--[button] = frame，一个按钮一个高亮框
 
-local function GetGlow(spellID)
-	local glow = glows[spellID]
-	if not glow then
-		glow = CreateFrame("Frame", nil, UIParent, "ActionButtonSpellAlertTemplate")
-		glow.ProcStartFlipbook:SetVertexColor(ALERT_TINT_R, ALERT_TINT_G, ALERT_TINT_B)
-		glow.ProcLoopFlipbook:SetVertexColor(ALERT_TINT_R, ALERT_TINT_G, ALERT_TINT_B)
-		--跟随按钮位置和显隐（按钮翻页/隐藏时一起收起来）
-		glow:SetScript("OnUpdate", function(self)
-			local button = self.anchorButton
-			if not button then return end
-			local size = button:GetWidth() * 1.4
-			self:SetSize(size, size)
-			self:SetPoint("CENTER", button, "CENTER", 0, 0)
-			self:SetShown(button:IsVisible())
-		end)
-		glows[spellID] = glow
-	end
-	return glow
-end
+local function SetGlow(button, on)
+	local glow = glows[button]
 
-local function SetGlow(spellID, button, on)
 	if not on then
-		local glow = glows[spellID]
 		if glow then
 			glow.anchorButton = nil
 			glow:Hide()
@@ -154,7 +150,22 @@ local function SetGlow(spellID, button, on)
 		return
 	end
 
-	local glow = GetGlow(spellID)
+	if not glow then
+		glow = CreateFrame("Frame", nil, UIParent, "ActionButtonSpellAlertTemplate")
+		glow.ProcStartFlipbook:SetVertexColor(ALERT_TINT_R, ALERT_TINT_G, ALERT_TINT_B)
+		glow.ProcLoopFlipbook:SetVertexColor(ALERT_TINT_R, ALERT_TINT_G, ALERT_TINT_B)
+		--跟随按钮位置和显隐（按钮翻页/隐藏时一起收起来）
+		glow:SetScript("OnUpdate", function(self)
+			local anchorButton = self.anchorButton
+			if not anchorButton then return end
+			local size = anchorButton:GetWidth() * 1.4
+			self:SetSize(size, size)
+			self:SetPoint("CENTER", anchorButton, "CENTER", 0, 0)
+			self:SetShown(anchorButton:IsVisible())
+		end)
+		glows[button] = glow
+	end
+
 	glow.anchorButton = button
 	glow:SetFrameStrata(button:GetFrameStrata())
 	glow:SetFrameLevel(button:GetFrameLevel() + 5)
@@ -165,16 +176,25 @@ local function SetGlow(spellID, button, on)
 	glow:Show()
 end
 
---每个盾各管各的：这个 buff 没了就亮它自己的动作条按钮
+--两种元素之盾互斥：冷却管理器里监控到的盾都不在时，动作条上的盾按钮全亮
+--（只监控了其中一个也能用：它不在 → 认为没盾；它在 → 认为有盾，全部灭掉）
+--同一技能拖了多个格子时，每个格子都亮
 local function Update()
 	if not ActionButtonUtil then return end
 
+	local monitored, active = false, false
 	for _, spellID in ipairs(ELEMENT_SHIELD_IDS) do
-		local button = FindButton(spellID)
-		if button then
-			local item = FindBuffItem(spellID)
-			--只在冷却管理器里配了这个 buff、并且它此刻不在时亮
-			SetGlow(spellID, button, item and item:IsActive() == false)
+		local item = FindBuffItem(spellID)
+		if item then
+			monitored = true
+			if item:IsActive() then active = true end
+		end
+	end
+
+	local needGlow = monitored and not active
+	for _, spellID in ipairs(ELEMENT_SHIELD_IDS) do
+		for _, button in ipairs(FindButtons(spellID)) do
+			SetGlow(button, needGlow)
 		end
 	end
 end
