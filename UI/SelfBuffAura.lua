@@ -99,7 +99,14 @@ ns.event("PLAYER_LOGIN", function()
 
 			local icon = auraButton:CreateTexture(nil, "ARTWORK")
 			icon:SetAllPoints(auraButton)
-			icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)
+
+			--图标现代化：底纹铺在图标下方形成 1px 细黑边
+			icon:SetTexCoord(0.07, 0.93, 0.07, 0.93)	--裁掉图标四周的装饰边
+			local backing = auraButton:CreateTexture(nil, "BACKGROUND")
+			backing:SetColorTexture(0, 0, 0, 1)
+			backing:SetPoint("TOPLEFT", icon, "TOPLEFT", -1, 1)
+			backing:SetPoint("BOTTOMRIGHT", icon, "BOTTOMRIGHT", 1, -1)
+			
 			auraButton:SetIcon(icon)
 
 			local cooldown = CreateFrame("Cooldown", nil, auraButton, "CooldownFrameTemplate")
