@@ -188,11 +188,26 @@ TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.UnitAura, ShowID)
 
 end
 
---无限服：鼠标提示显示目标玩家天赋（观察后读取）
+--无限服：鼠标提示显示目标玩家天赋（观察读取）
+--思路参考 HuTip（TalentInfo.lua / ItemLevel.lua）：先放占位行，数据回来后原地替换，不重绘提示
 if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 	local INSPECT_CONFIG = (Constants and Constants.TraitConsts and Constants.TraitConsts.INSPECT_TRAIT_CONFIG_ID) or -1
-	local talentCache = {}	-- guid -> "增强(0/30/11)"
-	local lastInspectAt = {}	-- guid -> 上次请求观察的时间
+	--分组名读不到时按职业 + 主系序号兜底
+	local SPEC_NAMES = {
+		WARRIOR = {"武器", "狂怒", "防护"},
+		PALADIN = {"神圣", "防护", "惩戒"},
+		HUNTER = {"野兽控制", "射击", "生存"},
+		ROGUE = {"刺杀", "战斗", "敏锐"},
+		PRIEST = {"戒律", "神圣", "暗影"},
+		SHAMAN = {"元素", "增强", "恢复"},
+		MAGE = {"奥术", "火焰", "冰霜"},
+		WARLOCK = {"痛苦", "恶魔学识", "毁灭"},
+		DRUID = {"平衡", "野性战斗", "恢复"},
+	}
+	local cache = {}	-- guid -> {text = 天赋文本或""、time = 缓存时间}
+	local pending = {}	-- guid -> {tooltip = 提示框、index = 占位行行号}
+	local lastAsk = {}	-- guid -> 上次请求观察时间
+
 	local function GetTipUnit()
 		local foci = GetMouseFoci()
 		local f = foci and foci[1]
@@ -205,15 +220,18 @@ if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 		end
 		if UnitExists("mouseover") then return "mouseover" end
 	end
-	--按天赋树分组读取三系名称与已用点数
-	local function BuildTalentLine(configID, treeID)
-		if not configID or not treeID or ns.MM(configID) or ns.MM(treeID) then return end
+
+	--按天赋树分组读三系名称与已用点数
+	local function ReadByGroup(configID, treeID)
 		local infos = C_Traits.GetGroupDisplayInfoByTreeID(treeID)
-		if not infos then return end
+		if not infos or #infos ~= 3 then return end
 		local gids = {}
-		for i, info in ipairs(infos) do gids[i] = info.groupID end
-		local gcis = C_Traits.GetGroupCurrencyInfo(configID, gids)
+		for i, info in ipairs(infos) do
+			if ns.MM(info.groupID) or ns.MM(info.displayName) then return end
+			gids[i] = info.groupID
+		end
 		local spent = {}
+		local gcis = C_Traits.GetGroupCurrencyInfo(configID, gids)
 		if gcis then
 			for _, gci in ipairs(gcis) do
 				local ci = gci.currencyInfos and gci.currencyInfos[1]
@@ -224,31 +242,98 @@ if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 		end
 		local names, points = {}, {}
 		for i, info in ipairs(infos) do
-			--秘密值不参与比较与拼接
-			if ns.MM(info.groupID) or ns.MM(info.displayName) then return end
 			names[i] = info.displayName
 			points[i] = spent[info.groupID] or 0
 		end
-		if #names == 0 then return end
+		return names, points
+	end
+
+	--兜底：分组数据缺失时，按节点横坐标三等分累加
+	local function ReadByPosX(configID, treeID)
+		local nodes = C_Traits.GetTreeNodes(treeID)
+		if not nodes then return end
+		local list, minX, maxX = {}, nil, nil
+		for _, nodeID in ipairs(nodes) do
+			local ok, node = pcall(C_Traits.GetNodeInfo, configID, nodeID)
+			if ok and node then
+				local x, rank = node.posX, node.currentRank
+				if x and not ns.MM(x) and rank and not ns.MM(rank) then
+					list[#list + 1] = {x = x, rank = rank}
+					minX = minX and math.min(minX, x) or x
+					maxX = maxX and math.max(maxX, x) or x
+				end
+			end
+		end
+		if not minX or maxX <= minX then return end
+		local width = (maxX - minX) / 3
+		local points = {0, 0, 0}
+		for _, node in ipairs(list) do
+			local i = math.min(3, math.floor((node.x - minX) / width) + 1)
+			points[i] = points[i] + node.rank
+		end
+		return points
+	end
+
+	local function BuildLine(configID, treeID, classFile)
+		if not configID or not treeID or ns.MM(configID) or ns.MM(treeID) then return end
+		local names, points = ReadByGroup(configID, treeID)
+		if not points then points = ReadByPosX(configID, treeID) end
+		if not points then return end
+		local total = 0
+		for i = 1, #points do total = total + (points[i] or 0) end
+		if total == 0 then return end	--没点天赋或数据还没到
 		local best = 1
 		for i = 2, #points do
 			if points[i] > points[best] then best = i end
 		end
-		return names[best].." ("..table.concat(points, "/")..")"
+		local name = names and names[best] or (SPEC_NAMES[classFile] and SPEC_NAMES[classFile][best])
+		--秘密值不参与比较与拼接
+		if not name or ns.MM(name) then return end
+		return name.." ("..table.concat(points, "/")..")"
 	end
+
+	local function FormatLine(text)
+		return "|cff00FF00天赋:|r |cffFFFFFF"..text.."|r"
+	end
+
+	--提示重建时清掉占位记录
+	GameTooltip:HookScript("OnTooltipCleared", function()
+		pending = {}
+	end)
+
 	ns.event("INSPECT_READY", function(event, guid)
 		if not guid or ns.MM(guid) then return end
-		local unit = GetTipUnit()
-		if not unit then return end
+		local foci = GetMouseFoci()
+		local f = foci and foci[1]
+		if not f or not f.unit then return end
+		local unit = f.unit
+		local exists = UnitExists(unit)
+		if not exists or ns.MM(exists) then return end
 		local uguid = UnitGUID(unit)
 		if not uguid or ns.MM(uguid) or uguid ~= guid then return end
 		local specID = C_SpecializationInfo.GetInspectSpecialization(unit)
 		if not specID or ns.MM(specID) then return end
-		local line = BuildTalentLine(INSPECT_CONFIG, C_ClassTalents.GetTraitTreeForSpec(specID))
-		if line then talentCache[guid] = line end
-		--提示仍停留在该单位，重绘刷新此行
-		if GameTooltip:IsShown() then GameTooltip:SetUnit(unit) end
+		local classFile = select(2, UnitClass(unit))
+		if not classFile or ns.MM(classFile) then return end
+		local line = BuildLine(INSPECT_CONFIG, C_ClassTalents.GetTraitTreeForSpec(specID), classFile)
+		cache[guid] = {text = line or "", time = GetTime()}
+		--原地替换占位行，不重绘提示
+		local p = pending[guid]
+		if p and p.tooltip:IsShown() and p.tooltip:GetName() then
+			local fs = _G[p.tooltip:GetName().."TextLeft"..p.index]
+			if fs then
+				if line then
+					fs:SetText(FormatLine(line))
+				else
+					fs:SetText("")
+					fs:Hide()
+				end
+				p.tooltip:Show()
+			end
+		end
+		pending[guid] = nil
 	end)
+
 	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, function(self)
 		local unit = GetTipUnit()
 		if not unit then return end
@@ -258,13 +343,17 @@ if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 		if not guid or ns.MM(guid) then return end
 		local pguid = UnitGUID("player")
 		if pguid and not ns.MM(pguid) and pguid == guid then return end
-		local cached = talentCache[guid]
-		if cached then
-			self:AddLine("|cff00FF00天赋:|r |cffFFFFFF"..cached.."|r")
+		local cached = cache[guid]
+		if cached and GetTime() - cached.time < 180 then
+			if cached.text ~= "" then self:AddLine(FormatLine(cached.text)) end
+			return
 		end
+		--先占位，数据回来后替换
+		self:AddLine("|cff00FF00天赋:|r |cff888888加载中...|r")
+		pending[guid] = {tooltip = self, index = self:NumLines()}
 		local canInspect = CanInspect(unit)
-		if not ns.MM(canInspect) and canInspect and GetTime() - (lastInspectAt[guid] or 0) > 10 then
-			lastInspectAt[guid] = GetTime()
+		if not ns.MM(canInspect) and canInspect and GetTime() - (lastAsk[guid] or 0) > 5 then
+			lastAsk[guid] = GetTime()
 			NotifyInspect(unit)
 		end
 	end)
