@@ -244,21 +244,26 @@ ns.event("PLAYER_ENTERING_WORLD", function(isInitialLogin, isReloading)
 end)
 ns.event("MERCHANT_SHOW", function()
 	if not ns.DB or not ns.DB.repair then return end
-	if CanMerchantRepair() then
-		local cost = GetRepairAllCost()                      -- 修理总费用
-		local gbwm = GetGuildBankWithdrawMoney()             -- 公会银行每日可取上限（固定值，不会减少）
-		local gbk = GetGuildBankMoney()                      -- 公会银行总金额
-		local canGuildRepair = CanGuildBankRepair()          -- 是否允许公会修理
-		local money = GetMoney()                             -- 玩家当前的金钱
-		if cost > 0 then
-			-- 优先公会修理
-			if IsInGuild() and canGuildRepair then
-				QueryGuildBankTab(1)                         -- 确保公会银行数据是最新的
-				local dailyRemaining = math.max(0, gbwm - sessionGuildRepair)
-				-- gbk 可能为 0（首次上线数据未到），此时忽略银行余额限制，只管每日上限
-				local guildMoney = gbk > 0 and math.min(dailyRemaining, gbk) or dailyRemaining
-				if guildMoney >= cost then
-					RepairAllItems(true)
+	if not CanMerchantRepair() then return end
+	local cost = GetRepairAllCost()                          -- 修理总费用
+	if not cost or cost <= 0 then return end
+
+	local canGuildRepair = IsInGuild() and CanGuildBankRepair() -- 是否允许公会修理
+	local gbk, gbwm
+	-- 优先公会修理
+	if canGuildRepair then
+		QueryGuildBankTab(1)                                 -- 确保公会银行数据是最新的
+		gbwm = GetGuildBankWithdrawMoney()                   -- 公会银行每日可取上限（固定值，不会减少）
+		gbk = GetGuildBankMoney()                            -- 公会银行总金额（真空或数据未到都返回 0）
+		local dailyRemaining = math.max(0, gbwm - sessionGuildRepair)
+		-- gbk 为 0 时无法区分"公会银行真的没钱"和"数据还没到"，都先试公修；
+		-- 公修失败客户端不报错、也不修理，所以要靠修完后的剩余费用来判定是否真的成功
+		if dailyRemaining >= cost and (gbk == 0 or gbk >= cost) then
+			RepairAllItems(true)
+			C_Timer.After(0.5, function()
+				local left = GetRepairAllCost()              -- 剩余修理费
+				if left and left <= 0 then
+					-- 公修成功
 					PlaySound("7994")
 					sessionGuildRepair = sessionGuildRepair + cost
 					print("|cff00FFFF本次使用公会维修：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
@@ -268,26 +273,38 @@ ns.event("MERCHANT_SHOW", function()
 					print("剩余可用公修：".. C_CurrencyInfo.GetCoinTextureString(remaining))
 					return
 				end
-			end
-			-- 公会修理不可用时，自费修理
-			if money > cost then
-				PlaySound("7994")
-				RepairAllItems()
-				local reason
-				if not IsInGuild() then
-					reason = "未加入公会"
-				elseif not canGuildRepair then
-					reason = "无权限"
-				elseif gbk > 0 and gbk < cost then
-					reason = "公会银行余额不足"
+				-- 公修没生效（公会银行没钱 / 每日限额已被用掉），改为自费
+				if GetMoney() > left then
+					PlaySound("7994")
+					RepairAllItems()
+					print("|cffFF9900未使用公会修理: |r公会银行余额不足")
+					print("|cffFF0000自费修理：|r"..C_CurrencyInfo.GetCoinTextureString(left))
 				else
-					reason = "公会每日修理限额不足"
+					print("|cff99CCFF".."没钱修装备了。".."|r")
 				end
-				print("|cffFF9900未使用公会修理: |r"..reason)
-				print("|cffFF0000自费修理：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
-			else
-				print("|cff99CCFF".."没钱修装备了。".."|r")
-			end
+			end)
+			return
 		end
+	end
+
+	-- 公会修理不可用时，自费修理
+	local money = GetMoney()                                 -- 玩家当前的金钱
+	if money > cost then
+		PlaySound("7994")
+		RepairAllItems()
+		local reason
+		if not IsInGuild() then
+			reason = "未加入公会"
+		elseif not canGuildRepair then
+			reason = "无权限"
+		elseif gbk and gbk > 0 and gbk < cost then
+			reason = "公会银行余额不足"
+		else
+			reason = "公会每日修理限额不足"
+		end
+		print("|cffFF9900未使用公会修理: |r"..reason)
+		print("|cffFF0000自费修理：|r"..C_CurrencyInfo.GetCoinTextureString(cost))
+	else
+		print("|cff99CCFF".."没钱修装备了。".."|r")
 	end
 end)
