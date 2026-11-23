@@ -118,7 +118,7 @@ idframe:RegisterEvent("ZONE_CHANGED_NEW_AREA")
 idframe:SetFrameStrata("BACKGROUND")
 local weimian = idframe:CreateFontString(nil, "ARTWORK")
 weimian:SetFont("fonts\\ARHei.ttf", 11, "OUTLINE")
-local maptop = MinimapCluster.BorderTop or MinimapZoneText
+local maptop = MinimapCluster.BorderTop
 weimian:SetPoint("RIGHT",maptop,"RIGHT",0,0)
 idframe:SetScript("OnEvent", function(self,event,aaaa)
 if event == "UPDATE_MOUSEOVER_UNIT" then
