@@ -332,7 +332,7 @@ f:SetScript("OnEvent", function(self, event, resultid, status, prevstatus, title
 	local activityID = info.activityIDs[1]
 	local name = C_LFGList.GetActivityFullName(activityID) or "未知活动"
 	local msg = "已加入: " .. name .. " " .. (title or "")
-	print("|cffb044a2ADDUI|r " .. msg.." "..info.leaderName)
+	print("|cffb044a2ADDUI|r " .. msg .. " " .. (info.leaderName or ""))
 	ns.AATEXT(msg)
 end)
 
