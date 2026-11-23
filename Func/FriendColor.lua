@@ -8,7 +8,7 @@ if SocialUIFrame then
 		-- 重排：一行 战网名 + 角色名，二行 等级 种族 职业，三行 位置-服务器(暴雪默认文本)
 		local gameAccountInfo = self.elementData and self.elementData.accountInfo and self.elementData.accountInfo.gameAccountInfo
 
-		self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 8)
+		self.FriendName:SetPoint("TOPLEFT", self.TextHolder, "TOPLEFT", 5, 5)
 
 		self.Name:ClearAllPoints()
 		self.Name:SetPoint("LEFT", self.FriendName, "RIGHT", 4, 0)
@@ -20,7 +20,7 @@ if SocialUIFrame then
 
 		self.Level:Show()
 		self.Level:ClearAllPoints()
-		self.Level:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -2)
+		self.Level:SetPoint("TOPLEFT", self.FriendName, "BOTTOMLEFT", 0, -5)
 
 		-- 种族：自建 FontString，跟在职业后面（暴雪没有种族文本）
 		local raceText = raceTexts[self]
@@ -47,7 +47,7 @@ if SocialUIFrame then
 		raceText:SetShown(hasRace)
 
 		self.Location:ClearAllPoints()
-		self.Location:SetPoint("TOPLEFT", self.Level, "BOTTOMLEFT", 0, -2)
+		self.Location:SetPoint("TOPLEFT", self.Level, "BOTTOMLEFT", 0, -5)
 
 		-- 位置栏按旧版信息栏样式：优先 richPresence，否则 区域-服务器（离线保留暴雪的“上次在线”）
 		if gameAccountInfo and gameAccountInfo.isOnline then
