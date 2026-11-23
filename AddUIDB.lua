@@ -22,6 +22,7 @@ ns.Defaults = {
 	deathRecapAlert = true, -- 死亡伤害提示
 	zu = true, -- 密语自动邀请
 	lfgkg = true, -- LFG增强
+	whoWhisperText = "有空组个,求跨个位面,谢谢", -- 谁列表一键私聊的密语内容（可修改）
 	raidRoleIcon = true, -- 团队框架职责图标
 	raidMouseHighlight = true, -- 团队框架鼠标指向边框
 	raidabsorb = true, -- 团队框架吸收盾

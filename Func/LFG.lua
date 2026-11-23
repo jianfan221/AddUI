@@ -35,12 +35,110 @@ if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 		ns.hook("LFGBrowseSearchEntry_Update", ShowComment)
 	end
 
+	-- 谁列表：每行加一键私聊求跨位面按钮
+	local DEFAULT_WHISPER = "有空组个,求跨个位面,谢谢"
+
+	local function GetWhisperText()
+		local text = AddUIDB and AddUIDB.whoWhisperText
+		if not text or text == "" then return DEFAULT_WHISPER end
+		return text
+	end
+
+	-- 自己当前所在区域（谁列表里的「区域」是子区域名，尘泥沼泽 → 奥卡兹岛）
+	local function GetMyZone()
+		local zone = GetSubZoneText()
+		if not zone or zone == "" then zone = GetZoneText() end
+		return zone
+	end
+
+	local function InitWhoRow(self, elementData)
+		if not self.AddUIWhisper then
+			local btn = CreateFrame("Button", nil, self, "UIPanelButtonTemplate")
+			btn:SetSize(60, 22)
+			btn:SetPoint("TOPRIGHT", self, "TOPRIGHT", -80, -23)
+			btn:SetText("密语")
+			btn:SetScript("OnClick", function(button)
+				if not button.whoName then return end
+				C_ChatInfo.SendChatMessage(GetWhisperText(), "WHISPER", nil, button.whoName)
+			end)
+			btn:SetScript("OnEnter", function(button)
+				if not button.whoName then return end
+				GameTooltip:SetOwner(button, "ANCHOR_RIGHT")
+				GameTooltip:SetText("私聊 " .. button.whoName)
+				GameTooltip:AddLine(GetWhisperText(), 1, 1, 1)
+				GameTooltip:Show()
+			end)
+			btn:SetScript("OnLeave", function() GameTooltip:Hide() end)
+			self.AddUIWhisper = btn
+		end
+		local info = elementData.info
+		local whoName = info and info.fullName
+		local area = info and info.area
+		local zone = GetMyZone()
+		-- 只在「对方和自己同一区域」的行显示按钮
+		local sameZone = area and zone and area ~= "" and
+			(area == zone or area:find(zone, 1, true) or zone:find(area, 1, true))
+		self.AddUIWhisper.whoName = whoName
+		self.AddUIWhisper:SetShown(sameZone and whoName ~= nil and whoName ~= GetUnitName("player"))
+	end
+
+	-- 打开谁列表时输入框默认填本区域
+	local function FillWhoZone()
+		if not WhoFrameEditBox then return end
+		local zone = GetMyZone()
+		if zone and zone ~= "" then
+			WhoFrameEditBox:SetText(zone)
+		end
+	end
+
+	local function HookWhoList()
+		if ns.whoListHooked or not LFGWhoListButtonMixin or not LFGWhoListFrame then return end
+		ns.whoListHooked = true
+		ns.hook(LFGWhoListButtonMixin, "InitButton", InitWhoRow)
+		-- 帧的 OnShow 是注册到 C 侧的回调，hooksecurefunc 改字段无效，必须 HookScript
+		LFGWhoListFrame:HookScript("OnShow", FillWhoZone)
+		-- 关面板时本来就停在这一页的话子页不会重新 OnShow，这里兜一层
+		if LFGParentFrame then
+			LFGParentFrame:HookScript("OnShow", FillWhoZone)
+		end
+		-- 窗口底部：密语内容编辑框（改完立即写入 DB，点按钮时读 DB）
+		local eb = CreateFrame("EditBox", "AddUIWhoWhisperBox", LFGWhoListFrame, "InputBoxTemplate")
+		eb:SetHeight(20)
+		eb:SetPoint("BOTTOMLEFT", LFGWhoListFrame, "BOTTOMLEFT", 84, 10)
+		eb:SetPoint("RIGHT", LFGWhoListFrame, "RIGHT", -110, 0)
+		eb:SetAutoFocus(false)
+		eb:SetMaxLetters(120)
+		eb:SetText(GetWhisperText())
+		eb:SetScript("OnEscapePressed", function(self) self:ClearFocus() end)
+		eb:SetScript("OnEnterPressed", function(self) self:ClearFocus() end)
+		eb:SetScript("OnTextChanged", function(self, userInput)
+			if not userInput or not AddUIDB then return end
+			AddUIDB.whoWhisperText = self:GetText()
+		end)
+		eb:SetScript("OnEnter", function(self)
+			GameTooltip:SetOwner(self, "ANCHOR_RIGHT")
+			GameTooltip:SetText("点“密语”按钮时发送这段话，可直接修改")
+			GameTooltip:Show()
+		end)
+		eb:SetScript("OnLeave", function() GameTooltip:Hide() end)
+		local title = LFGWhoListFrame:CreateFontString(nil, "OVERLAY", "GameFontNormalSmall")
+		title:SetPoint("RIGHT", eb, "LEFT", -6, 0)
+		title:SetText("密语内容")
+		-- 人数统计挪到右下，给底部的密语框让位
+		if LFGWhoListFrame.WhoFrameTotals then
+			LFGWhoListFrame.WhoFrameTotals:ClearAllPoints()
+			LFGWhoListFrame.WhoFrameTotals:SetPoint("BOTTOMRIGHT", LFGWhoListFrame, "BOTTOMRIGHT", -14, 12)
+		end
+	end
+
 	ns.event("ADDON_LOADED", function(event, addon)
 		if addon == "Blizzard_GroupFinder_VanillaStyle" then
 			HookVanillaLFG()
+			HookWhoList()
 		end
 	end)
 	HookVanillaLFG()
+	HookWhoList()
 end
 
 ns.event("PLAYER_ENTERING_WORLD", function()
