@@ -1,5 +1,10 @@
 ﻿local _,ns = ...
 
+-- 无限服 12.x：搜索结果的 isDelisted 是秘密值，插件不能做布尔判断
+-- 改用 SetVertexColorFromBoolean（SecretArguments = AllowedWhenTainted），由引擎按 true/false 自己选颜色
+local DELISTED_COLOR = CreateColor(0.3, 0.3, 0.3)
+local NORMAL_COLOR = CreateColor(0.9, 0.9, 0.9)
+
 -- 无限服（Camelot）寻求组队：在游戏风格后面显示队伍备注（正式服同类做法见下方 LFGList 部分）
 if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 	local function ShowComment(entry)
@@ -22,10 +27,10 @@ if WOW_PROJECT_ID == WOW_PROJECT_CAMELOT then
 			text:SetPoint("TOPLEFT", label, "TOPLEFT")
 		end
 		text:SetText(comment or "")
-		if info and info.isDelisted then
-			text:SetTextColor(0.3, 0.3, 0.3)
+		if info then
+			text:SetVertexColorFromBoolean(info.isDelisted, DELISTED_COLOR, NORMAL_COLOR)
 		else
-			text:SetTextColor(0.9, 0.9, 0.9)
+			text:SetVertexColor(1, 1, 1)
 		end
 	end
 
